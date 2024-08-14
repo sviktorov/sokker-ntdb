@@ -1,0 +1,28 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% block title %}Home - {{ page_title }}{% endblock %}
+
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
+ 
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+        <div class="row">
+
+            <!-- Render the tables -->
+            {% for table in tables %}
+            <div class="col-lg-12 col-md-6"> 
+                <div class="point-table-widget">
+                    {% render_table table %}
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+version: "3.7"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: ./compose/local/web/Dockerfile
+    image: sokker
+    command: /start
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env
+    environment:
+      DJANGO_SETTINGS_MODULE: sokker.settings
+
+  db:
+    image: postgres:15.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=sokker_web
+      - POSTGRES_USER=sokker_web
+      - POSTGRES_PASSWORD=sokker_web
+    ports:
+      - 5432:5432
+
+volumes:
+  postgres_data:

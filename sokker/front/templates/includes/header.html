@@ -1,0 +1,78 @@
+{% load i18n %}
+<!--Header Start-->
+<header id="main-header" class="main-header"> 
+    <!--topbar-->
+    <div class="topbar">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-6 col-sm-6">
+            <ul class="topsocial">
+              <li><a href="#" class="fb"><i class="fab fa-facebook-f"></i></a></li>
+              <li><a href="#" class="tw"><i class="fab fa-twitter"></i></a></li>
+              <li><a href="#" class="insta"><i class="fab fa-instagram"></i></a></li>
+              <li><a href="#" class="in"><i class="fab fa-linkedin-in"></i></a></li>
+              <li><a href="#" class="yt"><i class="fab fa-youtube"></i></a></li>
+            </ul>
+          </div>
+          <div class="col-md-6 col-sm-6">
+            <ul class="toplinks">
+              <li class="lang-btn">
+                <div class="dropdown">
+                  <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> ENG </button>
+                  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton"> <a class="dropdown-item" href="#">ENG</a>  </div>
+                </div>
+              </li>
+              <li class="acctount-btn"> <a href="/en/admin">{% trans "My Account" %}</a> </li>
+              <li class="search-btn"> <a class="search-icon" href="#search"><i class="fas fa-search"></i></a> </li>
+            </ul>
+            <div id="search">
+                  <button type="button" class="close">×</button>
+                  <form class="search-overlay-form">
+                    <input type="search" value="" placeholder="type keyword(s) here" />
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                  </form>
+                </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--topbar end--> 
+    <!--Logo + Navbar Start-->
+    <div class="logo-navbar">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-2 col-sm-5">
+            <div class="logo"><a href="index.html"><img src="/static/images/logo-dark.png" alt=""></a></div>
+          </div>
+          <div class="col-md-10 col-sm-7">
+            <nav class="main-nav">
+              <ul>
+                <li class="nav-item drop-down"> <a href="/">{% trans "Home" %}</a>
+                </li>
+                <li class="nav-item drop-down"> <a href="">{% trans "NTDB" %}</a>
+                  <ul>
+                    <li><a href="{% url 'best_players' country_name='bulgaria' %}">{% trans "Best Players" %}</a></li>
+                    <li><a href="{% url 'best_players_all' country_name='bulgaria' %}">{% trans "Best Players All Time" %}</a></li>
+                  </ul>
+                </li>
+                <li class="nav-item drop-down"> <a href="">Euro Cups</a>
+                  <ul>
+                    <li><a href="team-one.html">Coming soon</a></li>
+                  </ul>
+                </li>
+                <li class="nav-item drop-down"> <a href="">Tools</a>
+                  <ul>
+                    <li><a href="{% url 'tactics_transfer' %}">Tactics</a></li>
+                  </ul>
+                </li>
+                <li class="nav-item drop-down"> <a href="/admin/login">{% trans "Login" %}</a> </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--Logo + Navbar End--> 
+  </header>
+  <!--Header End--> 

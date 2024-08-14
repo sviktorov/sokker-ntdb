@@ -1,0 +1,102 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% block title %}Home - {{ page_title }}{% endblock %}
+
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('tact_fetch');
+        var submitButton = form.querySelector('button[type="submit"]');
+
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            form.submit(); // Submit the form
+        });
+        var form2 = document.getElementById('tact_save');
+        var submitButton2 = form2.querySelector('button[type="submit"]');
+
+        submitButton2.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            form2.submit(); // Submit the form
+        });
+
+        var form3 = document.getElementById('tact_transform');
+        var submitButton3 = form3.querySelector('button[type="submit"]');
+
+        submitButton3.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            form3.submit(); // Submit the form
+        });
+    });
+</script>
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+            <div class="row">
+                <h2>Fetch Code Data by Tactic ID</h2>
+            </div>
+            <div class="row">
+                <form id="tact_fetch" action="{% url 'tactics_transfer' %}" method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <input type="hidden" name="form1_submit" value="1">
+                    <button type="submit">Fetch</button>
+                </form>
+
+            </div>
+            <div class="row">
+                {% if url_fetch %}
+                    <p>Click on this url to fetch the code of tactic!</p>
+                    <a  target="blank" href="{{ url_fetch }}">{{ url_fetch }}</a>
+                {% endif %}
+            </div>
+            <div class="row">
+                <h2>Save Data by Tactic ID and code</h2>
+            </div>
+            <div class="row">
+                <form id="tact_save" method="post" action="{% url 'tactics_transfer' %}">
+                    {% csrf_token %}
+                    {{ form2.as_p }}
+                    <input type="hidden" name="form2_submit" value="1">
+                    <button type="submit">Save</button>
+                </form>
+            </div>
+            <div class="row">
+                {% if form2.code.value %}
+                    Beta version of the preview
+                    <iframe width="344" height="534" src="https://raqueto.com/sokker/editor.jsp?tact={{ form2.code.value }}">
+                    </iframe>
+                {% endif %}
+                {% if url %}
+                    <p>Click on this url to save the code of tactic!</p>
+                    <a  target="blank" href="{{ url }}">{{ url }}</a>
+                {% endif %}
+            </div>
+            <div class="row">
+                <h2>Swap Position Form</h2>
+
+            </div>
+            <div class="row">
+                <form id="tact_transform" method="post" action="{% url 'tactics_transfer' %}">
+                    {% csrf_token %}
+                    {{ form3.as_p }}
+                    <input type="hidden" name="form3_submit" value="1">
+                    <button type="submit">Swap Positions In Tactic</button>
+                </form>
+
+                {% if form3.output_code.value %}
+                    Beta version of the preview
+                    <iframe width="344" height="534" src="https://raqueto.com/sokker/editor.jsp?tact={{ form3.output_code.value }}">
+                    </iframe>
+                {% endif %}
+            </div>
+
+        </div>
+    </section>
+</div>
+
+{% endblock %}

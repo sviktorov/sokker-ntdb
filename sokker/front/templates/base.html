@@ -1,0 +1,67 @@
+{% load i18n %}
+{% load static %}
+{% get_language_info for LANGUAGE_CODE as lang %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="icon" href="{% static 'images/fav.png' %}" type="image/png">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="{% static 'css/custom.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/color.css' %}">
+<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/fontawesome.css' %}">
+<link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/prettyPhoto.css' %}">
+<!--Rev Slider Start-->
+<link rel="stylesheet" href="{% static 'js/rev-slider/css/settings.css' %}"  type='text/css' media='all' />
+<link rel="stylesheet" href="{% static 'js/rev-slider/css/layers.css' %}"  type='text/css' media='all' />
+<link rel="stylesheet" href="{% static 'js/rev-slider/css/navigation.css' %}"  type='text/css' media='all' />
+<!--Rev Slider End-->
+<title>Tigers Sports HTML Template</title>
+</head>
+<body>
+<!--Wrapper Start-->
+<div class="wrapper"> 
+  {% include 'includes/header.html' %}
+ 
+  <!--Main Content Start-->
+
+  {% block content %}
+
+  {% endblock %}
+  <!--Main Content End--> 
+  {% include 'includes/footer.html' %}
+</div>
+<!--Wrapper End--> 
+
+<!-- Optional JavaScript -->
+<script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
+<script src="{% static 'js/jquery-migrate-3.0.1.js' %}"></script>
+<script src="{% static 'js/popper.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+<script src="{% static 'js/mobile-nav.js' %}"></script>
+<script src="{% static 'js/owl.carousel.min.js' %}"></script>
+<script src="{% static 'js/isotope.js' %}"></script>
+<script src="{% static 'js/jquery.prettyPhoto.js' %}"></script>
+<script src="{% static 'js/jquery.countdown.js' %}"></script>
+<script src="{% static 'js/custom.js' %}"></script>
+
+<!--Rev Slider Start-->
+<script src="{% static 'js/rev-slider/js/jquery.themepunch.tools.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/jquery.themepunch.revolution.min.js' %}"></script>
+<script src="{% static 'js/rev-slider.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.actions.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.carousel.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.kenburn.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.layeranimation.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.migration.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.navigation.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.parallax.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.slideanims.min.js' %}"></script>
+<script src="{% static 'js/rev-slider/js/extensions/revolution.extension.video.min.js' %}"></script>
+
+</body>
+</html>

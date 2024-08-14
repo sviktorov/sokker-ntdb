@@ -1,0 +1,5 @@
+fly.toml
+.git/
+.tox/
+.env
+*.sqlite3

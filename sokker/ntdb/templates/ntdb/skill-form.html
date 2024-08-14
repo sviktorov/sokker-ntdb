@@ -1,0 +1,226 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% block title %}Home - {{ page_title }}{% endblock %}
+
+{% block content %}
+ 
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+        <div class="row">
+
+            <form method="post" action="{% url 'player_update' %}" id="player" novalidate="novalidate">
+                {% csrf_token %}
+
+                <table border="0">
+                  <tbody>
+                    <tr> 
+                      <td width="81">&nbsp;</td>
+                      <td width="118">&nbsp;</td>
+                      <td>&nbsp;</td>
+                      <td width="82"> <div align="right"></div></td>
+                      <td width="119"> <div align="left"></div></td>
+                    </tr>
+                    <tr> 
+                      <td width="81"> 
+                          <div align="right">Team:</div>
+                      </td>
+                      <td width="118"> 
+                          <div align="left"></div>
+                          <input name="login" type="hidden" value=""> 
+                      </td>
+                      <td width="4">&nbsp;</td>
+                      <td width="82">
+                           <div align="right">Player ID: </div>
+                      </td>
+                      <td width="119">
+                          <div align="left"></div>
+                          <input name="pid" type="hidden" value=""> 
+                          
+                      </td>
+                    </tr>
+                    <tr> 
+                      <td width="81">
+                          <div align="right">Name: </div>
+                      </td>
+                      <td width="118">
+                       <div align="left"></div>
+                       <input name="name" type="hidden" id="name" size="18" value=""></td>
+                      <td>&nbsp;</td>
+                      <td width="82"> 
+                          <div align="right">Age:</div>
+                      </td>
+                      <td width="119">
+                        <div align="left"></div> 
+                        <input name="age" type="hidden" value=""></td>
+      
+                    </tr>
+                     <tr> 
+                      <td width="81">
+                          <div align="right">Value: </div>
+                      </td>
+                      <td width="118">
+                       <div align="left"></div>
+                       <input name="val" type="hidden" id="val" size="18" value=""></td>
+                      <td>&nbsp;</td>
+                      <td width="82"> 
+                          <div align="right">Wage:</div>
+                      </td>
+                      <td width="119">
+                        <div align="left"></div> 
+                        <input name="wage" type="hidden" value=""></td>
+      
+                    </tr>
+                     <tr> 
+                      <td>
+                          <div align="right">Form:</div>
+                      </td>
+                      <td> 
+                        <div align="left"></div> 
+                        <input name="frm" type="hidden" value="">
+                      </td>
+                      <td>&nbsp;</td>
+                      <td> 
+                          <div align="right">Discipline:</div>
+                      </td>
+                       <td> 
+                          <div align="left"></div>
+                          <input name="tac" type="hidden" value="">
+                       </td>
+                    </tr>             
+                    <tr> 
+                      <td>
+                          <div align="right">Stamina:</div>
+                      </td>
+                      <td> 
+                        <div align="left"></div> 
+                        <input name="sta" type="hidden" value="">
+                      </td>
+                      <td>&nbsp;</td>
+                      <td> 
+                          <div align="right">Keeper:</div>
+                      </td>
+                       <td> 
+                          <div align="left"></div>
+                          <input name="kee" type="hidden" value="">
+                       </td>
+                    </tr>
+                    <tr> 
+                      <td>
+                          <div align="right">Pace:</div>
+                       </td>
+                      <td> 
+                        <div align="left"></div>
+                        <input name="pac" type="hidden" value="">
+                        </td>
+                      <td>&nbsp;</td>
+      
+                      <td> 
+                          <div align="right">Defender:</div>
+                      </td>
+                      <td> 
+                       <div align="left"></div>
+                        <input name="def" type="hidden" value="">
+                       </td>
+                    </tr>
+                    <tr> 
+                      <td> 
+                          <div align="right">Technique:</div>
+                      </td>
+      
+                      <td>
+                          <div align="left"></div> 
+                        <input name="tec" type="hidden" value="">                </td>
+                      <td>&nbsp;</td>
+                      <td> 
+                          <div align="right">Playmaking: </div>
+                      </td>
+                      <td> 
+                        
+                        <input name="pla" type="hidden" value="">
+                      </td>
+                    </tr>
+                    <tr> 
+                      <td> 
+                        <div align="right">Passing :</div></td>
+                      <td> 
+                        
+                        <input name="pas" type="hidden" value="">
+                      </td>
+                      <td>&nbsp;</td>
+                      <td> 
+                        <div align="right">Striker :</div>
+                        </td>
+      
+                      <td> 
+                         <div align="left"></div> 
+                        
+                        <input name="str" type="hidden" value="">
+                      </td>
+                    </tr>
+                    <tr> 
+                      <td height="22"> 
+                         &nbsp; <!--   <div align="right"><em>*</em>Training:</div>  -->
+                      </td>
+                      <td>
+                      <!-- <div align="left">
+                          <select name="train" id="select3"  class="required" >
+                            <option value=""></option>
+                            <option value=4>Stamina</option>
+                            <option value=5>Keeper</option>
+                            <option value=6>Pace</option>
+                            <option value=7>Defender</option>
+                            <option value=8>Technique</option>
+                            <option value=9>Playmaking</option>
+                            <option value=10>Passing</option>
+                            <option value=11>Striker</option>                    
+                           </select>
+                           </div>-->
+                           &nbsp;
+                      </td>
+                      <td>&nbsp;</td>
+                      <td height="22">
+                          <div align="right">
+                          <em>*</em>Position:</div>
+                       </td> 
+                       <td>
+                        <div align="left">
+                         <select name="position" id="position" class="required" aria-required="true">
+                            <option value=""></option>
+                            <option value="GK">Keeper</option>
+                            <option value="DEF">Defender</option>
+                            <option value="MID">Midfielder</option>
+                            <option value="ATT">Attacker</option>
+                          </select>
+                          </div>
+                      </td>
+                      </tr>
+                      <tr>
+                      <td colspan="5">
+                      <small><em>*</em>Please provide the best position of the player according to you. </small>
+                      </td>
+                      </tr>
+                      <tr>
+                      <td colspan="4">
+                      </td>
+                      <td>
+                      <div align="left">
+                          <input name="subm" value="Submit" type="submit">
+                          <input name="lang" value="" type="hidden">
+                          <input name="tid" value="" type="hidden">
+                          <input name="css" value="" type="hidden">
+                          <input name="countryid" value="" type="hidden">
+                        </div>
+                        </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </form>
+
+        </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

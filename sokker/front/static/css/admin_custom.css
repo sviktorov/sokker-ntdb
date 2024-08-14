@@ -1,0 +1,61 @@
+.skill-position.ATT {
+    color:#8D32B4;
+}
+
+.skill-position.GK {
+    color:#F16060;
+}
+
+.skill-position.DEF {
+    color:#6553E2;
+}
+
+.skill-position.MID {
+    color:#397DEB;
+}
+
+.skill-pace.GK {
+    color:#F16060;
+}
+
+.skill-keeper.GK {
+    color:#F16060;
+}
+
+.skill-pace.DEF {
+    color:#6553E2;
+}
+
+.skill-defending.DEF {
+    color:#6553E2;
+}
+
+.skill-pace.MID {
+    color:#397DEB;
+}
+
+.skill-defending.MID {
+    color:#397DEB;
+}
+
+.skill-passing.MID {
+    color:darkblue;
+}
+.skill-playmaking.MID {
+    color:darkblue;
+}
+.skill-technique.MID {
+    color:darkblue;
+}
+
+.skill-pace.ATT {
+    color:#8D32B4;
+}
+
+.skill-technique.ATT {
+    color:#8D32B4;
+}
+
+.skill-scoring.ATT {
+    color:#8D32B4;
+}
