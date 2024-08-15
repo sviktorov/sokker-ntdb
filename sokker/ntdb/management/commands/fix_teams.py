@@ -2,7 +2,7 @@
 
 from django.core.management.base import BaseCommand
 from sokker_base.models import Team
-from sokker_base.api import get_sokker_team_data, auth_sokker
+from sokker_base.api import get_sokker_team_data, auth_sokker, get_sokker_team_data
 from ntdb.pharsers import parser_team
 from django.db import connection
 
@@ -136,17 +136,10 @@ class Command(BaseCommand):
     help = "Update players public skills"
 
     def handle(self, *args, **options):
-        set_player_teamid_to_null()
-        set_player_youth_teamid_to_null()
-        set_archive_player_teamid_to_null()
-        set_archive_player_youth_teamid_to_null()
+        # set_player_teamid_to_null()
+        # set_player_youth_teamid_to_null()
+        # set_archive_player_teamid_to_null()
+        # set_archive_player_youth_teamid_to_null()
 
         response = auth_sokker()
-        teams = get_archived_players_missing_team_ids()
-        fix_teams(teams, response)
-        teams = get_archived_players_missing_youth_team_ids()
-        fix_teams(teams, response)
-        teams = get_players_missing_team_ids()
-        fix_teams(teams, response)
-        teams = get_players_missing_youth_team_ids()
-        fix_teams(teams, response)
+        get_sokker_team_data(10230, response)

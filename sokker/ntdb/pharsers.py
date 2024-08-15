@@ -34,9 +34,9 @@ def parser_player(response, player):
         player.name = info["name"]["name"]
         player.surname = info["name"]["surname"]
 
-        team = Team.objects.filter(team["id"]).first()
-        if team:
-            player.teamid = team["id"]
+        team_object = Team.objects.filter(id=team["id"]).first()
+        if team_object:
+            player.teamid = team_object
         else:
             player.teamid = None
         player.countryid = country["code"]
@@ -59,7 +59,11 @@ def parser_player(response, player):
         player.ntgoals = nationalStats["goals"]
         player.ntassists = nationalStats["assists"]
         player.ntassists = nationalStats["matches"]
-        player.youthteamid = youthTeamId
+        team_object_youth = Team.objects.filter(id=youthTeamId).first()
+        if team_object_youth:
+            player.youthteamid = team_object_youth
+        else:
+            player.youthteamid = None
         player.injurydays = injury["daysRemaining"]
         flag = False
         # hidden skills
