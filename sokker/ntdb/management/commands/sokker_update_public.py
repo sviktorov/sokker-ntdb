@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Query all records from the Player table
-        players = Player.objects.all()
+        players = Player.objects.all().order_by("daily_update")
         today_date = datetime.now().date()
 
         for player in players:
