@@ -22,6 +22,7 @@ from django.conf.urls import include
 from django.views.generic import TemplateView
 import ntdb.urls
 import tools.urls
+import euro.urls
 
 urlpatterns = [
     path("grappelli/", include("grappelli.urls")),  # grappelli URLS
@@ -33,4 +34,5 @@ urlpatterns += i18n_patterns(
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
     path("ntdb/", include(ntdb.urls)),
     path("tools/", include(tools.urls)),
+    path("euro/", include(euro.urls)),
 )

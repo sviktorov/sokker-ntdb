@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "front",
     "sokker_base",
     "ntdb",
+    "euro",
     "tools",
     "import_export",
     "django_admin_listfilter_dropdown",
