@@ -1,5 +1,5 @@
 from .models import Player, ArchivePlayer
-from django_tables2.views import MultiTableMixin, SingleTableMixin
+from django_tables2.views import MultiTableMixin
 from django.utils.translation import gettext_lazy as _
 from .utils import (
     get_fullname_wrapper,
@@ -237,9 +237,15 @@ class PlayerHistory(MultiTableMixin, TemplateView):
             .first()
         )
 
-        player = Player.objects.filter(sokker_id=self.sokker_id).first()
+        try:
+            sokker_id = int(self.sokker_id)
+            player = Player.objects.filter(sokker_id=sokker_id).first()
+        except ValueError:
+            # Handle the error, log it, or provide a fallback
+            player = None  # or some other default behavior
         if not player:
             player = ArchivePlayer.objects.filter(sokker_id=self.sokker_id).first()
+
         self.player = player
         if self.player:
             self.tables = [
@@ -262,7 +268,9 @@ class PlayerHistory(MultiTableMixin, TemplateView):
 
         # Add additional variables to the context
         menu = NTDB_SUB_MENU
-        title = self.player.name + " " + self.player.surname + " - " + _("History")
+        title = _("Player History")
+        if self.player:
+            title = self.player.name + " " + self.player.surname + " - " + _("History")
         item = {"title": title, "url": ""}
         if len(menu) < 3:
             menu.append(item)
