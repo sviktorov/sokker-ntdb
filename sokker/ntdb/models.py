@@ -242,6 +242,7 @@ class ArchivePlayer(models.Model):
     modified = models.DateTimeField(null=True, blank=True)
     height = models.IntegerField(null=True, blank=True)
     weight = models.IntegerField(null=True, blank=True)
+    daily_update = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Archive Player"

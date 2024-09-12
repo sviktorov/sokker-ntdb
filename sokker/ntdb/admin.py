@@ -348,6 +348,7 @@ class ArchivePlayerAdmin(ImportExportModelAdmin):
         "get_midfielder_points",
         "get_attacker_points",
         "get_goalie_points",
+        "daily_update",
     ]  # Add any other fields you want to display in the list
     ordering = ("-value",)
     list_filter = [
@@ -410,7 +411,9 @@ class ArchivePlayerAdmin(ImportExportModelAdmin):
         return queryset
 
     def full_name(self, obj):
-        return obj.name + " " + obj.surname  # Change the label as required
+        if obj:
+            return (obj.name or "") + " " + (obj.surname or "")
+        return ""
 
     full_name.short_description = _("Name")  # Set the custom label
 

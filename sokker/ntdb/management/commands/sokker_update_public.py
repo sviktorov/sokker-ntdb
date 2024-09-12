@@ -12,15 +12,21 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Query all records from the Player table
+        Player.objects.filter(sokker_id__isnull=True).delete()
         players = Player.objects.all().order_by("daily_update")
         today_date = datetime.now().date()
 
         for player in players:
             # Send GET request
-            if player.daily_update and player.daily_update.date() == today_date:
-                print("skip", player.sokker_id)
+            if (
+                player
+                and player.daily_update
+                and player.daily_update.date() == today_date
+            ):
+                print("skip", player.daily_update.date(), player.sokker_id)
                 continue
             response = get_sokker_player_data(player.sokker_id)
+
             if response.status_code == 200:
                 player = parser_player(response, player)
                 player.save()
