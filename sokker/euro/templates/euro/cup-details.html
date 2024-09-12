@@ -4,6 +4,7 @@
 {% load bootstrap5 %}
 {% load i18n %}
 {% block title %}Home - {{ page_title }} - {{ cup.c_name}}{% endblock %}
+{% load custom_tags %}
 
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
@@ -129,6 +130,25 @@
                 {% for table in tables %}
                 <div class="col-lg-12 col-md-6"> 
                     <h2>Group {{ forloop.counter }}</h2>
+                    {% get_group_games cup_id=cup.pk group_id=forloop.counter as group_games %}
+                    <div class="match-results-list wf100">
+                    <!--title start-->
+                    <div class="nms-title">
+                        <h4><span>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }}</span></h4>
+                     </div>
+                     <!--title end-->
+                        {% for game in group_games %}
+                                <!--box start--> 
+                                <ul class="last-match">
+                                <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
+                                <li class="mscore"> <span>{{ game.goals_home }}</span>ROUND {{ game.home_status }} </li>
+                                <li class="match-info"> <strong>{{ game.cup_round }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
+                                <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
+                                <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
+                                </ul>
+                                <!--box end-->
+                        {% endfor %}
+                    </div>
                     <div class="point-table-widget">
                         {% render_table table %}
                     </div>
