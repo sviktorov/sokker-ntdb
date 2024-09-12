@@ -38,6 +38,11 @@ class GameAdmin(ImportExportModelAdmin):
         "t_id_v",
         "goals_home",
         "goals_away",
+        "playoff_position",
+    )
+    list_filter = (
+        "c_id",
+        "playoff_position",
     )
     ordering = (
         "t_id_h",

@@ -1,0 +1,50 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load i18n %}
+{% load bootstrap5 %}
+{% block title %}Home - {{ page_title }} - {{ cup.c_name }}{% endblock %}
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
+ 
+<!--Main Content Start-->
+<div class="main-content solidbg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+      <!--Start-->
+      <div class="point-table">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="point-table-widget">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{% trans "Cup" %}</th>
+                      <th>{% trans "Teams" %}</th>
+                      <th>{% trans "Groups" %}</th>
+                      <th>{% trans "Notes" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for cup in cups %}
+                    <tr>
+                      <td><a href="{% url 'cup_details' cup_id=cup.pk %}"><img src="/static/images/tl-logo1.png" alt=""> <strong>{{ cup.c_name }}</strong></a></td>
+                      <td>{{ cup.c_teams }}</td>
+                      <td>{{ cup.c_groups }}</td>
+                      <td>{{ cup.c_notes }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--End--> 
+    </div>
+    <!--team Page End--> 
+  </div>
+  <!--Main Content End--> 
+{% endblock %}

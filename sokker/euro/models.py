@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class Cup(models.Model):
@@ -77,6 +78,20 @@ class Game(models.Model):
         return (
             f"Game {self.id}: {self.t_id_h} vs {self.t_id_v} - Status: {self.g_status}"
         )
+
+    def home_status(self):
+        if self.goals_home > self.goals_away:
+            return _("win")
+        if self.goals_home == self.goals_away:
+            return _("draw")
+        return _("loss")
+
+    def away_status(self):
+        if self.goals_away > self.goals_home:
+            return _("win")
+        if self.goals_away == self.goals_home:
+            return _("draw")
+        return _("loss")
 
 
 class RankGroups(models.Model):
