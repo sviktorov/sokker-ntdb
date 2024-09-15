@@ -61,7 +61,7 @@ flyctl postgres connect -a mrcps-db-dev
 
 ### scale memory of machine
 
-flyctl machine update 784e904c26e298 --vm-memory 1024 --app mrcps-db-dev
+flyctl machine update 48ed164c7d0d78 --vm-memory 512 --app sokker-db
 
 ## PostGIS
 

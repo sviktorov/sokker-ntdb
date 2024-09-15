@@ -4,6 +4,8 @@ from django.utils.translation import gettext_lazy as _
 
 class Cup(models.Model):
     id = models.AutoField(primary_key=True)  # Assuming c_id is an auto-incrementing ID
+    # New header_image field
+    header_image = models.ImageField(upload_to="header_images/", null=True, blank=True)
     c_name = models.CharField(max_length=255)
     c_edition = models.IntegerField(null=True, blank=True)
     c_teams = models.IntegerField(null=True, blank=True)

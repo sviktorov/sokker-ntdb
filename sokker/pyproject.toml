@@ -12,8 +12,8 @@ classifiers = [
 dependencies = [
     # core framework
     "Django == 4.2.*",
-
-    "psycopg2",
+    "Pillow",
+    "Psycopg2",
     "whitenoise",
     "gunicorn",
     # extensions
