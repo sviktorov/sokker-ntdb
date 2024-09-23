@@ -21,29 +21,23 @@
                 <table>
                   <thead>
                     <tr>
-                      <th>{% trans "Cup" %}</th>
-                      <th>{% trans "Teams" %}</th>
-                      <th>{% trans "Groups" %}</th>
+                      <th>{% trans "Pos" %}</th>
+                      <th>{% trans "Team" %}</th>
                       <th>{% trans "Winner" %}</th>
                       <th>{% trans "Silver" %}</th>
                       <th>{% trans "Bronze" %}</th>
                       <th>{% trans "4th" %}</th>
-                      <th>{% trans "Forum" %}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {% for cup in cups %}
+                    {% for team in teams %}
                     <tr>
-                      <td><a href="{% url 'cup_details' cup_id=cup.pk %}"><img src="/static/images/tl-logo1.png" alt=""> <strong>{{ cup.c_name }}</strong></a></td>
-                      <td>{{ cup.c_teams }}</td>
-                      <td>{{ cup.c_groups }}</td>
-                      <td>{% get_winners cup_id=cup.pk position=1 as winner %} {{ winner.team_id.t_name }}</td>
-                      <td>{% get_winners cup_id=cup.pk position=2 as silver %} {{ silver.team_id.t_name }}</td>
-                      <td>{% get_winners cup_id=cup.pk position=3 as bronze %} {{ bronze.team_id.t_name }}
-                        {% get_winners cup_id=cup.pk position=3 first=False as bronze2 %}{% if bronze2 %}<br>{{ bronze2.team_id.t_name }}{% endif %}
-                      </td>
-                      <td>{% get_winners cup_id=cup.pk position=4 as position4 %} {{ position4.team_id.t_name }}</td>
-                      <td><a href="{{ cup.forum_link }}" target="_blank">{% trans "Forum" %}</a></td>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ team.t_id.t_name }}</td>
+                      <td>{{ team.position_1 }}</td>
+                      <td>{{ team.position_2 }}</td>
+                      <td>{{ team.position_3 }}</td>
+                      <td>{{ team.position_4 }}</td>
                     </tr>
                     {% endfor %}
                   </tbody>

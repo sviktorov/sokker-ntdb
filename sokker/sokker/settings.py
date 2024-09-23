@@ -134,7 +134,8 @@ USE_TZ = True
 STATIC_ROOT = BASE_DIR / "static"
 STATIC_URL = "/static/"
 
-MEDIA_ROOT = "/data"
+
+MEDIA_ROOT = os.getenv("MEDIA_FOLDER_PATH", "/env")
 MEDIA_URL = "/media/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -172,8 +173,8 @@ LOGGING = {
 
 CACHES = {
     "default": {
-        "BACKEND": "django.core.cache.backends.db.DatabaseCache",
-        "LOCATION": "cache_table",
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": MEDIA_ROOT + "/django_cache",
     }
 }
 

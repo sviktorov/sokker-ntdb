@@ -187,7 +187,7 @@ class Player(models.Model):
             return str(self.sokker_id)
 
     class Meta:
-        verbose_name = "Player"
+        verbose_name = _("Player")
 
 
 class ArchivePlayer(models.Model):
@@ -245,4 +245,4 @@ class ArchivePlayer(models.Model):
     daily_update = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        verbose_name = "Archive Player"
+        verbose_name = _("Archive Player")

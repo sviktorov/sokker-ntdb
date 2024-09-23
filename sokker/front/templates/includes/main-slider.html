@@ -1,3 +1,4 @@
+{% load i18n %}
 <!--Slider Start-->
 <div class="main-slider">
   <div class="home2-slider rev_slider_wrapper">
@@ -15,13 +16,13 @@
                  </div>
                  <div class="tp-caption  tp-resizeme" data-x="left" data-hoffset="400" data-y="top" data-voffset="175" data-transform_idle="o:1;" data-transform_in="x:[-75%];y:0px;z:0;rX:0;rY:0;rZ:0;sX:1;sY:1;skX:0;skY:0;opacity:0.01;s:3000;e:Power3.easeOut;" data-transform_out="s:1000;e:Power3.easeInOut;s:1000;e:Power3.easeInOut;" data-mask_in="x:[100%];y:0;s:inherit;e:inherit;" data-splitin="none" data-splitout="none" data-start="700">
                     <div class="slide-content-box">
-                       <h1><span>NTDB:</span><br>
-                          Best Sokker Players
+                       <h1><span>NTDB Bulgaria:</span><br>
+                          {% trans "Best Sokker Players" %}
                        </h1>
                     </div>
                  </div>
                  <div class="tp-caption  tp-resizeme" data-x="left" data-hoffset="400" data-y="top" data-voffset="400" data-transform_idle="o:1;" data-transform_in="x:[-175%];y:0px;z:0;rX:0;rY:0;rZ:0;sX:1;sY:1;skX:0;skY:0;opacity:0.01;s:3000;e:Power3.easeOut;" data-transform_out="s:1000;e:Power3.easeInOut;s:1000;e:Power3.easeInOut;" data-mask_in="x:[100%];y:0;s:inherit;e:inherit;" data-splitin="none" data-splitout="none" data-start="700">
-                    <div class="slide-content-box"> <a href="{% url 'best_players' country_name='bulgaria' %}">Learn More</a> </div>
+                    <div class="slide-content-box"> <a href="{% url 'best_players' country_name='bulgaria' %}">{% trans "Learn More" %}</a> </div>
                  </div>
               </li>
               <li data-transition="fade">
@@ -31,13 +32,13 @@
                  </div>
                  <div class="tp-caption  tp-resizeme" data-x="left" data-hoffset="400" data-y="top" data-voffset="175" data-transform_idle="o:1;" data-transform_in="x:[-75%];y:0px;z:0;rX:0;rY:0;rZ:0;sX:1;sY:1;skX:0;skY:0;opacity:0.01;s:3000;e:Power3.easeOut;" data-transform_out="s:1000;e:Power3.easeInOut;s:1000;e:Power3.easeInOut;" data-mask_in="x:[100%];y:0;s:inherit;e:inherit;" data-splitin="none" data-splitout="none" data-start="700">
                     <div class="slide-content-box">
-                       <h1><span>NTDB:</span><br>
-                          All time players
+                       <h1><span>NTDB Bulgaria:</span><br>
+                          {% trans "All time players" %}
                        </h1>
                     </div>
                  </div>
                  <div class="tp-caption  tp-resizeme" data-x="left" data-hoffset="400" data-y="top" data-voffset="420" data-transform_idle="o:1;" data-transform_in="x:[-175%];y:0px;z:0;rX:0;rY:0;rZ:0;sX:1;sY:1;skX:0;skY:0;opacity:0.01;s:3000;e:Power3.easeOut;" data-transform_out="s:1000;e:Power3.easeInOut;s:1000;e:Power3.easeInOut;" data-mask_in="x:[100%];y:0;s:inherit;e:inherit;" data-splitin="none" data-splitout="none" data-start="700">
-                    <div class="slide-content-box"> <a href="#">Learn More</a> </div>
+                    <div class="slide-content-box"> <a href="{% url 'best_players_all' country_name='bulgaria' %}">Learn More</a> </div>
                  </div>
               </li>
               <li data-transition="fade">
@@ -48,12 +49,12 @@
                  <div class="tp-caption  tp-resizeme" data-x="left" data-hoffset="400" data-y="top" data-voffset="175" data-transform_idle="o:1;" data-transform_in="x:[-75%];y:0px;z:0;rX:0;rY:0;rZ:0;sX:1;sY:1;skX:0;skY:0;opacity:0.01;s:3000;e:Power3.easeOut;" data-transform_out="s:1000;e:Power3.easeInOut;s:1000;e:Power3.easeInOut;" data-mask_in="x:[100%];y:0;s:inherit;e:inherit;" data-splitin="none" data-splitout="none" data-start="700">
                     <div class="slide-content-box">
                        <h1><span>Euro:</span><br>
-                          Coming soon...
+                         {% trans "Sokker Euro Championships" %}
                        </h1>
                     </div>
                  </div>
                  <div class="tp-caption  tp-resizeme" data-x="left" data-hoffset="400" data-y="top" data-voffset="420" data-transform_idle="o:1;" data-transform_in="x:[-175%];y:0px;z:0;rX:0;rY:0;rZ:0;sX:1;sY:1;skX:0;skY:0;opacity:0.01;s:3000;e:Power3.easeOut;" data-transform_out="s:1000;e:Power3.easeInOut;s:1000;e:Power3.easeInOut;" data-mask_in="x:[100%];y:0;s:inherit;e:inherit;" data-splitin="none" data-splitout="none" data-start="700">
-                    <div class="slide-content-box"> <a href="#">Learn More</a> </div>
+                    <div class="slide-content-box"> <a href="{% url 'cup_index'  %}">{% trans "Learn More" %}</a> </div>
                  </div>
               </li>
            </ul>

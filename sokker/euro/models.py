@@ -6,8 +6,10 @@ class Cup(models.Model):
     id = models.AutoField(primary_key=True)  # Assuming c_id is an auto-incrementing ID
     # New header_image field
     header_image = models.ImageField(upload_to="header_images/", null=True, blank=True)
+    forum_link = models.CharField(max_length=255, null=True, blank=True)
     c_name = models.CharField(max_length=255)
     c_edition = models.IntegerField(null=True, blank=True)
+    c_flow = models.IntegerField(null=True, blank=True, default=1)
     c_teams = models.IntegerField(null=True, blank=True)
     c_groups = models.IntegerField(null=True, blank=True)
     c_g_winners = models.IntegerField(
@@ -81,7 +83,27 @@ class Game(models.Model):
             f"Game {self.id}: {self.t_id_h} vs {self.t_id_v} - Status: {self.g_status}"
         )
 
+    def away_points(self):
+        if not self.goals_home or not self.goals_away:
+            return 0
+        if self.goals_away > self.goals_home:
+            return 3
+        if self.goals_home == self.goals_away:
+            return 1
+        return 0
+
+    def home_points(self):
+        if not self.goals_home or not self.goals_away:
+            return 0
+        if self.goals_home > self.goals_away:
+            return 3
+        if self.goals_home == self.goals_away:
+            return 1
+        return 0
+
     def home_status(self):
+        if not self.goals_home or not self.goals_away:
+            return _("N/A")
         if self.goals_home > self.goals_away:
             return _("win")
         if self.goals_home == self.goals_away:
@@ -89,6 +111,8 @@ class Game(models.Model):
         return _("loss")
 
     def away_status(self):
+        if not self.goals_home or not self.goals_away:
+            return _("N/A")
         if self.goals_away > self.goals_home:
             return _("win")
         if self.goals_away == self.goals_home:
@@ -110,6 +134,54 @@ class RankGroups(models.Model):
     grecieved = models.IntegerField(null=True, blank=True)
     draw = models.IntegerField(null=True, blank=True)
     qualified = models.CharField(max_length=50)
+
+    def __str__(self):
+        return f"Team {self.id}: {self.t_id}  - Cup: {self.c_id} points {self.points}"
+
+    class Meta:
+        verbose_name_plural = _("Rank Groups")
+
+
+class Medals(models.Model):
+    id = models.AutoField(primary_key=True)
+    t_id = models.ForeignKey(
+        NTTeam, related_name="team_medal", on_delete=models.CASCADE
+    )
+    position_1 = models.IntegerField(null=True, blank=True)
+    position_2 = models.IntegerField(null=True, blank=True)
+    position_3 = models.IntegerField(null=True, blank=True)
+    position_4 = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = _("Medals")
+
+
+class Winners(models.Model):
+    id = models.AutoField(primary_key=True)
+    position = models.IntegerField(null=True, blank=True)
+    cup_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
+    team_id = models.ForeignKey(
+        NTTeam, related_name="team_winners", on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name_plural = _("Winners")
+
+
+class RankAllTime(models.Model):
+    id = models.AutoField(primary_key=True)
+    t_id = models.ForeignKey(
+        NTTeam, related_name="team_rank_all_time", on_delete=models.CASCADE
+    )
+    games = models.IntegerField(null=True, blank=True)
+    wins = models.IntegerField(null=True, blank=True)
+    loose = models.IntegerField(null=True, blank=True)
+    gdif = models.IntegerField(null=True, blank=True)
+    points = models.IntegerField(null=True, blank=True)
+    gscored = models.IntegerField(null=True, blank=True)
+    grecieved = models.IntegerField(null=True, blank=True)
+    draw = models.IntegerField(null=True, blank=True)
+    c_flow = models.IntegerField(null=True, blank=True, default=1)
 
     def __str__(self):
         return f"Team {self.id}: {self.t_id}  - Cup: {self.c_id} points {self.points}"

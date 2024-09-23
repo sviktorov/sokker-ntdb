@@ -15,8 +15,16 @@ class Command(BaseCommand):
         Player.objects.filter(sokker_id__isnull=True).delete()
         players = Player.objects.all().order_by("daily_update")
         today_date = datetime.now().date()
-
+        counter = 0
         for player in players:
+            if counter > 500:
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        "1000 Records updated successfully continue later"
+                    )
+                )
+                exit()
+
             # Send GET request
             if (
                 player
@@ -30,7 +38,10 @@ class Command(BaseCommand):
             if response.status_code == 200:
                 player = parser_player(response, player)
                 player.save()
+                counter = counter + 1
             else:
                 print("Error:", response.status_code)
+                player.daily_update = today_date
+                player.save()
 
-        self.stdout.write(self.style.SUCCESS("Records copied successfully"))
+        self.stdout.write(self.style.SUCCESS("Records updated successfully"))

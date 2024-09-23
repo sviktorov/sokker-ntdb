@@ -36,6 +36,7 @@ import logging
 import urllib.parse
 from decimal import Decimal
 from datetime import datetime
+from django.urls import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,13 @@ class PlayerUpdate(TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        parsed_body = urllib.parse.parse_qs(request.body.decode())
+
+        try:
+            parsed_body = urllib.parse.parse_qs(request.body.decode("utf-8"))
+        except UnicodeDecodeError:
+            # Fall back to a different encoding if UTF-8 fails
+            parsed_body = urllib.parse.parse_qs(request.body.decode("latin-1"))
+
         logger.debug("Body: %s", parsed_body)
 
         # Process the form data here
@@ -277,6 +284,7 @@ class PlayerHistory(MultiTableMixin, TemplateView):
 
         context["page_title"] = title
         context["page_siblings"] = menu
+        context["menu_type"] = "NTDB"
         context["country"] = self.country
         context["player"] = self.player
         return context
@@ -357,6 +365,7 @@ class BestPlayers(MultiTableMixin, FilterView):
         # Add additional variables to the context
         context["page_title"] = _("Best Players")
         context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
         context["country"] = self.country
         return context
 
@@ -418,5 +427,6 @@ class BestPlayersAll(MultiTableMixin, FilterView):
         # Add additional variables to the context
         context["page_title"] = _("Best Players All Time")
         context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
         context["country"] = self.country
         return context

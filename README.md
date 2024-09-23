@@ -83,3 +83,5 @@ ALTER DATABASE mrcps_dev SET search_path=public,postgis,contrib;
 CREATE SCHEMA postgis;
 
 CREATE EXTENSION postgis SCHEMA postgis;
+
+fly ssh console --app
