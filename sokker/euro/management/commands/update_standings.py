@@ -16,8 +16,9 @@ class Command(BaseCommand):
                 all_games = Game.objects.filter(c_id=cup, group_id=i)
                 RankGroups.objects.filter(c_id=cup, g_id=i).delete()
                 for game in all_games:
-                    if not game.goals_away or not game.goals_home:
+                    if game.goals_away is None or game.goals_home is None:
                         continue
+
                     print(game)
                     # home team update
                     team_data = RankGroups.objects.filter(

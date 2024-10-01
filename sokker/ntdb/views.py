@@ -37,8 +37,14 @@ import urllib.parse
 from decimal import Decimal
 from datetime import datetime
 from django.urls import reverse
+from django.http import HttpResponse
+import os
 
 logger = logging.getLogger(__name__)
+
+
+class NTDBIndex(TemplateView):
+    template_name = "ntdb/ntdb-index.html"  # Create this template
 
 
 class PlayerUpdate(TemplateView):
@@ -182,7 +188,7 @@ class PlayerUpdate(TemplateView):
 @login_required
 def CommandUpdateTeams(request):
     buffer = StringIO()
-    call_command("sokker_update_teams")
+    call_command("sokker_update_teams_names")
     # Get the output from the string buffer
     command_output = buffer.getvalue()
 
@@ -370,6 +376,28 @@ class BestPlayers(MultiTableMixin, FilterView):
         return context
 
 
+def debug_view(request, country_name):
+    # Get the client's IP address
+    # Set the log file path (adjust this as needed)
+    LOG_FILE_PATH = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "ip_logs.txt"
+    )
+    ip_address = request.META.get("REMOTE_ADDR")
+    user_agent = request.META.get("HTTP_USER_AGENT")
+
+    # Get the current date and time
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Log the IP address and current time to a file
+    with open(LOG_FILE_PATH, "a") as log_file:
+        log_file.write(
+            f"IP: {ip_address}, DateTime: {current_time} , UserAgent: {user_agent} \n"
+        )
+
+    # Your view logic here
+    return HttpResponse("Best players view was moved")
+
+
 class BestPlayersAll(MultiTableMixin, FilterView):
     template_name = "ntdb/players-best.html"
     context_object_name = "objects"
@@ -379,6 +407,7 @@ class BestPlayersAll(MultiTableMixin, FilterView):
     table_pagination = {"per_page": 100}
 
     def dispatch(self, request, *args, **kwargs):
+
         self.country_name = kwargs.get("country_name")
         self.country = (
             Country.objects.annotate(name_lower=Lower("name"))

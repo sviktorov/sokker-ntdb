@@ -15,7 +15,7 @@ class Command(BaseCommand):
             all_games = Game.objects.filter(c_id__in=all_cups_edition)
             RankAllTime.objects.filter(c_flow=flow).delete()
             for game in all_games:
-                if not game.goals_away or not game.goals_home:
+                if game.goals_away is None or game.goals_home is None:
                     continue
                 # home team update
                 team_data = RankAllTime.objects.filter(

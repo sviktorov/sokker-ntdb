@@ -23,4 +23,4 @@ COPY . /code
 EXPOSE 8000
 #CMD ["/bin/bash", "-c", "python manage.py collectstatic --noinput"]
 #CMD ["gunicorn", "--bind", ":8000", "--workers", "1", "sokker.wsgi"]
-CMD ["/bin/bash", "-c", "python manage.py collectstatic --noinput && gunicorn --bind :8000 --workers 4 --timeout=300 sokker.wsgi"]
+CMD ["/bin/bash", "-c", "python manage.py collectstatic --noinput && gunicorn --bind :8000 --workers 4 --timeout=600 --log-level debug sokker.wsgi"]

@@ -1,0 +1,26 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% load i18n %}
+{% block title %}{{ cup.c_name }}{% endblock %}
+{% load custom_tags %}
+
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}
+ 
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+            <h2>{% trans "The cup is in sign up process" %}</h2>
+            <p>{% trans "For more details follow forum link:" %}</p>
+            {% if cup.c_notes %}
+            <p>{{ cup.c_notes|safe }}</p>
+            {% endif %}
+            {% if cup.forum_link %}
+            <p><a href="{{ cup.forum_link }}" target="_blank">{% trans "Forum" %}</a></p>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

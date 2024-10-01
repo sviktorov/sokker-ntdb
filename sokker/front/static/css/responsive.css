@@ -190,7 +190,7 @@
 	line-height: 48px !important;
 }
 .rev_slider_wrapper a {
-	display: none;
+	display: block;
 }
 .list-box-expand .news-caption {
 	padding: 7px;
@@ -547,7 +547,7 @@ li.acctount-btn, .toplinks .btn.btn-secondary {
 	line-height: 42px !important;
 }
 .rev_slider_wrapper a {
-	display: none;
+	display: block;
 }
 .h3-match-counter {
 	display: none;
@@ -990,7 +990,7 @@ ul.post-meta li {
 	line-height: 36px !important;
 }
 .rev_slider_wrapper a {
-	display: none;
+	display: block;
 }
 .h3-match-counter {
 	display: none;

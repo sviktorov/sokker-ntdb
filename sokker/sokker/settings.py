@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "sokker_base",
     "ntdb",
     "euro",
+    "arcades",
     "tools",
     "import_export",
     "django_admin_listfilter_dropdown",
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "ntdb.middleware.BlockIPMiddleware",  # Add this line
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -164,7 +166,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "your_app_name": {
+        "sokker": {
             "handlers": ["console"],
             "level": "DEBUG",
         },

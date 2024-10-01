@@ -5,6 +5,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "",
+        views.NTDBIndex.as_view(),
+        name="ntdb_index",
+    ),
+    path(
         "player-update",
         views.PlayerUpdate.as_view(),
         name="player_update",
@@ -16,6 +21,11 @@ urlpatterns = [
     ),
     path(
         "<str:country_name>/best-players-all",
+        views.debug_view,
+        name="best_players_all_debug",
+    ),
+    path(
+        "<str:country_name>/best-players-all-time",
         views.BestPlayersAll.as_view(),
         name="best_players_all",
     ),

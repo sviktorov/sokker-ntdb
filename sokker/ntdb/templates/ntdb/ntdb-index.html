@@ -1,0 +1,32 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load custom_tags_base %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">            
+            <div class="row">
+
+                <div class="point-table-widget">
+                    <table>
+                        {% get_active_countries as countries %}
+                        <tbody>
+                        {% for country in countries %}
+                        <tr>
+                            <td>{{ country.name }}</td>
+                            <td><a href="{% url 'best_players' country_name=country.name %}"><i class="fas fa-angle-double-right"></i> {% trans "Best Players" %}</a></td>
+                            <td><a href="{% url 'best_players_all' country_name=country.name %}"><i class="fas fa-angle-double-right"></i> {% trans "All-time Players" %}</a></td>
+                            <td><a href="https://sokker.org/country/ID_country/{{ country.code }}" target="_blank"><i class="fas fa-angle-double-right"></i> {% trans "Go to sokker" %}</a></td>
+                        </tr>    
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

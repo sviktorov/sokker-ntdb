@@ -4,6 +4,7 @@ from .models import Cup, RankGroups, Game, Medals, RankAllTime
 from .tables import RankGroupsTable
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
+from django.shortcuts import redirect
 
 EURO_SUB_MENU = [
     {"title": _("Euros - listing"), "url": "/en/euro"},
@@ -64,6 +65,9 @@ class CupDetails(MultiTableMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         cup_id = kwargs.get("cup_id")
         cup_object = Cup.objects.filter(id=cup_id).first()
+        if cup_object and cup_object.c_status == "signup":
+            self.template_name = "euro/cup-signup.html"  # Create this template
+
         if cup_object and self.tables == []:
             distinct_groups = (
                 RankGroups.objects.filter(c_id=cup_object)

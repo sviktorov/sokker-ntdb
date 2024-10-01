@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from sokker_base.models import Team
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class Cup(models.Model):
@@ -27,24 +29,10 @@ class Cup(models.Model):
         return self.c_name
 
 
-class NTTeam(models.Model):
-    id = models.AutoField(primary_key=True)
-    t_nation = models.CharField(max_length=255)
-    t_name = models.CharField(max_length=255)
-    t_manager = models.CharField(max_length=255, null=True, blank=True)
-    t_s_ranking = models.IntegerField(null=True, blank=True)
-    t_sokker_id = models.CharField(max_length=255)
-    t_email = models.EmailField(null=True, blank=True)
-    t_arena = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.t_name
-
-
 class CupTeams(models.Model):
     id = models.AutoField(primary_key=True)
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
-    t_id = models.ForeignKey(NTTeam, on_delete=models.CASCADE)
+    t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
     g_id = models.IntegerField()
 
     def __str__(self):
@@ -57,21 +45,36 @@ class CupTeams(models.Model):
 class CupDraw(models.Model):
     id = models.AutoField(primary_key=True)
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
-    t_id = models.ForeignKey(NTTeam, on_delete=models.CASCADE)
+    t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
     g_id = models.IntegerField()
 
     def __str__(self):
         return f"Game {self.id}: {self.c_id} vs {self.t_id}"
 
 
+def get_default_team():
+    try:
+        return Team.objects.get(pk=100000000)
+    except ObjectDoesNotExist:
+        # Handle the case where the team doesn't exist yet.
+        # You can raise an error or return a sensible default.
+        return None  # Or raise an error, or create a default team
+
+
 class Game(models.Model):
     id = models.AutoField(primary_key=True)
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
     t_id_h = models.ForeignKey(
-        NTTeam, related_name="home_team", on_delete=models.CASCADE
+        Team,
+        related_name="home_team_base",
+        on_delete=models.CASCADE,
+        default=get_default_team(),
     )
     t_id_v = models.ForeignKey(
-        NTTeam, related_name="away_team", on_delete=models.CASCADE
+        Team,
+        related_name="away_team_base",
+        on_delete=models.CASCADE,
+        default=get_default_team(),
     )
     g_status = models.CharField(max_length=50)
     group_id = models.CharField()
@@ -125,7 +128,9 @@ class Game(models.Model):
 
 class RankGroups(models.Model):
     id = models.AutoField(primary_key=True)
-    t_id = models.ForeignKey(NTTeam, related_name="team_rank", on_delete=models.CASCADE)
+    t_id = models.ForeignKey(
+        Team, related_name="team_rank_arcades", on_delete=models.CASCADE
+    )
     games = models.IntegerField(null=True, blank=True)
     g_id = models.IntegerField(null=True, blank=True)
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
@@ -148,7 +153,7 @@ class RankGroups(models.Model):
 class Medals(models.Model):
     id = models.AutoField(primary_key=True)
     t_id = models.ForeignKey(
-        NTTeam, related_name="team_medal", on_delete=models.CASCADE
+        Team, related_name="team_medal_arcades", on_delete=models.CASCADE
     )
     position_1 = models.IntegerField(null=True, blank=True)
     position_2 = models.IntegerField(null=True, blank=True)
@@ -164,7 +169,7 @@ class Winners(models.Model):
     position = models.IntegerField(null=True, blank=True)
     cup_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
     team_id = models.ForeignKey(
-        NTTeam, related_name="team_winners", on_delete=models.CASCADE
+        Team, related_name="team_winners", on_delete=models.CASCADE
     )
 
     class Meta:
@@ -174,7 +179,7 @@ class Winners(models.Model):
 class RankAllTime(models.Model):
     id = models.AutoField(primary_key=True)
     t_id = models.ForeignKey(
-        NTTeam, related_name="team_rank_all_time", on_delete=models.CASCADE
+        Team, related_name="team_rank_all_time", on_delete=models.CASCADE
     )
     games = models.IntegerField(null=True, blank=True)
     wins = models.IntegerField(null=True, blank=True)
