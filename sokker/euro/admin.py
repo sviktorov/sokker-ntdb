@@ -18,7 +18,7 @@ from django.contrib import admin
 
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
-    list_display = ("c_name", "c_edition", "c_active")
+    list_display = ("c_name", "c_edition", "c_active", "c_draw_status")
     list_filter = ("c_active",)
     ordering = ("c_name",)
 
@@ -33,12 +33,14 @@ class NTTeamAdmin(ImportExportModelAdmin):
 class CupTeamsAdmin(ImportExportModelAdmin):
     list_display = ("t_id", "c_id", "g_id")
     ordering = ("c_id",)
+    list_filter = ("c_id__c_draw_status", "c_id", "g_id")
 
 
 @admin.register(CupDraw)
 class CupDrawAdmin(ImportExportModelAdmin):
     list_display = ("t_id", "c_id", "g_id")
     ordering = ("c_id",)
+    list_filter = ("c_id__c_draw_status", "c_id", "g_id")
 
 
 @admin.register(Game)

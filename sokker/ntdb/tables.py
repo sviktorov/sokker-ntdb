@@ -12,23 +12,28 @@ from .utils import (
 )
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TeamColumn(tables.Column):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.orderable = False
-        self.verbose_name = _("Team Link")
+        self.verbose_name = _("Team")
 
     def render(self, value, record):
-        teamid = getattr(
+        logger.debug("render() called with value: %s, record: %s", value, record)
+        team = getattr(
             record, "teamid", None
-        )  # Get the sokker_id attribute from the record
-        if teamid is None:
-            return "x"  # Return a default value if sokker_id is not found
-        url = "https://sokker.org/en/app/team/{}/".format(teamid)
-        html_string = f'<a href="{url}" target="_blank">Team page</a>'
-        return mark_safe(html_string)
+        )  # Get the teamid attribute from the record
+        if team is None:
+            return "x"  # Return a default value if teamid is not found
+
+        url = f"https://sokker.org/en/app/team/{team.id}/"
+        html_string = f'<a href="{url}" target="_blank"><img width="20" height="13" src="https://sokker.org/static/pic/flags/{team.country.code}.svg" alt="Team Flag">{team.name}</a>'
+        return mark_safe(html_string)  # Mark HTML as safe for rendering
 
 
 class SokkerID(tables.Column):
@@ -403,6 +408,7 @@ class ArchivePlayerDetailsTable(ArchivePlayerTable):
     def_points = DefPointsColumn()
     gk_points = GkPointsColumn()
     mid_points = MidPointsColumn()
+    teamid = TeamColumn()
 
     def get_queryset(self):
         queryset = super().get_queryset()

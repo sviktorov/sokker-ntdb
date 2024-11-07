@@ -1,0 +1,63 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load i18n %}
+{% load bootstrap5 %}
+{% load custom_tags_arcades %}
+{% block title %}Home - {{ page_title }} - {{ cup.c_name }}{% endblock %}
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
+ 
+<!--Main Content Start-->
+<div class="main-content solidbg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+      <!--Start-->
+      <div class="point-table">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="point-table-widget">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>{% trans "Pos" %}</th>
+                      <th>{% trans "Team" %}</th>
+                      <th>{% trans "Games" %}</th>
+                      <th>{% trans "Wins" %}</th>
+                      <th>{% trans "Draws" %}</th>
+                      <th>{% trans "Lost" %}</th>
+                      <th>{% trans "Scored" %}</th>
+                      <th>{% trans "Received" %}</th>
+                      <th>{% trans "G. Dif" %}</th>
+                      <th>{% trans "Points" %}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for team in teams %}
+                    <tr>
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ team.t_id.t_name }}</td>
+                      <td>{{ team.games }}</td>
+                      <td>{{ team.wins }}</td>
+                      <td>{{ team.draw }}</td>
+                      <td>{{ team.loose }}</td>
+                      <td>{{ team.gscored }}</td>
+                      <td>{{ team.grecieved }}</td>
+                      <td>{{ team.gdif }}</td>
+                      <td>{{ team.points }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!--End--> 
+    </div>
+    <!--team Page End--> 
+  </div>
+  <!--Main Content End--> 
+{% endblock %}

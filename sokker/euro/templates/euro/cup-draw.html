@@ -8,154 +8,156 @@
 
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}
- 
-<div class="main-content wf100"> 
-    <section class="wf100 p80">
-        <div class="container">
-            {% if final %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Final" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    <!--box start--> 
-                    <ul class="last-match">
-                       <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ final.t_id_h.t_name }}</strong> </li>
-                       <li class="mscore"> <span>{{ final.goals_home }}</span> {{ final.home_status }} </li>
-                       <li class="match-info"> <strong>{% trans "Final" %}</strong> <span><em>|</em> </span>  {% if final.matchID %}<a href="https://sokker.org/comment?matchID={{final.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                       <li class="mscore"> <span>{{ final.goals_away }}</span> {{ final.away_status }}  </li>
-                       <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ final.t_id_v.t_name }}</strong> </li>
-                    </ul>
-                    <!--box end-->
-                 </div>
-            </div>
-            {% endif %}
-       
-            {% if final_bronze %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "3/4 Place game" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    <!--box start--> 
-                    <ul class="last-match">
-                       <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ final_bronze.t_id_h.t_name }}</strong> </li>
-                       <li class="mscore"> <span>{{ final_bronze.goals_home }}</span> {{ final_bronze.home_status }} </li>
-                       <li class="match-info"> <strong>{% trans "Bronze game" %}</strong> <span><em>|</em> </span>  {% if final_bronze.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                       <li class="mscore"> <span>{{ final_bronze.goals_away }}</span>  {{ final.away_status }} </li>
-                       <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ final_bronze.t_id_v.t_name }}</strong> </li>
-                    </ul>
-                    <!--box end-->
-                 </div>
-            </div>
-            {% endif %}
+<style>
+   .fade-out {
+  opacity: 0.2;
+  transition: opacity 1s ease-in-out;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+}
+</style>
+
+<script>
+   // Function to handle the button click action and redirect to a new URL
+   function generateDraw() {
+      // Example URL you want to redirect to
+      const c_id = "{{ cup.pk }}";
+      const baseUrl =  "{% url 'do_draw' %}";
+      const targetUrl = `${baseUrl}?c_id=${c_id}`;
+      // Redirect to the new URL
+      window.location.href = targetUrl;
+   }
 
 
-            {% if semi_finals|length > 0 %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Semifinals" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    {% for game in semi_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
-                    {% endfor %}
-                 </div>
-            </div>
-            {% endif %}
+   function fadeAndMoveElement(fromElement, toElement, teamHTML) {
+      return new Promise((resolve) => {
+         fromElement.classList.add('fade-out');
+         setTimeout(() => {
+            toElement.innerHTML = teamHTML;
+            toElement.classList.add('fade-in');
+            resolve(); // Resolve the promise after the timeout
+         }, 2000);
+      });
+   }
 
-            {% if quarter_finals|length > 0 %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Quarterfinals" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    {% for game in quarter_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
-                    {% endfor %}
-                 </div>
-            </div>
-            {% endif %}   
+   document.addEventListener('DOMContentLoaded', function() {
+      const targetDateTimeStr = '{{ cup.c_draw_date|date:"Y-m-d\TH:i:s" }}';
+      console.log(targetDateTimeStr); // Check the output   
+      const targetDateTime = new Date(targetDateTimeStr);
+      // Get the countdown element and the button
+      const countdownElement = document.getElementById("countdown");
+      const doDrawButton = document.getElementById("do-draw");
+
+      // Update the countdown every second
+      const countdownInterval = setInterval(() => {
+         // Get the current date and time
+         const now = new Date().getTime();
+         
+         // Calculate the difference between now and the target date
+         const distance = targetDateTime - now;
+         
+         // Calculate days, hours, minutes, and seconds
+         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+         
+         // Display the result
+         countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+         
+         // Check if the countdown is over
+         if (distance <= 0) {
+            // Stop the countdown
+            clearInterval(countdownInterval);
             
- 
-            {% if eight_finals|length > 0 %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Eight finals" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    {% for game in eight_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
-                    {% endfor %}
-                 </div>
-            </div>
-            {% endif %}  
+            // Show the button
+            countdownElement.innerHTML = "Time's up you can generate the draw!";
+            doDrawButton.style.display = "block";
+         }
+      }, 1000);
 
-            <div class="row">
-                <!-- Render the tables -->
-                {% for table in tables %}
-                <div class="col-lg-12 col-md-6"> 
-                    <h2>Group {{ forloop.counter }}</h2>
-                    {% get_group_games cup_id=cup.pk group_id=forloop.counter as group_games %}
-                    <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                        <h4><span>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }}</span></h4>
-                     </div>
-                     <!--title end-->
-                        {% for game in group_games %}
-                                <!--box start--> 
-                                <ul class="last-match">
-                                <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                                <li class="mscore"> <span>{{ game.goals_home }}</span>ROUND {{ game.home_status }} </li>
-                                <li class="match-info"> <strong>{{ game.cup_round }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                                <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                                <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                                </ul>
-                                <!--box end-->
+
+
+      var submitButton = document.getElementById("trigger-button");
+      var drawAnimation = {{ draw_json|safe }};
+
+      submitButton.addEventListener('click', async function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      for (var team of drawAnimation) {
+         console.log("draw team", team.from, team.to);
+         var fromElement = document.getElementById(team.from);
+         var toElement = document.getElementById(team.to); // Assuming team.to provides the target ID
+         var teamHTML = fromElement.innerHTML;
+
+         await fadeAndMoveElement(fromElement, toElement, teamHTML); // Wait for promise to resolve
+         console.log("Element moved!"); // This will print after each element is moved
+      }
+      });
+   });  
+  
+ </script>
+
+<div class="main-content innerpagebg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+       <!--Start-->
+       <div class="matach-groups">
+          <div class="container">
+            <div>
+               <h2>Draw is scheduled for {{ cup.c_draw_date }}</h2>
+
+               <h3 id="countdown">0</h3>
+               
+               {% if cup.c_draw_status == "done" %}
+                  <button id="trigger-button">Play Draw</button>
+               {% endif %}
+               {% if cup.c_draw_status == "ready" %}
+               <button id="do-draw" style="display:none" onclick="return generateDraw();">Generate Draw</button>
+               {% endif %}
+            </div>
+             <div class="row">
+                <!--col start-->
+                {% for i in pot_numbers %}
+                <div class="col-lg-{{ col_lg_pots }} col-md-{{ col_lg_pots }}">
+                   <div class="group-box">
+                      <h6>POT {{ i }}</h6>
+                      <ul>
+                        {% for team in pots %}
+                            {% if team.g_id == i %}
+                                <li id="pot_{{ team.t_id.t_sokker_id }}"  ><img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ team.t_id.t_sokker_id }}.svg" alt="">{{ team.t_id.t_name }} </li>
+                            {% endif %} 
                         {% endfor %}
-                    </div>
-                    <div class="point-table-widget">
-                        {% render_table table %}
-                    </div>
+                       
+                      </ul>
+                   </div>
                 </div>
                 {% endfor %}
-            </div>
-        </div>
-    </section>
-</div>
+                <!--col end--> 
+             </div>
+             <div class="row">
+                <!--col start-->
+                {% for i in group_numbers %}
+                <div class="col-lg-{{ col_lg_groups }} col-md-{{ col_lg_groups }}">
+                   <div class="group-box">
+                      <h6>Group {{ i }}</h6>
+                      <ul>
+                        {% for pot in pot_numbers %}
+                            <li id="group_{{ i }}_{{ forloop.counter }}"></li>
+                        {% endfor %}
+                      </ul>
+                   </div>
+                </div>
+                {% endfor %}
+                <!--col end--> 
+             </div>
+          </div>
+       </div>
+       <!--End--> 
+    </div>
+    <!--team Page End--> 
+ </div>
 {% endblock %}

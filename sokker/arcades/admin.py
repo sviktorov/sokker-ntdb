@@ -7,6 +7,7 @@ from .models import (
     Winners,
     Medals,
     RankAllTime,
+    CupCategory,
 )
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
@@ -15,10 +16,23 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib import admin
 
 
+@admin.register(CupCategory)
+class CupCategoryAdmin(ImportExportModelAdmin):
+    list_display = ("name",)
+
+
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
-    list_display = ("c_name", "c_edition", "c_active")
-    list_filter = ("c_active",)
+    list_display = (
+        "c_name",
+        "c_edition",
+        "c_active",
+        "category",
+    )
+    list_filter = (
+        "c_active",
+        "category",
+    )
     ordering = ("c_name",)
 
 

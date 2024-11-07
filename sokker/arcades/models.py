@@ -4,8 +4,20 @@ from sokker_base.models import Team
 from django.core.exceptions import ObjectDoesNotExist
 
 
+class CupCategory(models.Model):
+    id = models.AutoField(primary_key=True)  # Assuming c_id is an auto-incrementing ID
+    name = models.CharField(max_length=255)
+    slug = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
 class Cup(models.Model):
     id = models.AutoField(primary_key=True)  # Assuming c_id is an auto-incrementing ID
+    category = models.ForeignKey(
+        CupCategory, on_delete=models.CASCADE, null=True, blank=True, default=None
+    )
     # New header_image field
     header_image = models.ImageField(upload_to="header_images/", null=True, blank=True)
     forum_link = models.CharField(max_length=255, null=True, blank=True)
@@ -52,15 +64,6 @@ class CupDraw(models.Model):
         return f"Game {self.id}: {self.c_id} vs {self.t_id}"
 
 
-def get_default_team():
-    try:
-        return Team.objects.get(pk=100000000)
-    except ObjectDoesNotExist:
-        # Handle the case where the team doesn't exist yet.
-        # You can raise an error or return a sensible default.
-        return None  # Or raise an error, or create a default team
-
-
 class Game(models.Model):
     id = models.AutoField(primary_key=True)
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
@@ -68,13 +71,17 @@ class Game(models.Model):
         Team,
         related_name="home_team_base",
         on_delete=models.CASCADE,
-        default=get_default_team(),
+        default=None,
+        null=True,
+        blank=True,
     )
     t_id_v = models.ForeignKey(
         Team,
         related_name="away_team_base",
         on_delete=models.CASCADE,
-        default=get_default_team(),
+        default=None,
+        null=True,
+        blank=True,
     )
     g_status = models.CharField(max_length=50)
     group_id = models.CharField()

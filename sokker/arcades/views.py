@@ -1,63 +1,49 @@
 from django_tables2.views import MultiTableMixin
 from django.views.generic import TemplateView
-from .models import Cup, RankGroups, Game, Medals, RankAllTime, CupDraw, CupTeams
+from .models import Cup, RankGroups, Game, Medals, RankAllTime, CupCategory
 from .tables import RankGroupsTable
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.shortcuts import redirect
-import json
-from collections import defaultdict
-from django.core.management import call_command
-from io import StringIO
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
 
-EURO_SUB_MENU = [
-    {"title": _("Euros - listing"), "url": "/en/euro"},
-    {"title": _("Medals"), "url": "/en/euro/medals"},
-    {"title": _("Rank"), "url": "/en/euro/rank"},
+ARCADES_SUB_MENU = [
+    {"title": _("Arcade tournaments"), "url": "/en/{}arcades"},
+    {"title": _("Medals"), "url": "/en/arcades/{}medals"},
+    {"title": _("Rank"), "url": "/en/arcades/{}rank"},
 ]
 
 
-def CommandFormPlayerUpdate(request):
-    c_id = request.GET.get("c_id")
-    buffer = StringIO()
-    if c_id:
-        call_command("draw", c_id=str(c_id), stdout=buffer)
-        # Get the output from the buffer
-        command_output = buffer.getvalue()
-        print(command_output)
-        buffer.close()
-        redirect_url = reverse("cup_draw", kwargs={"cup_id": str(c_id)})
-        return HttpResponseRedirect(redirect_url)
-    else:
-        # If 'c_id' is not provided, you can handle the error or set a default value
-        return HttpResponse("Error: c_id parameter is missing.", status=400)
+def pass_category_to_menu(category: CupCategory):
+    menu = []
+    for item in ARCADES_SUB_MENU:
+        item["url"] = item["url"].format(category.slug)
+        menu.append(item)
+    return menu
 
 
 class CupIndex(TemplateView):
-    template_name = "euro/index.html"  # Create this template
+    template_name = "arcades/index.html"  # Create this template
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cup_list = Cup.objects.all().order_by("c_flow", "-c_edition")
-        context["page_title"] = _("Euro Cups")
+        context["page_title"] = _("Arcade Cups")
         context["page_siblings"] = []
         context["cups"] = cup_list
-        context["page_siblings"] = EURO_SUB_MENU
-        context["menu_type"] = "EURO"
+        context["page_siblings"] = ARCADES_SUB_MENU
+        context["menu_type"] = "ARCADES"
         return context
 
 
 class CupMedals(TemplateView):
-    template_name = "euro/medals.html"  # Create this template
+    template_name = "arcades/medals.html"  # Create this template
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         teams = Medals.objects.all().order_by(
             "-position_1", "-position_2", "-position_3", "-position_4"
         )
-        context["page_siblings"] = EURO_SUB_MENU
+        context["page_siblings"] = ARCADES_SUB_MENU
         context["menu_type"] = "EURO"
         context["page_title"] = _("Medals")
         context["teams"] = teams
@@ -65,63 +51,22 @@ class CupMedals(TemplateView):
 
 
 class CupRank(TemplateView):
-    template_name = "euro/rank.html"  # Create this template
+    template_name = "arcades/rank.html"  # Create this template
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         teams = RankAllTime.objects.filter(c_flow=1).order_by(
             "-points", "-gdif", "-gscored"
         )
-        context["page_siblings"] = EURO_SUB_MENU
+        context["page_siblings"] = ARCADES_SUB_MENU
         context["menu_type"] = "EURO"
         context["page_title"] = _("Rank")
         context["teams"] = teams
         return context
 
 
-class CupDrawTemplate(TemplateView):
-    template_name = "euro/cup-draw.html"  # Create this template
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        cup_id = kwargs.get("cup_id")
-        cup_object = Cup.objects.filter(id=cup_id).first()
-        pots = CupDraw.objects.filter(c_id=cup_object).order_by("g_id")
-        draw = CupTeams.objects.filter(c_id=cup_object).order_by("pk")
-        menu = EURO_SUB_MENU
-        group_numbers = list(range(1, cup_object.c_groups + 1))
-        pot_numbers = list(range(1, int(cup_object.c_teams / cup_object.c_groups) + 1))
-        # pot_iterations = int(cup.c_teams / cup.c_groups)
-        draw_json = []
-        group_indexes = defaultdict(int)
-
-        for td in draw:
-            group_indexes[td.g_id] += 1
-            draw_json.append(
-                {
-                    "from": "pot_{}".format(td.t_id.t_sokker_id),
-                    "to": "group_{}_{}".format(td.g_id, group_indexes[td.g_id]),
-                    "sokker_id": td.t_id.t_sokker_id,
-                }
-            )
-        context["page_siblings"] = []
-        context["cup"] = cup_object
-        context["page_siblings"] = menu
-        context["menu_type"] = "EURO"
-        context["pots"] = pots
-        context["group_numbers"] = group_numbers
-        context["pot_numbers"] = pot_numbers
-        context["col_lg_groups"] = str(int(12 / int(cup_object.c_groups)))
-        context["col_lg_pots"] = str(
-            int(12 / int(cup_object.c_teams / cup_object.c_groups))
-        )
-        context["draw"] = draw
-        context["draw_json"] = json.dumps(draw_json)
-        return context
-
-
 class CupDetails(MultiTableMixin, TemplateView):
-    template_name = "euro/cup-details.html"  # Create this template
+    template_name = "arcades/cup-details.html"  # Create this template
     context_object_name = "objects"
     tables = []
 
@@ -129,7 +74,7 @@ class CupDetails(MultiTableMixin, TemplateView):
         cup_id = kwargs.get("cup_id")
         cup_object = Cup.objects.filter(id=cup_id).first()
         if cup_object and cup_object.c_status == "signup":
-            self.template_name = "euro/cup-signup.html"  # Create this template
+            self.template_name = "arcades/cup-signup.html"  # Create this template
 
         if cup_object and self.tables == []:
             distinct_groups = (
@@ -183,8 +128,14 @@ class CupDetails(MultiTableMixin, TemplateView):
         if cup_object:
             title = cup_object.c_name
             context["page_title"] = title
-            url = reverse("cup_details", kwargs={"cup_id": str(cup_object.pk)})
-        menu = EURO_SUB_MENU
+            url = reverse(
+                "arcade_cup_details",
+                kwargs={
+                    "cup_id": str(cup_object.pk),
+                    "category_slug": str(cup_object.category.slug),
+                },
+            )
+        menu = ARCADES_SUB_MENU
 
         # Check if the URL already exists in the `menu`
         if not any(item["url"] == url for item in menu):

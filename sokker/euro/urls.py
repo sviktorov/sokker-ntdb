@@ -24,4 +24,14 @@ urlpatterns = [
         views.CupDetails.as_view(),
         name="cup_details",
     ),
+    path(
+        "<str:cup_id>/draw",
+        views.CupDrawTemplate.as_view(),
+        name="cup_draw",
+    ),
+    path(
+        "do_draw",
+        views.CommandFormPlayerUpdate,
+        name="do_draw",
+    ),
 ]
