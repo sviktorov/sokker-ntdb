@@ -18,7 +18,7 @@ from django.contrib import admin
 
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
-    list_display = ("c_name", "c_edition", "c_active", "c_draw_status")
+    list_display = ("c_name", "c_edition", "c_active", "c_draw_status", "c_status")
     list_filter = ("c_active",)
     ordering = ("c_name",)
 

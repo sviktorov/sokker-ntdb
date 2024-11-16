@@ -70,4 +70,5 @@ class Command(BaseCommand):
                     ct.save()
                     remove_element_by_value(group_numbers, group_numbers[0])
             cup.c_draw_status = "done"
+            cup.c_status = "fixtures"
             cup.save()

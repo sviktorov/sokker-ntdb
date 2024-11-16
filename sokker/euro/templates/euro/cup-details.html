@@ -12,6 +12,18 @@
 <div class="main-content wf100"> 
     <section class="wf100 p80">
         <div class="container">
+            
+            {% if cup.c_notes %}
+            <div class="row">
+                <p>{{ cup.c_notes|safe }}</p>
+            </div>
+            {% endif %}
+            {% if cup.forum_link %}
+            <div class="row">
+                <p><a href="{{ cup.forum_link }}" target="_blank">{% trans "Forum" %}</a></p>
+             </div>
+            {% endif %}
+        
             {% if final %}
             <div class="row">
                 <div class="match-results-list wf100">
