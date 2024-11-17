@@ -21,7 +21,7 @@ urlpatterns = [
     ),
     path(
         "<str:cup_id>/",
-        cache_page(0)(views.CupDetails.as_view()),
+        views.CupDetails.as_view(),
         name="cup_details",
     ),
     path(

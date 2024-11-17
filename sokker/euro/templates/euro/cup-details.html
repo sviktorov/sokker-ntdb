@@ -1,5 +1,6 @@
 <!-- templates/best-players.html -->
 {% extends 'base.html' %}
+{% load cache %}
 {% load render_table from django_tables2 %}
 {% load bootstrap5 %}
 {% load i18n %}
@@ -161,7 +162,9 @@
                         {% endfor %}
                     </div>
                     <div class="point-table-widget">
+                        {% cache 0 "rank_group_cache_key_{{ cup.pk }}_{{ forloop.counter }}" %}
                             {% render_table table %}
+                        {% endcache %}
                     </div>
                 </div>
                 {% endfor %}

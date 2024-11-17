@@ -12,6 +12,9 @@ from io import StringIO
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 
+from django.views.decorators.cache import cache_control
+
+
 EURO_SUB_MENU = [
     {"title": _("Euros - listing"), "url": "/en/euro"},
     {"title": _("Medals"), "url": "/en/euro/medals"},
@@ -128,21 +131,24 @@ class CupDetails(MultiTableMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         cup_id = kwargs.get("cup_id")
         cup_object = Cup.objects.filter(id=cup_id).first()
+
         if cup_object and cup_object.c_status == "signup":
             self.template_name = "euro/cup-signup.html"  # Create this template
 
         if cup_object and self.tables == []:
+            my_tables = []
             group_numbers = list(range(1, cup_object.c_groups + 1))
-
             for g_id in group_numbers:
                 group = (
                     RankGroups.objects.filter(c_id=cup_object, g_id=g_id)
                     .order_by("-points")
                     .order_by("-gdif")
                 )
-                self.tables.append(
+                my_tables.append(
                     RankGroupsTable(group),
                 )
+                self.tables = my_tables
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
