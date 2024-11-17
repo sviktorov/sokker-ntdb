@@ -5,7 +5,6 @@
 {% load i18n %}
 {% block title %}{{ cup.c_name }}{% endblock %}
 {% load custom_tags %}
-
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}
  
@@ -162,7 +161,7 @@
                         {% endfor %}
                     </div>
                     <div class="point-table-widget">
-                        {% render_table table %}
+                            {% render_table table %}
                     </div>
                 </div>
                 {% endfor %}

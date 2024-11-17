@@ -1,5 +1,5 @@
 from django.urls import path
-
+from django.views.decorators.cache import cache_page
 from . import views
 
 
@@ -21,7 +21,7 @@ urlpatterns = [
     ),
     path(
         "<str:cup_id>/",
-        views.CupDetails.as_view(),
+        cache_page(0)(views.CupDetails.as_view()),
         name="cup_details",
     ),
     path(

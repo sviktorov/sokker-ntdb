@@ -132,16 +132,11 @@ class CupDetails(MultiTableMixin, TemplateView):
             self.template_name = "euro/cup-signup.html"  # Create this template
 
         if cup_object and self.tables == []:
-            distinct_groups = (
-                RankGroups.objects.filter(c_id=cup_object)
-                .values("g_id")
-                .distinct("g_id")
-                .order_by("g_id")
-            )
+            group_numbers = list(range(1, cup_object.c_groups + 1))
 
-            for g_id in distinct_groups:
+            for g_id in group_numbers:
                 group = (
-                    RankGroups.objects.filter(c_id=cup_object, g_id=g_id["g_id"])
+                    RankGroups.objects.filter(c_id=cup_object, g_id=g_id)
                     .order_by("-points")
                     .order_by("-gdif")
                 )
