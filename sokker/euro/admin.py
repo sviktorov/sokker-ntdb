@@ -15,13 +15,20 @@ from django.utils.translation import gettext_lazy as _
 
 from django.contrib import admin
 
+@admin.action(description='Mark selected items as active')
+def mark_as_active(modeladmin, request, queryset):
+    queryset.update(c_active=True)
+
+@admin.action(description='Mark selected items as inactive')
+def mark_as_inactive(modeladmin, request, queryset):
+    queryset.update(is_active=False)
 
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
     list_display = ("c_name", "c_edition", "c_active", "c_draw_status", "c_status")
     list_filter = ("c_active",)
     ordering = ("c_name",)
-
+    actions = [mark_as_active, mark_as_inactive]
 
 @admin.register(NTTeam)
 class NTTeamAdmin(ImportExportModelAdmin):

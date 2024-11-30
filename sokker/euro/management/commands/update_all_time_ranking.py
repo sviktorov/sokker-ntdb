@@ -89,7 +89,7 @@ class Command(BaseCommand):
                     )
                     team_data.games = team_data.games + 1
                     team_data.gscored = team_data.gscored + int(game.goals_away)
-                    team_data.grecieved = team_data.grecieved + int(game.goals_away)
+                    team_data.grecieved = team_data.grecieved + int(game.goals_home)
                     team_data.points = team_data.points + game.away_points()
                     status = game.away_status()
                     if status == _("win"):

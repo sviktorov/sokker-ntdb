@@ -15,11 +15,18 @@ from django.utils.translation import gettext_lazy as _
 
 from django.contrib import admin
 
-
 @admin.register(CupCategory)
 class CupCategoryAdmin(ImportExportModelAdmin):
     list_display = ("name",)
 
+
+@admin.action(description='Mark selected items as active')
+def mark_as_active(modeladmin, request, queryset):
+    queryset.update(c_active=True)
+
+@admin.action(description='Mark selected items as inactive')
+def mark_as_inactive(modeladmin, request, queryset):
+    queryset.update(is_active=False)
 
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
@@ -34,6 +41,7 @@ class CupAdmin(ImportExportModelAdmin):
         "category",
     )
     ordering = ("c_name",)
+    actions = [mark_as_active, mark_as_inactive]
 
 
 @admin.register(CupTeams)

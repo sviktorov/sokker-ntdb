@@ -18,8 +18,6 @@ class Command(BaseCommand):
                 for game in all_games:
                     if game.goals_away is None or game.goals_home is None:
                         continue
-
-                    print(game)
                     # home team update
                     team_data = RankGroups.objects.filter(
                         t_id=game.t_id_h, c_id=cup, g_id=i
@@ -99,7 +97,7 @@ class Command(BaseCommand):
                         team_data.g_id = i
                         team_data.games = team_data.games + 1
                         team_data.gscored = team_data.gscored + int(game.goals_away)
-                        team_data.grecieved = team_data.grecieved + int(game.goals_away)
+                        team_data.grecieved = team_data.grecieved + int(game.goals_home)
                         team_data.points = team_data.points + game.away_points()
                         status = game.away_status()
                         if status == _("win"):

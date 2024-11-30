@@ -110,3 +110,6 @@ G.playoff_position
 FROM `games` AS G
 JOIN `teams` AS T1 ON G.t_id_h = T1.t_id
 JOIN `teams` AS T2 ON G.t_id_v = T2.t_id;
+
+
+find . -type d -name "__pycache__" -exec rm -rf {} +
