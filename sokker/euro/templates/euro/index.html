@@ -38,10 +38,24 @@
                       <td><a href="{% url 'cup_details' cup_id=cup.pk %}"><img src="/static/images/tl-logo1.png" alt=""> <strong>{{ cup.c_name }}</strong></a></td>
                       <td>{{ cup.c_teams }}</td>
                       <td>{{ cup.c_groups }}</td>
-                      <td>{% get_winners cup_id=cup.pk position=1 as winner %} <img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ winner.team_id.t_sokker_id }}.svg" />{{ winner.team_id.t_name }}</td>
-                      <td>{% get_winners cup_id=cup.pk position=2 as silver %} <img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ silver.team_id.t_sokker_id }}.svg" />{{ silver.team_id.t_name }}</td>
-                      <td>{% get_winners cup_id=cup.pk position=3 as bronze %} <img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ bronze.team_id.t_sokker_id }}.svg" />{{ bronze.team_id.t_name }}
-                        {% get_winners cup_id=cup.pk position=3 first=False as bronze2 %}{% if bronze2 %}<br><img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ bronze2.team_id.t_sokker_id }}.svg" />{{ bronze2.team_id.t_name }}{% endif %}
+                      <td>{% get_winners cup_id=cup.pk position=1 as winner %} 
+                        {% if winner %}
+                          <img width="38" height="26" src="https://sokker.org/static/pic/flags/{{ winner.team_id.t_sokker_id }}.svg" />{{ winner.team_id.t_name }}
+                        {% endif %}
+                      </td>
+                      <td>{% get_winners cup_id=cup.pk position=2 as silver %} 
+                        {% if silver %}
+                        <img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ silver.team_id.t_sokker_id }}.svg" />{{ silver.team_id.t_name }}
+                        {% endif %}
+                      </td>
+                      <td>{% get_winners cup_id=cup.pk position=3 as bronze %} 
+                        {% if bronze %}
+                        <img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ bronze.team_id.t_sokker_id }}.svg" />{{ bronze.team_id.t_name }}
+                        {% endif %}
+                        {% get_winners cup_id=cup.pk position=3 first=False as bronze2 %}
+                        {% if bronze2 %}
+                         <br><img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ bronze2.team_id.t_sokker_id }}.svg" />{{ bronze2.team_id.t_name }}
+                         {% endif %}
                       </td>
                       <td>{% get_winners cup_id=cup.pk position=4 as position4 %} {{ position4.team_id.t_name }}</td>
                       <td><a href="{{ cup.forum_link }}" target="_blank">{% trans "Forum" %}</a></td>

@@ -141,7 +141,7 @@ class CupDetails(MultiTableMixin, TemplateView):
             for g_id in group_numbers:
                 group = (
                     RankGroups.objects.filter(c_id=cup_object, g_id=g_id)
-                    .order_by("-points", "-gdif")
+                    .order_by("-points", "-gdif","-gscored")
                 )
                 my_tables.append(
                     RankGroupsTable(group),

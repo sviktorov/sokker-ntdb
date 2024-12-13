@@ -26,7 +26,7 @@ def mark_as_active(modeladmin, request, queryset):
 
 @admin.action(description='Mark selected items as inactive')
 def mark_as_inactive(modeladmin, request, queryset):
-    queryset.update(is_active=False)
+    queryset.update(c_active=False)
 
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
