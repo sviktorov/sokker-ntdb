@@ -1,161 +1,156 @@
 <!-- templates/best-players.html -->
 {% extends 'base.html' %}
+{% load cache %}
 {% load render_table from django_tables2 %}
 {% load bootstrap5 %}
 {% load i18n %}
 {% block title %}{{ cup.c_name }}{% endblock %}
-{% load custom_tags_arcades %}
-
+{% load custom_tags %}
 {% block content %}
-{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}
- 
-<div class="main-content wf100"> 
-    <section class="wf100 p80">
-        <div class="container">
-            {% if final %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Final" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    <!--box start--> 
-                    <ul class="last-match">
-                       <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ final.t_id_h.name }}</strong> </li>
-                       <li class="mscore"> <span>{{ final.goals_home }}</span> {{ final.home_status }} </li>
-                       <li class="match-info"> <strong>{% trans "Final" %}</strong> <span><em>|</em> </span>  {% if final.matchID %}<a href="https://sokker.org/comment?matchID={{final.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                       <li class="mscore"> <span>{{ final.goals_away }}</span> {{ final.away_status }}  </li>
-                       <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ final.t_id_v.name }}</strong> </li>
-                    </ul>
-                    <!--box end-->
-                 </div>
-            </div>
-            {% endif %}
-       
-            {% if final_bronze %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "3/4 Place game" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    <!--box start--> 
-                    <ul class="last-match">
-                       <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ final_bronze.t_id_h.name }}</strong> </li>
-                       <li class="mscore"> <span>{{ final_bronze.goals_home }}</span> {{ final_bronze.home_status }} </li>
-                       <li class="match-info"> <strong>{% trans "Bronze game" %}</strong> <span><em>|</em> </span>  {% if final_bronze.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                       <li class="mscore"> <span>{{ final_bronze.goals_away }}</span>  {{ final.away_status }} </li>
-                       <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ final_bronze.t_id_v.name }}</strong> </li>
-                    </ul>
-                    <!--box end-->
-                 </div>
-            </div>
-            {% endif %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}  
 
-
-            {% if semi_finals|length > 0 %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Semifinals" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    {% for game in semi_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
-                    {% endfor %}
-                 </div>
-            </div>
-            {% endif %}
-
-            {% if quarter_finals|length > 0 %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Quarterfinals" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    {% for game in quarter_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
-                    {% endfor %}
-                 </div>
-            </div>
-            {% endif %}   
-            
- 
-            {% if eight_finals|length > 0 %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Eight finals" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    {% for game in eight_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
-                    {% endfor %}
-                 </div>
-            </div>
-            {% endif %}  
-
-            <div class="row">
-                <!-- Render the tables -->
-                {% for table in tables %}
-                <div class="col-lg-12 col-md-6"> 
-                    <h2>Group {{ forloop.counter }}</h2>
-                    {% get_group_games cup_id=cup.pk group_id=forloop.counter as group_games %}
-                    <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                        <h4><span>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }}</span></h4>
-                     </div>
-                     <!--title end-->
-                        {% for game in group_games %}     
-                                <!--box start--> 
-                                <ul class="last-match">
-                                <li class="team-name"> <img src="/static/images/nmf-logo1.png" alt=""> <strong>{{ game.t_id_h.name }}</strong> </li>
-                                <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                                <li class="match-info"> <strong>{{ game.cup_round }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                                <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                                <li class="team-name"> <img src="/static/images/nmf-logo2.png" alt=""> <strong>{{ game.t_id_v.name }}</strong> </li>
-                                </ul>
-                                <!--box end-->
-                        {% endfor %}
-                    </div>
-                    <div class="point-table-widget">
-                        {% render_table table %}
+<div class="main-content innerpagebg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+       <!--Start-->
+       <div class="matach-groups">
+            <div class="container">
+                {% include "arcades/includes/submenu.html" with cup=cup %} 
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="section-title">
+                            <h2>{% trans "Cup Details" %}</h2>
+                        </div> 
                     </div>
                 </div>
-                {% endfor %}
+                {% if cup.c_notes %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <p>{{ cup.c_notes|safe }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if cup.forum_link %}
+                <div class="row">
+                    <div class="col-md-12 buy-ticket">
+                        <p><a href="{{ cup.forum_link }}" target="_blank">{% trans "Forum" %}</a></p>
+                    </div>
+                </div>
+                {% endif %}
+                {% if final or final_bronze or semi_finals or quarter_finals or eight_finals %}
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="section-title">
+                            <h2>{% trans "Playoffs" %}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                        <div class="col-lg-3 col-md-3">
+                            <div class="group-box">
+                                <h6>{% trans "Final" %}</h6>
+                                {% if final %}
+                                    {% include "arcades/includes/game_block_playoff.html" with title="Final" game=final cup=cup %}
+                                {% endif %}
+            
+                                {% if final_bronze %}
+                                    {% include "arcades/includes/game_block_playoff.html" with title="3/4 Place game" game=final_bronze cup=cup %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                
+                        <div class="col-lg-3 col-md-3">
+                            <div class="group-box">
+                                {% if semi_finals|length > 0 %}
+                                    <h6>{% trans "Semifinals" %}</h6>
+                                    
+                                    <!--title end-->
+                                    {% for game in semi_finals %}
+                                        {% include "arcades/includes/game_block_playoff.html" with  game=game cup=cup %}       
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                
+                
+                        <div class="col-lg-3 col-md-3">
+                            <div class="group-box">
+                                {% if quarter_finals|length > 0 %}
+                                    <h6>{% trans "Quarterfinals" %}</h6>
+                        
+                                    <!--title end-->
+                                    {% for game in quarter_finals %}
+                                        {% include "arcades/includes/game_block_playoff.html" with  game=game cup=cup %}       
+                                    {% endfor %}
+                                {% endif %}  
+                            </div>
+                        </div>
+                
+                
+                        <div class="col-lg-3 col-md-3">
+                            <div class="group-box">
+    
+                                {% if eight_finals|length > 0 %}
+                                            
+                                    <h6>{% trans "Eight finals" %}</h6>
+                                        <!--title end-->
+                                    {% for game in eight_finals %}
+                                        {% include "arcades/includes/game_block_playoff.html" with  game=game cup=cup %}       
+                                    {% endfor %}
+                                
+                                {% endif %}  
+                            </div>
+                        </div>
+            
+                </div>
+                {% endif %}
+                <div class="row">
+                    <div class="section-title">
+                        <div class="col-md-12">
+                            <h2>{% trans "Group Stage" %}</h2>
+                        </div>
+                    </div> 
+                </div>
+                <div class="row">
+                    <!-- Render the tables -->
+                    {% for table in tables %}
+
+                        <div class="col-lg-{{ columns_1 }} col-md-{{ columns_1 }}">
+                            <div class="group-box">
+                                {% get_last_round_arcades cup_id=cup.pk group_id=forloop.counter as last_round %}
+                                {% get_group_games_arcades cup_id=cup.pk group_id=forloop.counter rounds=last_round as group_games %}                      
+                                <h6>{% trans "Group" %} {{ forloop.counter }} - Round {{ last_round }}</h6>
+                                <ul>
+                                    {% for game in group_games %}
+                                        {% include "arcades/includes/game_block.html" with  game=game cup=cup %}       
+                                    {% endfor %}         
+                                </ul>
+                                <div class="buy-ticket">
+                                    <a href="{% url "arcade_cup_fixtures_groups" category_slug=cup.category.slug cup_id=cup.pk group_id=forloop.counter %}">{% trans "All games" %}</a>
+                                </div>
+
+                            </div>
+                        </div>
+                        <div class="col-lg-{{ columns_2 }} col-md-{{ columns_2 }}">
+                            <div class="group-box">
+                                <div class="widget">
+                                    <h6>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }} - Standing</h6>
+                                    <div class="point-table-widget">
+
+                                    {% cache 0 "rank_group_cache_key_{{ cup.pk }}_{{ forloop.counter }}" %}
+                                        {% render_table table %}
+                                    {% endcache %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                </div>
             </div>
         </div>
-    </section>
+    </div>
 </div>
 {% endblock %}

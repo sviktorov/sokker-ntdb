@@ -1,0 +1,14 @@
+<nav>
+    <div class="nav nav-tabs" id="nav-tab-group" role="tablist">
+        {% for group in groups %}
+            <a class="nav-item nav-link {% if group|stringformat:"s" == group_id %}active{% endif %}" 
+               id="nav-{{ forloop.counter }}-tab-group" 
+               href="#nav-{{ forloop.counter }}-group" 
+               role="tab" 
+               aria-controls="nav-{{ forloop.counter }}-group" 
+               aria-selected="{% if group|stringformat:"s" == group_id %}true{% else %}false{% endif %}">
+               {{ forloop.counter }}
+            </a>
+        {% endfor %}
+    </div>
+</nav>

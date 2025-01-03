@@ -1,0 +1,21 @@
+{% load i18n %}
+<div class="row">
+    <div class="match-results-list wf100">
+        <!--title start-->
+        {% if title %}
+        <div class="nms-title">
+           <h4><span>{{ cup.c_name}} - {% blocktrans %}{{ title }}{% endblocktrans %}</span></h4>
+        </div>
+        {% endif %}
+        <!--title end-->
+        <!--box start--> 
+        <ul class="last-match">
+           <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
+           <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
+           <li class="match-info"> <strong>{{ title }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{game.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
+           <li class="mscore"> <span>{{ game.goals_away }}</span> {{ game.away_status }}  </li>
+           <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
+        </ul>
+        <!--box end-->
+     </div>
+</div>

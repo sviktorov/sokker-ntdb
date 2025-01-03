@@ -189,7 +189,6 @@ class CupDetails(MultiTableMixin, TemplateView):
         # Check if the URL already exists in the `menu`
         if not any(item["url"] == url for item in menu):
             menu.append({"title": cup_object.c_name, "url": url})
-        context["page_siblings"] = []
         context["final"] = final
         context["final_bronze"] = final_bronze
         context["semi_finals"] = semi_finals
@@ -198,5 +197,5 @@ class CupDetails(MultiTableMixin, TemplateView):
 
         context["cup"] = cup_object
         context["page_siblings"] = menu
-        context["menu_type"] = "EURO"
+        context["menu_type"] = "ARCADES"
         return context

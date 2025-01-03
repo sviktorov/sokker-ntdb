@@ -36,6 +36,8 @@ class Cup(models.Model):
     c_draw_date = models.DateTimeField(null=True, blank=True, default=None)
     c_notes = models.TextField(null=True, blank=True)  # Assuming this can be nullable
     c_active = models.BooleanField(default=False)  # Assuming this is a boolean field
+    is_cl = models.BooleanField(default=False)
+    c_start_date = models.DateTimeField(null=True, blank=True, default=None) 
 
     def __str__(self):
         return self.c_name
@@ -46,6 +48,7 @@ class CupTeams(models.Model):
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
     t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
     g_id = models.IntegerField()
+    pot_id = models.IntegerField(null=True, blank=True, default=0)
 
     def __str__(self):
         return f"Game {self.id}: {self.c_id} vs {self.t_id}"

@@ -41,6 +41,7 @@ class TeamAdmin(ImportExportModelAdmin):
     list_display = ("id", "name", "country", "daily_update")
     list_filter = ("country",)
     ordering = ("name",)
+    search_fields = ('name','id')   
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}

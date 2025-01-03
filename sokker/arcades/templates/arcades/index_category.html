@@ -7,26 +7,7 @@
 {% block title %}Home - {{ page_title }} - {{ cup.c_name }}{% endblock %}
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-      const categoryFilter = document.getElementById("category-filter");
-      const rows = document.querySelectorAll("#cups-table tbody tr");
-
-      categoryFilter.addEventListener("change", function () {
-          const selectedCategory = categoryFilter.value;
-
-          rows.forEach(row => {
-              const rowCategory = row.getAttribute("data-category");
-              if (selectedCategory === "all" || rowCategory === selectedCategory) {
-                  row.style.display = "";
-              } else {
-                  row.style.display = "none";
-              }
-          });
-      });
-  });
-</script> 
-
+ 
 <!--Main Content Start-->
 <div class="main-content solidbg wf100">
     <!--team Page Start-->
@@ -34,24 +15,13 @@
       <!--Start-->
       <div class="point-table">
         <div class="container">
-           <!-- Filter Form -->
-          <div class="filter-form mb-3">
-            <h2><label for="category-filter">{% trans "Filter by Category" %}</label></h2>
-            <select id="category-filter" class="form-select">
-                <option value="all">{% trans "All Categories" %}</option>
-                {% for category in categories %}
-                <option value="{{ category.slug }}">{{ category.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
           <div class="row">
             <div class="col-md-12">
               <div class="point-table-widget">
-                <table id="cups-table">
+                <table>
                   <thead>
                     <tr>
                       <th>{% trans "Cup" %}</th>
-                      <th>{% trans "Category" %}</th>
                       <th>{% trans "Teams" %}</th>
                       <th>{% trans "Groups" %}</th>
                       <th>{% trans "Winner" %}</th>
@@ -63,9 +33,8 @@
                   </thead>
                   <tbody>
                     {% for cup in cups %}
-                    <tr  data-category="{{ cup.category.slug }}">
+                    <tr>
                       <td><a href="{% url 'arcade_cup_details' cup_id=cup.pk category_slug=cup.category.slug %}"><img src="/static/images/tl-logo1.png" alt=""> <strong>{{ cup.c_name }}</strong></a></td>
-                      <td><a href="/en/arcades/{{ cup.category.slug }}/">{{ cup.category.name }}</a></td>
                       <td>{{ cup.c_teams }}</td>
                       <td>{{ cup.c_groups }}</td>
                       <td>{% get_winners cup_id=cup.pk position=1 as winner %} {{ winner.team_id.t_name }}</td>

@@ -1,0 +1,15 @@
+<div class="row">
+    <div class="col-md-12">
+        <div class="product-tabs">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab-cup" role="tablist"> 
+                <a class="nav-item nav-link {% if request.resolver_match.url_name == 'arcade_cup_details' %}active{% endif %}" id="nav-1-tab-cup"  href="{% url "arcade_cup_details" cup_id=cup.pk category_slug=cup.category.slug %}" role="tab" aria-controls="nav-1-cup" aria-selected="{% if request.resolver_match.url_name == 'arcade_cup_details' %}true{% else%}false{% endif %}">Cup home</a> 
+                <a class="nav-item nav-link {% if request.resolver_match.url_name == 'arcade_cup_fixtures_groups' %}active{% endif %}" id="nav-2-tab-cup"  href="{% url "arcade_cup_fixtures_groups" category_slug=cup.category.slug cup_id=cup.pk group_id=1 %}" role="tab" aria-controls="nav-2-cup" aria-selected="false">Fixtures</a>
+                <a class="nav-item nav-link {% if request.resolver_match.url_name == 'arcade_cup_standings' %}active{% endif %}" id="nav-3-tab-cup"  href="{% url "arcade_cup_details" cup_id=cup.pk category_slug=cup.category.slug %}" role="tab" aria-controls="nav-3-cup" aria-selected="false">Standings</a>
+                <a class="nav-item nav-link {% if request.resolver_match.url_name == 'arcade_cup_draw' %}active{% endif %}" id="nav-4-tab-cup"  href="{% url "arcade_cup_draw" cup_id=cup.pk category_slug=cup.category.slug %}" role="tab" aria-controls="nav-4-cup" aria-selected="false">Draw</a>
+                <a class="nav-item nav-link {% if request.resolver_match.url_name == 'arcade_cup_index_category' %}active{% endif %}" id="nav-5-tab-cup"  href="{% url "arcade_cup_index_category" category_slug=cup.category.slug %}" role="tab" aria-controls="nav-5-cup" aria-selected="false">Editions</a>
+            </div>
+        </nav>
+        </div>
+    </div>
+</div>

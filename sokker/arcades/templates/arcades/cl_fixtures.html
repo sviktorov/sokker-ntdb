@@ -1,0 +1,46 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% load i18n %}
+{% block title %}{{ cup.c_name }}{% endblock %}
+{% load custom_tags %}
+
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}
+
+
+<div class="main-content innerpagebg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+       <!--Start-->
+       <div class="matach-groups">
+          <div class="container">
+            <div class="row" ><h2>{{ filename }}</h2></div>
+          
+             <div class="row">
+                
+                <!--col start-->
+                {% for fixture in fixtures %}
+                <div class="col-lg-6 col-md-6">
+                   <div class="group-box">
+
+                      <h6>Round {{ forloop.counter }}</h6>
+                      <ul>
+                        {% for record in fixture %}
+                        <li id="pot_"  >{{ forloop.counter }}. {{ record.1 }} - {{ record.2 }}</li>
+                        {% endfor %}
+                      </ul>
+                   </div>
+                </div>
+                {% endfor %}
+                <!--col end--> 
+             </div>
+             
+          </div>
+       </div>
+       <!--End--> 
+    </div>
+    <!--team Page End--> 
+ </div>
+{% endblock %}

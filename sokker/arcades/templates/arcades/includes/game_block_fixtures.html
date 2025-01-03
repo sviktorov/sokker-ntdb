@@ -1,0 +1,13 @@
+{% load i18n %}
+
+<!--box start--> 
+<li>   
+    <h4>{{ game.t_id_h.name }} 
+    <img width="35" src="https://sokker.org/static/pic/flags/{{ game.t_id_h.country.code }}.svg" alt="" />
+    <strong>{{ game.goals_away }}</strong> : <strong>{{ game.goals_home }}</strong>
+    <img width="35" src="https://sokker.org/static/pic/flags/{{ game.t_id_v.country.code }}.svg" alt="" />
+    {{ game.t_id_v.name }}
+    </h4>
+</li>
+
+<!--box end-->

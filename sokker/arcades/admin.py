@@ -9,6 +9,7 @@ from .models import (
     RankAllTime,
     CupCategory,
 )
+
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
@@ -31,6 +32,7 @@ def mark_as_inactive(modeladmin, request, queryset):
 @admin.register(Cup)
 class CupAdmin(ImportExportModelAdmin):
     list_display = (
+        "id",
         "c_name",
         "c_edition",
         "c_active",
@@ -41,23 +43,31 @@ class CupAdmin(ImportExportModelAdmin):
         "category",
     )
     ordering = ("c_name",)
+    search_fields = ('c_name',)
     actions = [mark_as_active, mark_as_inactive]
 
 
 @admin.register(CupTeams)
 class CupTeamsAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('t_id',)   
     list_display = ("t_id", "c_id", "g_id")
     ordering = ("c_id",)
+    search_fields = ('t_id',)
+    list_filter = ("c_id", "g_id", "c_id")
 
 
 @admin.register(CupDraw)
 class CupDrawAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('t_id',)   
     list_display = ("t_id", "c_id", "g_id")
     ordering = ("c_id",)
+    search_fields = ('t_id',)
+    list_filter = ("c_id", "g_id", "c_id")
 
 
 @admin.register(Game)
 class GameAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('t_id_h', 't_id_v', 'c_id')  
     list_display = (
         "t_id_h",
         "t_id_v",
@@ -77,10 +87,12 @@ class GameAdmin(ImportExportModelAdmin):
         "t_id_h",
         "t_id_v",
     )
+    search_fields = ('t_id_h', 't_id_v', 'c_id',)
 
 
 @admin.register(RankGroups)
 class RankGroupsAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('t_id', 'c_id')  
     list_display = ("t_id", "c_id", "g_id", "points", "grecieved", "gscored", "gdif")
     list_filter = (
         "c_id",
@@ -91,6 +103,7 @@ class RankGroupsAdmin(ImportExportModelAdmin):
 
 @admin.register(Medals)
 class MedalsAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('t_id',)  
     list_display = ("t_id", "position_1", "position_2", "position_3", "position_4")
     list_filter = ("t_id",)
     ordering = ("position_1",)
@@ -98,6 +111,7 @@ class MedalsAdmin(ImportExportModelAdmin):
 
 @admin.register(Winners)
 class WinnersAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('team_id', 'cup_id')  
     list_display = (
         "team_id",
         "cup_id",

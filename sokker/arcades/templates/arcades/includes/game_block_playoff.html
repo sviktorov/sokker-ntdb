@@ -1,0 +1,26 @@
+{% load i18n %}
+
+<!--box start--> 
+<ul>
+    <li>  
+        <img width="35"  src="https://sokker.org/static/pic/flags/{{ game.t_id_h.country.code }}.svg" alt="" />
+        <strong>{{ game.t_id_h.name }}</strong>
+    </li>
+    <li>
+        <ul class="mres">
+            <li>
+                <strong>{{ game.goals_home }}</strong>
+            </li>
+            <li>
+                <strong>{{ game.goals_away }}</strong>
+            </li>
+        </ul>
+        
+    </li>
+    <li>
+        <img width="35"  src="https://sokker.org/static/pic/flags/{{ game.t_id_v.country.code }}.svg" alt="" />
+        <strong>{{ game.t_id_v.name }}</strong> 
+    </li>
+</ul>
+
+<!--box end-->

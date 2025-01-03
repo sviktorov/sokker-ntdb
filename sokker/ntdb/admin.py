@@ -77,6 +77,7 @@ class PlayerAdmin(ImportExportModelAdmin):
     country = None
     form = PlayerAdminForm
     list_per_page = 50
+    autocomplete_fields = ('teamid',)  
     list_display = [
         "full_name",
         "injurydays",

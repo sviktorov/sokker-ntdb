@@ -2,7 +2,7 @@ from .models import RankGroups
 import django_tables2 as tables
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-
+import re
 
 class NTTeamColumn(tables.Column):
     def __init__(self, *args, **kwargs):
@@ -21,7 +21,25 @@ class NTTeamColumn(tables.Column):
         return mark_safe(html_string)  # Mark HTML as safe for rendering
 
 
+def extract_number_from_string(s):
+    match = re.search(r'\((\d+)\)', s)
+    if match:
+        return int(match.group(1))
+    return None  # Return None if no number is found
+
+class OrderRowColumn(tables.Column):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.orderable = False
+        self.verbose_name = _("N")
+    
+    def render(self, value, record, table, bound_row):      
+        html = extract_number_from_string(str(table._counter))
+        return html
+
+
 class RankGroupsTable(tables.Table):
+    pk = OrderRowColumn()
     t_id = NTTeamColumn()
 
     def get_queryset(self):
@@ -30,7 +48,9 @@ class RankGroupsTable(tables.Table):
 
     class Meta:
         model = RankGroups
+        
         fields = (
+            "pk",
             "t_id",
             "games",
             "wins",

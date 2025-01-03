@@ -10,18 +10,18 @@
 <div class="main-content wf100"> 
     <section class="wf100 p80">
         <div class="container">
-        <div class="row">
+            <div class="row">
 
-            <!-- Render the tables -->
             {% for table in tables %}
-            <div class="col-lg-12 col-md-6"> 
-                <div class="point-table-widget">
-                    {% render_table table %}
+                <div class="tab-pane {% if forloop.counter == 1  %}active show{% else %}{% endif %} fade" id="nav-{{ forloop.counter }}" role="tabpanel" aria-labelledby="nav-{{ forloop.counter }}">
+                    <div class="col-lg-12 col-md-12"> 
+                        <div class="point-table-widget">
+                            {% render_table table %}
+                        </div>
+                    </div>
                 </div>
-            </div>
             {% endfor %}
-
-        </div>
+            </div>
         </div>
     </section>
 </div>

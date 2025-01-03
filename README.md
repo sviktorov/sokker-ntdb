@@ -113,3 +113,76 @@ JOIN `teams` AS T2 ON G.t_id_v = T2.t_id;
 
 
 find . -type d -name "__pycache__" -exec rm -rf {} +
+
+
+ SELECT G.g_id AS id, T1.t_sokker_id AS t_id_h, T2.t_sokker_id AS t_id_v, G.g_status, 
+ CASE
+WHEN G.c_id = 22 THEN 446
+WHEN G.c_id = 21 THEN 447
+WHEN G.c_id = 24 THEN 448
+WHEN G.c_id = 25 THEN 449
+WHEN G.c_id = 26 THEN 450
+WHEN G.c_id = 27 THEN 451
+WHEN G.c_id = 28 THEN 452
+WHEN G.c_id = 29 THEN 453
+WHEN G.c_id = 30 THEN 454
+WHEN G.c_id = 31 THEN 455
+WHEN G.c_id = 32 THEN 456
+WHEN G.c_id = 33 THEN 457
+WHEN G.c_id = 34 THEN 458
+WHEN G.c_id = 35 THEN 459
+
+ELSE G.c_id -- This ensures that other values remain unchanged
+END AS c_id,G.group_id, G.goals_home, G.goals_away, G.cup_round, G.matchID, G.playoff_position FROM `games` AS G JOIN `teams` AS T1 ON G.t_id_h = T1.t_id JOIN `teams` AS T2 ON G.t_id_v = T2.t_id
+
+
+  SELECT
+ CASE
+WHEN G.c_id = 22 THEN 446
+WHEN G.c_id = 21 THEN 447
+WHEN G.c_id = 24 THEN 448
+WHEN G.c_id = 25 THEN 449
+WHEN G.c_id = 26 THEN 450
+WHEN G.c_id = 27 THEN 451
+WHEN G.c_id = 28 THEN 452
+WHEN G.c_id = 29 THEN 453
+WHEN G.c_id = 30 THEN 454
+WHEN G.c_id = 31 THEN 455
+WHEN G.c_id = 32 THEN 456
+WHEN G.c_id = 33 THEN 457
+WHEN G.c_id = 34 THEN 458
+WHEN G.c_id = 35 THEN 459
+
+ELSE G.c_id -- This ensures that other values remain unchanged
+END AS c_id,
+G.g_id,
+T1.t_sokker_id as t_id
+ FROM `cups_teams` AS G 
+ JOIN `teams` AS T1 ON G.t_id = T1.t_id 
+ LIMIT 1000
+
+
+  SELECT
+ CASE
+WHEN G.c_id = 22 THEN 446
+WHEN G.c_id = 21 THEN 447
+WHEN G.c_id = 24 THEN 448
+WHEN G.c_id = 25 THEN 449
+WHEN G.c_id = 26 THEN 450
+WHEN G.c_id = 27 THEN 451
+WHEN G.c_id = 28 THEN 452
+WHEN G.c_id = 29 THEN 453
+WHEN G.c_id = 30 THEN 454
+WHEN G.c_id = 31 THEN 455
+WHEN G.c_id = 32 THEN 456
+WHEN G.c_id = 33 THEN 457
+WHEN G.c_id = 34 THEN 458
+WHEN G.c_id = 35 THEN 459
+
+ELSE G.c_id -- This ensures that other values remain unchanged
+END AS c_id,
+G.g_id,
+T1.t_sokker_id as t_id
+ FROM `cups_draw` AS G 
+ JOIN `teams` AS T1 ON G.t_id = T1.t_id 
+ LIMIT 1000

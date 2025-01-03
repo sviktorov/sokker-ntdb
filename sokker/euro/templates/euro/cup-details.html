@@ -25,47 +25,12 @@
             {% endif %}
         
             {% if final %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "Final" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    <!--box start--> 
-                    <ul class="last-match">
-                       <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ final.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ final.t_id_h.t_name }}</strong> </li>
-                       <li class="mscore"> <span>{{ final.goals_home }}</span> {{ final.home_status }} </li>
-                       <li class="match-info"> <strong>{% trans "Final" %}</strong> <span><em>|</em> </span>  {% if final.matchID %}<a href="https://sokker.org/comment?matchID={{final.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                       <li class="mscore"> <span>{{ final.goals_away }}</span> {{ final.away_status }}  </li>
-                       <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ final.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ final.t_id_v.t_name }}</strong> </li>
-                    </ul>
-                    <!--box end-->
-                 </div>
-            </div>
+                {% include "euro/includes/game_block.html" with title="Final" game=final cup=cup %}
             {% endif %}
        
             {% if final_bronze %}
-            <div class="row">
-                <div class="match-results-list wf100">
-                    <!--title start-->
-                    <div class="nms-title">
-                       <h4><span>{{ cup.c_name}} - {% trans "3/4 Place game" %}</span></h4>
-                    </div>
-                    <!--title end-->
-                    <!--box start--> 
-                    <ul class="last-match">
-                       <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ final_bronze.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ final_bronze.t_id_h.t_name }}</strong> </li>
-                       <li class="mscore"> <span>{{ final_bronze.goals_home }}</span> {{ final_bronze.home_status }} </li>
-                       <li class="match-info"> <strong>{% trans "Bronze game" %}</strong> <span><em>|</em> </span>  {% if final_bronze.matchID %}<a href="https://sokker.org/comment?matchID={{final_bronze.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                       <li class="mscore"> <span>{{ final_bronze.goals_away }}</span>  {{ final.away_status }} </li>
-                       <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ final_bronze.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ final_bronze.t_id_v.t_name }}</strong> </li>
-                    </ul>
-                    <!--box end-->
-                 </div>
-            </div>
+                {% include "euro/includes/game_block.html" with title="3/4 Place game" game=final_bronze cup=cup %}
             {% endif %}
-
 
             {% if semi_finals|length > 0 %}
             <div class="row">
@@ -76,15 +41,7 @@
                     </div>
                     <!--title end-->
                     {% for game in semi_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{game.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
+                        {% include "euro/includes/game_block.html" with  game=game cup=cup %}       
                     {% endfor %}
                  </div>
             </div>
@@ -99,15 +56,7 @@
                     </div>
                     <!--title end-->
                     {% for game in quarter_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{game.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
+                        {% include "euro/includes/game_block.html" with  game=game cup=cup %}       
                     {% endfor %}
                  </div>
             </div>
@@ -123,15 +72,7 @@
                     </div>
                     <!--title end-->
                     {% for game in eight_finals %}
-                        <!--box start--> 
-                        <ul class="last-match">
-                        <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                        <li class="mscore"> <span>{{ game.goals_home }}</span> {{ game.home_status }} </li>
-                        <li class="match-info"> <strong>{{ game.playoff_position }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{game.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                        <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                        <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                        </ul>
-                        <!--box end-->
+                        {% include "euro/includes/game_block.html" with  game=game cup=cup %}       
                     {% endfor %}
                  </div>
             </div>
@@ -150,15 +91,7 @@
                      </div>
                      <!--title end-->
                         {% for game in group_games %}
-                                <!--box start--> 
-                                <ul class="last-match">
-                                <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
-                                <li class="mscore"> <span>{{ game.goals_home }}</span>ROUND {{ game.home_status }} </li>
-                                <li class="match-info"> <strong>{{ game.cup_round }}</strong> <span><em>|</em> </span>  {% if game.matchID %}<a href="https://sokker.org/comment?matchID={{game.matchID}}">{% trans "Match Report" %}</a>{% endif %}</li>
-                                <li class="mscore"> <span>{{ game.goals_away }}</span>  {{ game.away_status }} </li>
-                                <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
-                                </ul>
-                                <!--box end-->
+                            {% include "euro/includes/game_block.html" with  game=game cup=cup %}       
                         {% endfor %}
                     </div>
                     <div class="point-table-widget">
