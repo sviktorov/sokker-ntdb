@@ -10,6 +10,9 @@ from .models import (
     CupCategory,
 )
 
+from import_export import resources
+
+
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
@@ -47,14 +50,26 @@ class CupAdmin(ImportExportModelAdmin):
     actions = [mark_as_active, mark_as_inactive]
 
 
+class CupTeamsAdminResource(resources.ModelResource):
+    pot_id = resources.Field(attribute='pot_id', column_name='pot_id')
+    rating = resources.Field(attribute='rating', column_name='rating')
+    cl_draw = resources.Field(attribute='cl_draw', column_name='cl_draw')
+
+    class Meta:
+        model = CupTeams 
+        fields = ('id', 'c_id', 't_id', 'g_id', 'pot_id', 'rating', 'cl_draw', 't_id__name')
+        export_order = ('id', 'c_id', 't_id', 'g_id', 'pot_id', 'rating', 'cl_draw', 't_id__name')
+        import_id_fields = ('id', 'c_id', 't_id', 'g_id', 'pot_id', 'rating', 'cl_draw')
+
+
 @admin.register(CupTeams)
 class CupTeamsAdmin(ImportExportModelAdmin):
-    autocomplete_fields = ('t_id',)   
-    list_display = ("t_id", "c_id", "g_id")
+    autocomplete_fields = ('t_id', 'c_id')   
+    list_display = ("t_id", "pot_id", "c_id", "g_id", "rating", "cl_draw")
     ordering = ("c_id",)
     search_fields = ('t_id',)
-    list_filter = ("c_id", "g_id", "c_id")
-
+    list_filter = ("c_id", "g_id", "pot_id")
+    resource_class = CupTeamsAdminResource
 
 @admin.register(CupDraw)
 class CupDrawAdmin(ImportExportModelAdmin):
@@ -76,12 +91,14 @@ class GameAdmin(ImportExportModelAdmin):
         "goals_away",
         "playoff_position",
         "group_id",
+        "g_status",
     )
     list_filter = (
         "c_id",
         "group_id",
         "cup_round",
         "playoff_position",
+        "g_status",
     )
     ordering = (
         "t_id_h",

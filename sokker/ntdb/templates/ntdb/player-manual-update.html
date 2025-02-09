@@ -1,0 +1,68 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% block title %}{{ page_title }}{% endblock %}
+{% load ntdb %}
+{% block content %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('player-update-form');
+        var submitButton = form.querySelector('button[type="submit"]');
+
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            form.submit();
+        });
+
+        var form2 = document.getElementById('player-update-form-2');
+        var submitButton2 = form2.querySelector('button[type="submit"]');
+
+        submitButton2.addEventListener('click', function(event) {
+            event.preventDefault();
+            form2.submit();
+        });
+    });
+</script>
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+            <div class="row">
+                <h2>Player Manual Update</h2>
+            </div>
+            <div class="row">
+                <div class="col-lg-6 col-md-6 team-two">
+                    <h3>Step 1 - Player Data Pharse</h3>
+
+                    <form id="player-update-form" method="POST">
+                        <input type="hidden" name="step" value="1">
+                        {% csrf_token %}
+                        {% bootstrap_form form %}
+                        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+                    </form>
+                </div>
+                <div class="col-lg-6 col-md-6 team-two">
+                    {% if saved %}
+                        <div class="alert alert-success mt-3">
+                            Player data updated successfully.
+                        </div>
+                    {% endif %}
+                    {% if playerForm %}
+                        <h3>Step 2 - Submit data</h3>
+                        <form id="player-update-form-2" method="POST">
+                            <input type="hidden" name="step" value="2">
+                            {% csrf_token %}
+                        {% bootstrap_form playerForm %}
+                        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+                        </form>
+
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+

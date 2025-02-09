@@ -1,8 +1,29 @@
 <!-- templates/home.html -->
 {% extends 'base.html' %}
-
+{% load custom_tags_arcades %}
 {% block title %}Home - Sokker Tools{% endblock %}
 
 {% block content %}
   {% include 'includes/main-slider.html' %}
+  <div class="main-content wf100"> 
+    <!--Slide tabs start-->
+    <div class="slider-tabs wf100">
+      <div class="container">
+        <div class="row">
+          {% get_active_cups as active_cups %}
+          <ul>
+            {% for cup in active_cups %}
+            <li class="col-lg-4">
+              <div class="slidetab-box"> <span>0{{ forloop.counter }}</span>
+                <h6><a href="{% url 'arcade_cup_details' category_slug=cup.category.slug cup_id=cup.pk %}">{{ cup.c_name }}</a></h6>
+                <strong>{{ cup.category.name }}</strong> </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <!--Slide tabs end--> 
+
+</div>
 {% endblock %}

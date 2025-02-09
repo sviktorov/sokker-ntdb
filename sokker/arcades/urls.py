@@ -35,6 +35,11 @@ urlpatterns = [
         name="arcade_cup_fixtures_groups",
     ),
     path(
+        "<str:category_slug>/<str:cup_id>/stat-pots/",
+        views.CupStatPotsCLTemplate.as_view(),
+        name="arcade_cup_stat_pots_cl",
+    ),
+    path(
         "<str:category_slug>/draw/<str:cup_id>/",
         views.CupDrawTemplate.as_view(),
         name="arcade_cup_draw",

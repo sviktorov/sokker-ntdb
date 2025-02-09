@@ -16,6 +16,47 @@
             event.preventDefault(); // Prevent default form submission
             form.submit(); // Submit the form
         });
+
+        // Add pagination classes and styling
+        const paginationUls = document.querySelectorAll('ul.pagination');
+        paginationUls.forEach(ul => {
+            const liElements = ul.querySelectorAll('li');
+            liElements.forEach(li => {
+                li.classList.add('pagination-item');
+                const link = li.querySelector('a');
+                if (link) {
+                    link.classList.add('page-link');
+                    // Add style for active parent
+                    if (li.classList.contains('active')) {
+                        link.style.backgroundColor = '#ffcb05';
+                        link.style.color = 'black';
+                    }
+                }
+            });
+        });
+
+        // New code for handling table sort links
+        if ('{{ submenu }}' === 'stats_teams') {
+            const updateSortLinks = (tabNumber) => {
+                const activePane = document.querySelector(`#nav-${tabNumber}`);
+                const sortLinks = activePane.querySelectorAll('th.orderable a');
+                sortLinks.forEach(link => {
+                    const url = new URL(link.href);
+                    url.searchParams.set('tab', `tab${tabNumber}`);
+                    link.href = url.toString();
+                });
+            };
+
+            // Add click handlers to the nav links
+            document.querySelector('#nav-1-tab').addEventListener('click', () => updateSortLinks(1));
+            document.querySelector('#nav-2-tab').addEventListener('click', () => updateSortLinks(2));
+
+            // Initialize for the active tab
+            const activeTab = document.querySelector('.nav-link.active');
+            const tabNumber = activeTab.id.split('-')[1];
+            console.log(tabNumber);
+            updateSortLinks(tabNumber);
+        }
     });
 </script>
 
@@ -25,32 +66,47 @@
             
             {% if filter %}
             <div class="row">
-                <div class="contact-form">
-                    <form id="filter_box" action="" method="get" class="form form-inline">
+                <div class="contact-form col-lg-4">
+                    <form id="filter_box" action="" method="get" class="form form-inline cart-qty">
                         {% bootstrap_form filter.form layout='inline' %}
-                        {% bootstrap_button button_type="submit" content="filter" %}
+                        {% bootstrap_button button_type="submit" button_class="add-2-cart" content="filter" %}
                     </form>
                 </div>
             </div>
             {% endif %}
 
+
             <div class="row">
                 <div class="product-tabs">
                     <nav>
                         <div class="nav nav-tabs" id="nav-tab" role="tablist"> 
+                            {% if submenu == 'stats' %}
+                            <a class="nav-item nav-link active" id="nav-1-tab" data-toggle="tab" href="#nav-1" role="tab" aria-controls="nav-1" aria-selected="true">NT Games</a> 
+                            <a class="nav-item nav-link" id="nav-2-tab" data-toggle="tab" href="#nav-2" role="tab" aria-controls="nav-2" aria-selected="false">NT Goals</a>
+                            <a class="nav-item nav-link" id="nav-3-tab" data-toggle="tab" href="#nav-3" role="tab" aria-controls="nav-3" aria-selected="false">NT Assists</a>
+                            <a class="nav-item nav-link" id="nav-4-tab" data-toggle="tab" href="#nav-4" role="tab" aria-controls="nav-4" aria-selected="false">Games</a>
+                            <a class="nav-item nav-link" id="nav-5-tab" data-toggle="tab" href="#nav-5" role="tab" aria-controls="nav-5" aria-selected="false">Goals</a>
+                            <a class="nav-item nav-link" id="nav-6-tab" data-toggle="tab" href="#nav-6" role="tab" aria-controls="nav-6" aria-selected="false">Assists</a>
+                            {% endif %}
+                            {% if submenu == 'all' or submenu == 'best' %}
                             <a class="nav-item nav-link active" id="nav-1-tab" data-toggle="tab" href="#nav-1" role="tab" aria-controls="nav-1" aria-selected="true">Goalkeeper</a> 
                             <a class="nav-item nav-link" id="nav-2-tab" data-toggle="tab" href="#nav-2" role="tab" aria-controls="nav-2" aria-selected="false">Defender</a>
                             <a class="nav-item nav-link" id="nav-3-tab" data-toggle="tab" href="#nav-3" role="tab" aria-controls="nav-3" aria-selected="false">Midfilder</a>
-                            <a class="nav-item nav-link" id="nav-4-tab" data-toggle="tab" href="#nav-4" role="tab" aria-controls="nav-4" aria-selected="false">Attacker</a>
-
+                            <a class="nav-item nav-link" id="nav-4-tab" data-toggle="tab" href="#nav-4" role="tab" aria-controls="nav-4" aria-selected="false">Wing</a>
+                            <a class="nav-item nav-link" id="nav-5-tab" data-toggle="tab" href="#nav-5" role="tab" aria-controls="nav-5" aria-selected="false">Attacker</a>
+                            {% endif %}
+                            {% if submenu == 'stats_teams' %}
+                            <a class="nav-item nav-link {% if active_table == 1 %}active{% endif %}" id="nav-1-tab" data-toggle="tab" href="#nav-1" role="tab" aria-controls="nav-1" aria-selected="true">NT Players in Team</a> 
+                            <a class="nav-item nav-link {% if active_table == 2 %}active{% endif %}" id="nav-2-tab" data-toggle="tab" href="#nav-2" role="tab" aria-controls="nav-2" aria-selected="false">NT Players from Youth Team</a>
+                             {% endif %}
                         </div>
                      </nav>
                      <div class="tab-content" id="nav-tabContent">
                         <!-- Render the tables -->
                         {% for table in tables %}
-                            <div class="tab-pane {% if forloop.counter == 1  %}active show{% else %}{% endif %} fade" id="nav-{{ forloop.counter }}" role="tabpanel" aria-labelledby="nav-{{ forloop.counter }}">
+                            <div class="tab-pane {% if forloop.counter == active_table  %}active show{% else %}{% endif %} fade" id="nav-{{ forloop.counter }}" role="tabpanel" aria-labelledby="nav-{{ forloop.counter }}">
                                 <div class="col-lg-12 col-md-12"> 
-                                    <div class="point-table-widget">
+                                    <div class="point-table-widget gt-pagination">
                                         {% render_table table %}
                                     </div>
                                 </div>

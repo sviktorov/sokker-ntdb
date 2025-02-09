@@ -58,7 +58,7 @@ def parser_player(response, player):
         player.ntcards = nationalStats["cards"]["cards"]
         player.ntgoals = nationalStats["goals"]
         player.ntassists = nationalStats["assists"]
-        player.ntassists = nationalStats["matches"]
+        player.ntmatches = nationalStats["matches"]
         team_object_youth = Team.objects.filter(id=youthTeamId).first()
         if team_object_youth:
             player.youthteamid = team_object_youth

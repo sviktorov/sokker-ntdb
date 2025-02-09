@@ -57,7 +57,7 @@ class Player(models.Model):
     weight = models.IntegerField(null=True, blank=True)
     note = models.TextField(null=True, blank=True)
     daily_update = models.DateTimeField(null=True, blank=True)
-
+    retired = models.BooleanField(null=True, blank=True, default=False)
     def calculate_gk_points(self):
         skill_keeper = self.skillkeeper or 0
         skill_pace = self.skillpace or 0
@@ -95,6 +95,7 @@ class Player(models.Model):
         skill_technique = self.skilltechnique or 0
         skill_passing = self.skillpassing or 0
         skill_stamina = self.skillstamina or 0
+        skill_scoring = self.skillscoring or 0
 
         skill_pace = float(skill_pace)
         skill_defending = float(skill_defending)
@@ -102,11 +103,41 @@ class Player(models.Model):
         skill_technique = float(skill_technique)
         skill_passing = float(skill_passing)
         skill_stamina = float(skill_stamina)
+        skill_scoring = float(skill_scoring)
         return (
             1.5 * skill_passing
             + 1.5 * skill_playmaking
             + skill_pace
             + skill_technique
+            + 0.5 * skill_defending
+            + 0.5 * skill_scoring
+            + 0.25 * skill_stamina
+        )
+    
+    def calculate_wing_points(self):
+        skill_pace = self.skillpace or 0
+        skill_defending = self.skilldefending or 0
+        skill_playmaking = self.skillplaymaking or 0
+        skill_technique = self.skilltechnique or 0
+        skill_passing = self.skillpassing or 0
+        skill_stamina = self.skillstamina or 0
+        skill_scoring = self.skillscoring or 0
+
+        skill_pace = float(skill_pace)
+        skill_defending = float(skill_defending)
+        skill_playmaking = float(skill_playmaking)
+        skill_technique = float(skill_technique)
+        skill_passing = float(skill_passing)
+        skill_stamina = float(skill_stamina)
+        skill_scoring = float(skill_scoring)
+        
+        return (
+            1.5 * skill_passing
+            + 1 * skill_playmaking
+            + 0.5 * skill_scoring
+            + 1.5 * skill_pace
+            + 1.5 * skill_technique
+            + 0.5 * skill_defending
             + 0.5 * skill_defending
             + 0.25 * skill_stamina
         )
@@ -243,6 +274,34 @@ class ArchivePlayer(models.Model):
     height = models.IntegerField(null=True, blank=True)
     weight = models.IntegerField(null=True, blank=True)
     daily_update = models.DateTimeField(null=True, blank=True)
+    retired = models.BooleanField(null=True, blank=True, default=False)
 
     class Meta:
         verbose_name = _("Archive Player")
+
+
+
+class NTTeamsStats(models.Model):
+    # Define choices as class variables
+    STAT_TYPES = [
+        ('youth', 'From Youth Team'),
+        ('team', 'In Club Players'),
+    ]
+
+    countryid = models.IntegerField(null=True, blank=True)
+    teamid = models.ForeignKey(Team, on_delete=models.CASCADE)
+    stat_type = models.CharField(
+        max_length=255,
+        choices=STAT_TYPES,
+        null=True,
+        blank=True
+    )
+    ntmatches = models.IntegerField(null=True, blank=True, default=0)
+    ntgoals = models.IntegerField(null=True, blank=True, default=0)
+    ntassists = models.IntegerField(null=True, blank=True, default=0)
+    ntplayers = models.IntegerField(null=True, blank=True, default=0)
+    ntseasons = models.IntegerField(null=True, blank=True, default=0)
+    json_data = models.JSONField(null=True, blank=True)
+    json_data_youth = models.JSONField(null=True, blank=True)
+    class Meta:
+        verbose_name = _("NT Teams Stats")

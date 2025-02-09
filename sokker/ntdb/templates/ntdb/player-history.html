@@ -3,7 +3,7 @@
 {% load render_table from django_tables2 %}
 {% load bootstrap5 %}
 {% block title %}{{ page_title }}{% endblock %}
-
+{% load ntdb %}
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
  
@@ -11,7 +11,152 @@
     <section class="wf100 p80">
         <div class="container">
             <div class="row">
+                <div class="col-lg-6 col-md-6 team-two">
+                    <div class="player-box">
+                        <div class="player-thumb"><img src="/static/images/player4.png" alt=""></div>
+                        <div class="player-txt">
+                        <span class="star-tag"><i class="fas fa-star"></i></span>
+                        <h3>{{ player.name }} {{ player.surname }}</h3>
+                        <strong class="player-desi">{{ player.position }} age: {{ player.age }} </strong>
+                            <ul>
+                                <li><img width="30" src="https://sokker.org/static/pic/flags/{{ player.countryid }}.svg" alt=""><span>NT</span></li>
+                                <li>{% get_player_stats sokker_id=player.sokker_id stat_type='ntmatches' as ntmatches %}{{ ntmatches }}<span>NT Games</span></li>
+                                <li>{% get_player_stats sokker_id=player.sokker_id stat_type='ntgoals' as ntgoals %}{{ ntgoals }}<span>NT Goals</span></li>
+                                <li>{% get_player_stats sokker_id=player.sokker_id stat_type='ntassists' as ntassists %}{{ ntassists }}<span>NT Assists</span></li>
+                                <li>21<span>NT</span></li>
+                                <li>{% get_player_stats sokker_id=player.sokker_id stat_type='ntmatches' age_limit=21 as ntmatches %}{{ ntmatches }}<span>Games</span></li>
+                                <li>{% get_player_stats sokker_id=player.sokker_id stat_type='ntgoals' age_limit=21 as ntgoals %}{{ ntgoals }}<span>Goals</span></li>
+                                <li>{% get_player_stats sokker_id=player.sokker_id stat_type='ntassists' age_limit=21 as ntassists %}{{ ntassists }}<span>Assists</span></li>
+                                <li>stat<span>club</span></li>
+                                <li>{{ player.matches }}<span>Games</span></li>
+                                <li>{{ player.goals }}<span>Goals</span></li>
+                                <li>{{ player.assists }}<span>Assists</span></li>  
+                            </ul>
+                            <a class="playerbio" href="https://sokker.org/player/PID/{{ player.sokker_id }}" target="_blank">Player Page <i class="far fa-arrow-alt-circle-right"></i></a> <a href="#" class="follow">Follow</a> 
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                    <div class="team-one-scrore team-two">
+                        <h4>ALL TIME STATS</span></h4>
+                        <ul>
+                           <!--Box Start-->
+                           <li>
+                              <div class="progress-circle over50 p100">
+                                 <span>{% get_player_all_time_stats player True as best %}{{ best }}</span>
+                                 <div class="left-half-clipper">
+                                    <div class="first50-bar"></div>
+                                    <div class="value-bar"></div>
+                                 </div>
+                              </div>
+                              <strong><a href="{% url 'best_players_all' country_name=country.name %}">Pos in all time {% if player.age < 28 %} for age of {{ player.age }} {% endif %}as {{ player.position }}</a></strong> 
+                           </li>
+                           <!--Box End--> 
+                           <!--Box Start-->
+                           {% get_player_all_time_stats player as best_rating %}
+                           <li>
+                              <div class="progress-circle over50 p{{ best_rating.1 }}">
+                                 <span>{{ best_rating.0 }}</span>
+                                 <div class="left-half-clipper">
+                                    <div class="first50-bar"></div>
+                                    <div class="value-bar"></div>
+                                 </div>
+                              </div>
+                              <strong>Best rating as {{ player.position }} at age of {{ best_rating.2 }}</strong> 
+                           </li>
+                           <!--Box End--> 
+                           <!--Box Start-->
+                           {% get_player_all_time_stats player True True as best_rating %}
+                           <li>
+                              <div class="progress-circle over50 p0">
+                                 <span>{{ best_rating }}</span>
+                                 <div class="left-half-clipper">
+                                    <div class="first0-bar"></div>
+                                    <div class="value-bar"></div>
+                                 </div>
+                              </div>
+                              {% if player.age > 21 %}
+                              <strong><a href="{% url 'best_players' country_name=country.name %}?age=21">Pos in Best of at age of 21 as {{ player.position }}</a></strong> 
+                              {% else %}
+                              <strong><a href="{% url 'best_players' country_name=country.name %}">Pos in Best of as {{ player.position }}</a></strong> 
+                              {% endif %}
+                           </li>
+                           <!--Box End--> 
+                           <!--Box Start-->
+                           {% get_player_all_time_stats player False True as best_rating %}
+                           <li>
+                              <div class="progress-circle over50 p{{ best_rating.1 }}">
+                                 <span>{{ best_rating.0 }}</span>
+                                 <div class="left-half-clipper">
+                                    <div class="first50-bar"></div>
+                                    <div class="value-bar"></div>
+                                 </div>
+                              </div>
+                              <strong>
+                                 In best of at age of {{ best_rating.2 }}</strong> 
+                           </li>
+                           <!--Box End-->
+                        </ul>
+                     </div>
+                </div>
+                <div class="col-lg-6 col-md-6">
+                  <div class="team-one-scrore team-two">
+                      <h4>ACTIVE STATS</span></h4>
+                      <ul>
+                         <!--Box Start-->
+                         {% get_player_active_stats player as best_rating %}
+                         {% if best_rating %}
+                         <li>
+                            <div class="progress-circle over50 p{{ best_rating.1 }}">
+                               <span>{{ best_rating.0 }}</span>
+                               <div class="left-half-clipper">
+                                  <div class="first50-bar"></div>
+                                  <div class="value-bar"></div>
+                               </div>
+                            </div>
+                            <strong>Current rating as {{ player.position }} at age of {{ best_rating.2 }}</strong> 
+                         </li>
+                         {% endif %}
+                         <!--Box End--> 
+                         <!--Box Start-->
+                         {% if best_rating %}
+                         <li>
+                            <div class="progress-circle over50 p100">
+                               <span>{% get_player_active_stats player True as best %}{{ best }}</span>
+                               <div class="left-half-clipper">
+                                  <div class="first50-bar"></div>
+                                  <div class="value-bar"></div>
+                               </div>
+                            </div>
+                            <strong><a href="{% url 'best_players' country_name=country.name %}?age={{ player.age }}">Pos in BEST OF for age of {{ player.age }} as {{ player.position }}</a></strong> 
+                         </li>
+                         {% endif %}
+                         <!--Box End--> 
 
+                        <!--Box Start-->
+                        <li>
+                        <div class="progress-circle over50 p100">
+                           <span>{% get_player_active_stats player True no_age=True as best %}{{ best }}</span>
+                           <div class="left-half-clipper">
+                              <div class="first50-bar"></div>
+                              <div class="value-bar"></div>
+                           </div>
+                        </div>
+                        <strong><a href="{% url 'best_players' country_name=country.name %}">Pos in BEST OF as {{ player.position }}</a></strong> 
+                     </li>
+                     <!--Box End--> 
+                      </ul>
+                   </div>
+              </div>
+              <div class="col-lg-12 col-md-12">
+                  <div class="team-one-scrore team-two">
+                     <h4>{{ player.position }} POINTS PREDICTION</span></h4>
+            
+                        {% get_player_skill_progression player=player position=player.position as progression %}
+                        <img src="data:image/png;base64,{{ progression.plot }}" alt="Skill Progression Plot">
+                     </div>
+               </div>
+              
             {% for table in tables %}
                 <div class="tab-pane {% if forloop.counter == 1  %}active show{% else %}{% endif %} fade" id="nav-{{ forloop.counter }}" role="tabpanel" aria-labelledby="nav-{{ forloop.counter }}">
                     <div class="col-lg-12 col-md-12"> 

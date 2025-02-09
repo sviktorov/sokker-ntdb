@@ -33,9 +33,15 @@ class OrderRowColumn(tables.Column):
         self.orderable = False
         self.verbose_name = _("N")
     
-    def render(self, value, record, table, bound_row):      
-        html = extract_number_from_string(str(table._counter))
-        return html
+    def render(self, value, record, table, bound_row):    
+        # Calculate the actual row number based on the page number
+        page = 1
+        per_page = table.per_page if hasattr(table, 'per_page') else 10
+        row_number = (page - 1) * per_page + bound_row.row_counter + 1
+
+        if row_number > len(table.rows):
+            return row_number % len(table.rows) or len(table.rows)  # Use modulo to wrap around
+        return row_number
 
 
 class RankGroupsTable(tables.Table):
@@ -61,3 +67,4 @@ class RankGroupsTable(tables.Table):
             "gdif",
             "points",
         )
+        

@@ -33,6 +33,10 @@ dependencies = [
     "django-bootstrap-v5",
     "django-admin-numeric-filter",
     "requests",
+    "matplotlib",
+    "numpy",
+    "scikit-learn",
+    "pandas",
 ]
 
 [project.optional-dependencies]

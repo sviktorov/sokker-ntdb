@@ -1,0 +1,38 @@
+{% load i18n %}
+<!--box start--> 
+<ul style="padding: 5px;">
+    <li>  
+        <div class="widget">
+            <h4><img width="42"  src="https://sokker.org/static/pic/flags/{{ game_list.0.t_id_h.country.code }}.svg" alt="" /><a style="color: #222222;" href="https://sokker.org/en/app/team/{{ game_list.0.t_id_h.id }}/" target="_blank">{{ game_list.0.t_id_h.name }}</a></h4>
+        </div>
+    </li>
+    <li>
+        <ul class="mres">
+            <li style="width: 100%;">
+                {% if game_list.0 %}<strong>{{ game_list.0.goals_home }}</strong>{% endif %}
+                {% if game_list.1 %}<strong>{{ game_list.1.goals_away }}</strong>{% endif %} 
+                {% if game_list.0 and game_list.1 %}
+                <strong style="background-color: #e81f3e;">{{ game_list.0.goals_home|add:game_list.1.goals_away }}</strong>
+                {% endif %}
+                {% if game_list.2 %}<strong style="background-color: #ffcb05;">{{ game_list.2.goals_home }}</strong>{% endif %}
+            </li>
+            <li style="width: 100%;">
+                {% if game_list.0 %}<strong>{{ game_list.0.goals_away }}</strong>{% endif %}
+                {% if game_list.1 %}<strong>{{ game_list.1.goals_home }}</strong>{% endif %}
+                {% if game_list.0 and game_list.1 %}
+                <strong style="background-color: #e81f3e;">{{ game_list.0.goals_away|add:game_list.1.goals_home }}</strong>
+                {% endif %}
+                {% if game_list.2 %}<strong style="background-color: #ffcb05;">{{ game_list.2.goals_away }}</strong>{% endif %}
+            </li>
+        </ul>
+        
+    </li>
+    <li>
+        <div class="widget">
+            <h4><img width="42"  src="https://sokker.org/static/pic/flags/{{ game_list.0.t_id_v.country.code }}.svg" alt="" />
+                <a style="color: #222222;" href="https://sokker.org/en/app/team/{{ game_list.0.t_id_v.id }}/" target="_blank">{{ game_list.0.t_id_v.name }}</a></h4> 
+        </div>
+    </li>
+</ul>
+
+<!--box end-->

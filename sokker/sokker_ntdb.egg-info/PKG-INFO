@@ -1,0 +1,43 @@
+Metadata-Version: 2.2
+Name: sokker-ntdb
+Version: 0.1.0
+Classifier: Private :: Do not upload
+Requires-Python: >=3.11
+Requires-Dist: Django==4.2.*
+Requires-Dist: Pillow
+Requires-Dist: Psycopg2
+Requires-Dist: whitenoise
+Requires-Dist: gunicorn
+Requires-Dist: django-debug-toolbar
+Requires-Dist: django-environ
+Requires-Dist: django-sms
+Requires-Dist: wagtail-review
+Requires-Dist: sentry-sdk[django]
+Requires-Dist: django-compressor
+Requires-Dist: django-sass-processor
+Requires-Dist: django-import-export
+Requires-Dist: django-admin-list-filter-dropdown
+Requires-Dist: django-grappelli
+Requires-Dist: django_tables2
+Requires-Dist: django-filter
+Requires-Dist: django-bootstrap-v5
+Requires-Dist: django-admin-numeric-filter
+Requires-Dist: requests
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: scikit-learn
+Requires-Dist: pandas
+Provides-Extra: dev
+Requires-Dist: pip-audit; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: flake8-pyproject; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: sphinx; extra == "dev"
+Requires-Dist: myst-parser; extra == "dev"
+Requires-Dist: sphinxcontrib-confluencebuilder; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-django; extra == "dev"
+Requires-Dist: pytest-env; extra == "dev"
+Requires-Dist: pytest-freezer; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"

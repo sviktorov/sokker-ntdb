@@ -10,10 +10,12 @@ from django.db.models import Max, IntegerField
 from django.db.models.functions import Cast
 import json
 from collections import defaultdict
+from django.core.cache import cache
 
 
 ARCADES_SUB_MENU = [
-    {"title": _("Arcade tournaments"), "url": "/en/arcades"},
+    {"title": _("Arcade tournaments"), "url": "/en/arcades/cups"},
+    {"title": _("Stat Pots"), "url": "/en/arcades/{}cl-cup/stat-pots"},
 ]
 
 
@@ -116,34 +118,46 @@ class CupDetails(MultiTableMixin, TemplateView):
     template_name = "arcades/cup-details.html"  # Create this template
     context_object_name = "objects"
     tables = []
+    table_pagination = False
+
 
     def dispatch(self, request, *args, **kwargs):
         cup_id = kwargs.get("cup_id")
-        cup_object = Cup.objects.filter(id=cup_id).first()
-
-        if cup_object and self.tables == []:
-            distinct_groups = (
-                RankGroups.objects.filter(c_id=cup_object)
-                .values("g_id")
-                .distinct("g_id")
-                .order_by("g_id")
-            )
-
-            for g_id in distinct_groups:
-                group = (
-                    RankGroups.objects.filter(c_id=cup_object, g_id=g_id["g_id"])
-                    .order_by("-points", "-gdif", "-gscored")
+        cache_key = f'cup_tables_{cup_id}'
+        
+        # Try to get cached tables
+        self.tables = cache.get(cache_key)
+        
+        if not self.tables:
+            cup_object = Cup.objects.filter(id=cup_id).first()
+            if cup_object:
+                distinct_groups = (
+                    RankGroups.objects.filter(c_id=cup_object)
+                    .values("g_id")
+                    .distinct("g_id")
+                    .order_by("g_id")
                 )
-                self.tables.append(
-                    RankGroupsTable(group),
-                )
+
+                self.tables = []
+                for g_id in distinct_groups:
+                    group = (
+                        RankGroups.objects.filter(c_id=cup_object, g_id=g_id["g_id"])
+                        .order_by("-points", "-gdif", "-gscored")
+                    )
+                    table = RankGroupsTable(group)
+                    table.paginate(page=1, per_page=100)
+                    self.tables.append(table)
+                
+                # Cache the tables
+                cache.set(cache_key, self.tables, 3600)  # Cache for 1 hour
+
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cup_id = kwargs.get("cup_id")
         cup_object = Cup.objects.filter(id=cup_id).first()
-        final = Game.objects.filter(c_id=cup_id, playoff_position="final").first()
+        final = Game.objects.filter(c_id=cup_id, playoff_position="final")
         final_bronze = Game.objects.filter(
             c_id=cup_id, playoff_position="3/4 final"
         ).first()
@@ -168,6 +182,19 @@ class CupDetails(MultiTableMixin, TemplateView):
                 "e8",
             ],
         ).order_by("playoff_position")
+        eight_finals_cl = Game.objects.filter(
+            c_id=cup_id,
+            playoff_position__in=[
+                "e1_cl",
+                "e2_cl",
+                "e3_cl",
+                "e4_cl",
+                "e5_cl",
+                "e6_cl",
+                "e7_cl",
+                "e8_cl",
+            ],
+        ).order_by("playoff_position")
         url = ""
         if cup_object:
             title = cup_object.c_name
@@ -181,7 +208,7 @@ class CupDetails(MultiTableMixin, TemplateView):
             )
         menu = ARCADES_SUB_MENU
         if cup_object:
-            if cup_object.c_groups>1:
+            if cup_object.c_groups>0:
                 columns_1 = 4
                 columns_2 = 8
             else:
@@ -191,6 +218,8 @@ class CupDetails(MultiTableMixin, TemplateView):
         # Check if the URL already exists in the `menu`
         if not any(item["url"] == url for item in menu):
             menu.append({"title": cup_object.c_name, "url": url})
+        eight_finals_cl_teams = RankGroups.objects.filter(c_id=cup_object,g_id=1).order_by("-points","-gdif","-gscored")[:8]
+
         context["final"] = final
         context["final_bronze"] = final_bronze
         context["semi_finals"] = semi_finals
@@ -202,7 +231,8 @@ class CupDetails(MultiTableMixin, TemplateView):
         context["menu_type"] = "EURO"
         context["columns_1"] = columns_1
         context["columns_2"] = columns_2
-        
+        context["eight_finals_cl"] = eight_finals_cl
+        context["eight_finals_cl_teams"] = eight_finals_cl_teams
         return context
     
 
@@ -217,6 +247,8 @@ class CupFixtures(TemplateView):
         max_round = Game.objects.filter(c_id=cup_id, group_id=group_id)\
                 .annotate(cup_round_as_int=Cast("cup_round", IntegerField()))\
                 .aggregate(Max("cup_round_as_int"))["cup_round_as_int__max"]
+        if not max_round:
+            max_round = 1
         rounds = range(1, max_round + 1)
         menu = ARCADES_SUB_MENU
         context["cup"] = cup_object
@@ -278,11 +310,46 @@ class CupDrawTemplate(TemplateView):
         context["cup"] = cup_object
         context["page_siblings"] = menu
         context["menu_type"] = "EURO"
-        context["pots"] = pots
-        context["group_numbers"] = group_numbers
-        context["pot_numbers"] = pot_numbers
-        context["col_lg_groups"] = str(col_lg_groups)
-        context["col_lg_pots"] = str(col_lg_pots)
-        context["draw"] = draw
+        
+
+        if cup_object.is_cl:
+            context["col_lg_groups"] = 12
+            context["col_lg_pots"] = 3
+            context["group_numbers"] = range(1, 2)
+            context["pot_numbers"] = range(1, 5)
+            context["draw"] = draw
+            context["pots"] = pots
+        else:
+            context["col_lg_groups"] = str(col_lg_groups)
+            context["col_lg_pots"] = str(col_lg_pots)
+            context["group_numbers"] = group_numbers
+            context["pot_numbers"] = pot_numbers
+            context["draw"] = draw
+            context["pots"] = pots
         context["draw_json"] = json.dumps(draw_json)
+        return context
+    
+
+class CupStatPotsCLTemplate(TemplateView):
+    template_name = "arcades/cup-stat-pots-cl.html"  # Create this template
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cup_id = kwargs.get("cup_id")
+        cup_object = Cup.objects.filter(id=cup_id).first()
+        pots = CupDraw.objects.filter(c_id=cup_object).order_by("g_id")
+        rank_groups = RankGroups.objects.filter(c_id=cup_object,g_id=1).order_by("-points","-gdif","-gscored").all()
+        distinct_pots = pots.values_list('g_id', flat=True).distinct().order_by('g_id')
+
+        url = ""
+        menu = ARCADES_SUB_MENU
+        # Check if the URL already exists in the `menu`
+        if not any(item["url"] == url for item in menu):
+            url = url.format(cup_object.pk)
+            menu.append({"title": cup_object.c_name, "url": url})
+        context["cup"] = cup_object
+        context["page_siblings"] = menu
+        context["menu_type"] = "EURO"
+        context["distinct_pots"] = distinct_pots
+        context["rank_groups"] = rank_groups
         return context

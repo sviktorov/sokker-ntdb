@@ -15,9 +15,11 @@ def get_group_games(cup_id, group_id):
 @register.simple_tag
 def get_last_round_arcades(cup_id, group_id):
     # Fetch the list of games and return the maximum `cup_round`
-    max_round = GameArcades.objects.filter(c_id=cup_id, group_id=group_id)\
+    max_round = GameArcades.objects.filter(c_id=cup_id, group_id=group_id, g_status="yes")\
                 .annotate(cup_round_as_int=Cast("cup_round", IntegerField()))\
                 .aggregate(Max("cup_round_as_int"))["cup_round_as_int__max"]
+    if max_round is None:
+        return "1"
     return str(max_round)
 
 

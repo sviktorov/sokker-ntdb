@@ -15,19 +15,36 @@ urlpatterns = [
         name="player_update",
     ),
     path(
+        "player-manual-update",
+        views.PlayerManualUpdate.as_view(),
+        name="player_manual_update",
+    ),
+
+    path(
         "<str:country_name>/best-players",
         views.BestPlayers.as_view(),
         name="best_players",
     ),
     path(
-        "<str:country_name>/best-players-all",
-        views.debug_view,
-        name="best_players_all_debug",
-    ),
-    path(
         "<str:country_name>/best-players-all-time",
         views.BestPlayersAll.as_view(),
         name="best_players_all",
+    ),
+    path(
+        "<str:country_name>/best-players-all-time-stats",
+        views.BestPlayersAllStats.as_view(),
+        name="best_players_all_stats",
+    ),
+    
+    path(
+        "<str:country_name>/best-players-team-stats/<str:team_id>",
+        views.BestPlayersTeamStats.as_view(),
+        name="best_players_team_stats",
+    ),
+    path(
+        "<str:country_name>/best-players-all-time-stats-teams",
+        views.BestPlayersAllStatsTeams.as_view(),
+        name="best_players_all_stats_teams",
     ),
     path(
         "<str:country_name>/player-history/<str:sokker_id>",

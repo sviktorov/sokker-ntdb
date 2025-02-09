@@ -13,7 +13,7 @@ class Command(BaseCommand):
             print(cup.c_groups)
             for i in range(1, cup.c_groups + 1):
                 print("get games for group:", i)
-                all_games = Game.objects.filter(c_id=cup, group_id=i)
+                all_games = Game.objects.filter(c_id=cup, group_id=i, g_status__in=["yes", "ADJ", "DN"])
                 RankGroups.objects.filter(c_id=cup, g_id=i).delete()
                 for game in all_games:
                     if game.goals_away is None or game.goals_home is None:

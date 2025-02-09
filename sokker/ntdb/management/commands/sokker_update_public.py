@@ -13,7 +13,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Query all records from the Player table
         Player.objects.filter(sokker_id__isnull=True).delete()
-        players = Player.objects.all().order_by("daily_update")
+        players = Player.objects.filter(retired=False).order_by("daily_update")
         today_date = datetime.now().date()
         counter = 0
         for player in players:
@@ -42,6 +42,8 @@ class Command(BaseCommand):
             else:
                 print("Error:", response.status_code)
                 player.daily_update = today_date
+                if response.status_code == 404:
+                    player.retired = True
                 player.save()
 
         self.stdout.write(self.style.SUCCESS("Records updated successfully"))

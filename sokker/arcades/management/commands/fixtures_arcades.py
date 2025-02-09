@@ -54,10 +54,13 @@ class Command(BaseCommand):
         if cup.c_draw_status == "done" and cup.c_status == "fixtures":
             print("Number of teams:", cup.c_teams)
             print("Number of groups:", cup.c_groups)
-
+            Game.objects.filter(c_id=cup).delete()
             group_numbers = list(range(1, cup.c_groups + 1))
             for i in group_numbers:
-                ct = CupTeams.objects.filter(c_id=cup, g_id=i).order_by("pot_id")
+                if cup.is_cl:
+                    ct = CupTeams.objects.filter(c_id=cup, g_id=i).order_by("cl_draw")
+                else:   
+                    ct = CupTeams.objects.filter(c_id=cup, g_id=i).order_by("pot_id")
                 print("Group {} team number {}".format(i, ct.count()))
                 fixtures = []
 
@@ -65,24 +68,26 @@ class Command(BaseCommand):
                     fixtures = fixtures_4
                 if ct.count() == 6:
                     fixtures = fixtures_6
-                if ct.count() == 32 and ct.is_cl:
+                if ct.count() == 36 and cup.is_cl:
                     fixtures, filename = generate_fixtures_cl()
-                for round in fixtures:
-                    print(round)
-                    r = round[0]
-                    home_team = ct[round[1] - 1]
-                    away_team = ct[round[2] - 1]
-                    print(
-                        "Home {} - Away {}".format(
-                            home_team.t_id.t_name, away_team.t_id.t_name
+                    
+                for round_list in fixtures:
+                    for game in round_list:
+                        r = game[0]
+                        print(game)
+                        home_team = ct[int(game[1]) - 1]
+                        away_team = ct[int(game[2]) - 1]
+                        print(
+                            "Home {} - Away {}".format(
+                                home_team.t_id.name, away_team.t_id.name
+                            )
                         )
-                    )
-                    game = Game()
-                    game.t_id_h = home_team.t_id
-                    game.t_id_v = away_team.t_id
-                    game.c_id = cup
-                    game.cup_round = r
-                    game.group_id = i
-                    game.save()
+                        game = Game()
+                        game.t_id_h = home_team.t_id
+                        game.t_id_v = away_team.t_id
+                        game.c_id = cup
+                        game.cup_round = int(r)
+                        game.group_id = int(i)
+                        game.save()
             cup.c_status = "ready"
             cup.save()

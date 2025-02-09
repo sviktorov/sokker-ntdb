@@ -9,6 +9,7 @@
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}  
 
+
 <div class="main-content innerpagebg wf100">
     <!--team Page Start-->
     <div class="team wf100 p80">
@@ -26,7 +27,9 @@
                 {% if cup.c_notes %}
                 <div class="row">
                     <div class="col-md-12">
-                        <p>{{ cup.c_notes|safe }}</p>
+                        <div class="post-txt">
+                            <p>{{ cup.c_notes|safe }}</p>
+                        </div>  
                     </div>
                 </div>
                 {% endif %}
@@ -51,7 +54,16 @@
                             <div class="group-box">
                                 <h6>{% trans "Final" %}</h6>
                                 {% if final %}
-                                    {% include "arcades/includes/game_block_playoff.html" with title="Final" game=final cup=cup %}
+                                    {% if cup.is_cl %}
+                                        {% regroup final by playoff_position as grouped_games %}
+                                        {% for position in grouped_games %}
+                                                {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for game in final %}
+                                               {% include "arcades/includes/game_block_playoff.html" with title="Final" game=game cup=cup %}       
+                                        {% endfor %}
+                                    {% endif %}
                                 {% endif %}
             
                                 {% if final_bronze %}
@@ -65,11 +77,17 @@
                             <div class="group-box">
                                 {% if semi_finals|length > 0 %}
                                     <h6>{% trans "Semifinals" %}</h6>
-                                    
                                     <!--title end-->
-                                    {% for game in semi_finals %}
-                                        {% include "arcades/includes/game_block_playoff.html" with  game=game cup=cup %}       
-                                    {% endfor %}
+                                    {% if cup.is_cl %}
+                                        {% regroup semi_finals by playoff_position as grouped_games %}
+                                        {% for position in grouped_games %}
+                                                {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for game in semi_finals %}
+                                            {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
+                                        {% endfor %}
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         </div>
@@ -79,11 +97,17 @@
                             <div class="group-box">
                                 {% if quarter_finals|length > 0 %}
                                     <h6>{% trans "Quarterfinals" %}</h6>
-                        
-                                    <!--title end-->
-                                    {% for game in quarter_finals %}
-                                        {% include "arcades/includes/game_block_playoff.html" with  game=game cup=cup %}       
-                                    {% endfor %}
+
+                                    {% if cup.is_cl %}
+                                        {% regroup quarter_finals by playoff_position as grouped_games %}
+                                        {% for position in grouped_games %}
+                                                {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for game in quarter_finals %}
+                                            {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
+                                        {% endfor %}
+                                    {% endif %}
                                 {% endif %}  
                             </div>
                         </div>
@@ -96,15 +120,43 @@
                                             
                                     <h6>{% trans "Eight finals" %}</h6>
                                         <!--title end-->
-                                    {% for game in eight_finals %}
-                                        {% include "arcades/includes/game_block_playoff.html" with  game=game cup=cup %}       
-                                    {% endfor %}
+                                    {% if cup.is_cl %}
+                                        {% regroup eight_finals by playoff_position as grouped_games %}
+                                        {% for position in grouped_games %}
+                                                {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for game in eight_finals %}
+                                            {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
+                                        {% endfor %}
+                                    {% endif %}
                                 
                                 {% endif %}  
                             </div>
                         </div>
             
                 </div>
+                {% endif %}
+                {% if cup.is_cl %}
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="section-title">
+                                <h2>{% trans "Playoffs preliminaries" %}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6 col-md-6">
+                            <div class="group-box">
+                                {% if eight_finals_cl %}
+                                    {% regroup eight_finals_cl by playoff_position as grouped_games %}
+                                    {% for position in grouped_games %}
+                                        {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
                 <div class="row">
                     <div class="section-title">
@@ -116,32 +168,31 @@
                 <div class="row">
                     <!-- Render the tables -->
                     {% for table in tables %}
-
                         <div class="col-lg-{{ columns_1 }} col-md-{{ columns_1 }}">
                             <div class="group-box">
                                 {% get_last_round_arcades cup_id=cup.pk group_id=forloop.counter as last_round %}
                                 {% get_group_games_arcades cup_id=cup.pk group_id=forloop.counter rounds=last_round as group_games %}                      
                                 <h6>{% trans "Group" %} {{ forloop.counter }} - Round {{ last_round }}</h6>
+                                
                                 <ul>
                                     {% for game in group_games %}
+                                        <h4>Game {{ forloop.counter }}</h4>
                                         {% include "arcades/includes/game_block.html" with  game=game cup=cup %}       
                                     {% endfor %}         
                                 </ul>
                                 <div class="buy-ticket">
                                     <a href="{% url "arcade_cup_fixtures_groups" category_slug=cup.category.slug cup_id=cup.pk group_id=forloop.counter %}">{% trans "All games" %}</a>
                                 </div>
-
                             </div>
                         </div>
                         <div class="col-lg-{{ columns_2 }} col-md-{{ columns_2 }}">
                             <div class="group-box">
                                 <div class="widget">
                                     <h6>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }} - Standing</h6>
-                                    <div class="point-table-widget">
-
-                                    {% cache 0 "rank_group_cache_key_{{ cup.pk }}_{{ forloop.counter }}" %}
-                                        {% render_table table %}
-                                    {% endcache %}
+                                    <div class="match-results-table team-name">
+                                        {% cache 3600 'cup_standings' cup.pk forloop.counter %}
+                                            {% render_table table %}
+                                        {% endcache %}
                                     </div>
                                 </div>
                             </div>
@@ -153,4 +204,60 @@
         </div>
     </div>
 </div>
+{% if cup.is_cl %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Find all tables within match-results-table class
+    const tables = document.querySelectorAll('.match-results-table table');
+    console.log('Found tables:', tables.length);
+
+    tables.forEach(table => {
+        // Get all rows except header
+        const rows = table.querySelectorAll('tbody tr');
+        console.log('Found rows:', rows.length);
+        
+        rows.forEach((row, index) => {
+            // Convert to 1-based index to match table positions
+            const position = index + 1;
+            console.log('Processing row:', position);
+
+            // Add classes based on position
+            if (position <= 8) {
+                row.classList.add('top-position');
+            } else if (position <= 24) {
+                row.classList.add('middle-position');
+            } else if (position <= 36) {
+                row.classList.add('bottom-position');
+            }
+            
+            // Add border class after position 8 and 24
+            if (position === 8 || position === 24) {
+                row.classList.add('border-bottom');
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.table-container table thead th.orderable a{
+    color: #000 !important;
+}
+.top-position td{
+    background-color: #38a1f3 !important;  /* light green */
+    color: #fff !important;
+}
+.middle-position td{
+    background-color: #28a745 !important;  /* light blue */
+    color: #fff !important;
+}
+.bottom-position td{
+    background-color: #dc3545 !important;  /* light red */
+    color: #fff !important;
+}
+.border-bottom {
+    border-bottom: 2px solid #000 !important;
+}
+</style>
+{% endif %}
 {% endblock %}

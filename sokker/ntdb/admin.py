@@ -1,4 +1,4 @@
-from .models import Player, ArchivePlayer
+from .models import Player, ArchivePlayer, NTTeamsStats
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
@@ -10,7 +10,8 @@ from sokker_base.api import get_sokker_player_data
 from .pharsers import parser_player
 from django.urls import reverse
 from django.utils.html import format_html
-
+from django.contrib.admin.widgets import AutocompleteSelect
+from datetime import datetime
 
 class SkillRangeNumericFilter(RangeNumericFilter):
     MAX_DECIMALS = 18
@@ -73,11 +74,27 @@ class AgeLessFilter(admin.SimpleListFilter):
             return queryset.filter(age__lte=self.value())
 
 
+class TeamFilter(admin.SimpleListFilter):
+    title = _("Team")
+    parameter_name = "teamid"
+    template = "django_admin_listfilter_dropdown/dropdown_filter.html"
+
+    def lookups(self, request, model_admin):
+        # Get unique teams from the Player model
+        teams = Player.objects.values_list('teamid__id', 'teamid__name').distinct()
+        return [(str(team_id), team_name) for team_id, team_name in teams if team_name]
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(teamid=self.value())
+
+
 class PlayerAdmin(ImportExportModelAdmin):
     country = None
     form = PlayerAdminForm
     list_per_page = 50
     autocomplete_fields = ('teamid',)  
+   
     list_display = [
         "full_name",
         "injurydays",
@@ -86,13 +103,13 @@ class PlayerAdmin(ImportExportModelAdmin):
         "position_with_class",
         "skillform",
         "skillstamina",
-        "skillkeepr_with_class",
         "skillpace_with_class",
-        "skillscoring_with_class",
         "skilltechnique_with_class",
         "skillpassing_with_class",
-        "skillplaymaking_with_class",
+        "skillkeepr_with_class",
         "skilldefending_with_class",
+        "skillplaymaking_with_class",
+        "skillscoring_with_class",
         "skillexperience",
         "skillteamwork",
         "skilldiscipline",
@@ -102,8 +119,11 @@ class PlayerAdmin(ImportExportModelAdmin):
         "get_goalie_points",
         "position_score",
         "date",
-        "edit_button",
         "daily_update",
+        "retired",
+        "teamid",
+        "edit_button",
+        "edit_button_manual",
     ]  # Add any other fields you want to display in the list
     readonly_fields = (
         "injurydays",
@@ -132,10 +152,12 @@ class PlayerAdmin(ImportExportModelAdmin):
         "weight",
         "modified",
         "daily_update",
+        "retired",
     )
     ordering = ("-value",)
     list_filter = [
         CountryFilter,
+        TeamFilter,
         "position",
         "national",
         AgeEqualFilter,
@@ -147,13 +169,14 @@ class PlayerAdmin(ImportExportModelAdmin):
         ("skillpassing", SkillRangeNumericFilter),
         ("skillplaymaking", SkillRangeNumericFilter),
         ("skilldefending", SkillRangeNumericFilter),
-        "teamid",
-    ]  # Add 'countryid' to filter optionsßß
-    search_fields = ["sokker_id", "name", "surname"]
+
+    ]
+    search_fields = ["sokker_id", "name", "surname", "teamid__name"]
 
     def save_model(self, request, obj, form, change):
         response = get_sokker_player_data(obj.sokker_id)
         obj = parser_player(response, obj)
+        obj.date  = datetime.now().strftime("%Y-%m-%d")
         super().save_model(request, obj, form, change)
 
     def changelist_view(self, request, extra_context=None):
@@ -211,9 +234,17 @@ class PlayerAdmin(ImportExportModelAdmin):
             "admin:%s_%s_change" % (obj._meta.app_label, obj._meta.model_name),
             args=[obj.pk],
         )
-        return format_html('<a href="{}?countryid={}">Edit</a>', url, obj.countryid)
+        return format_html('<a href="{}?countryid={}">✏️</a>', url, obj.countryid)
 
-    edit_button.short_description = _("Edit")
+    edit_button.short_description = _("✏️")
+
+    def edit_button_manual(self, obj):
+        url = reverse(
+            "player_manual_update"
+        )
+        return format_html('<a href="{}?sokker_id={}" target="_blank">✎</a>', url, obj.sokker_id)
+
+    edit_button_manual.short_description = _("✎")  
 
     def full_name(self, obj):
         full_name = ""
@@ -349,6 +380,9 @@ class ArchivePlayerAdmin(ImportExportModelAdmin):
         "get_midfielder_points",
         "get_attacker_points",
         "get_goalie_points",
+        "ntmatches",
+        "ntgoals",
+        "ntassists",
         "daily_update",
     ]  # Add any other fields you want to display in the list
     ordering = ("-value",)
@@ -358,6 +392,7 @@ class ArchivePlayerAdmin(ImportExportModelAdmin):
         "national",
         AgeEqualFilter,
         AgeLessFilter,
+        "teamid",
     ]  # Add 'countryid' to filter optionsßß
     search_fields = ["sokker_id", "name", "surname"]
 
@@ -443,4 +478,10 @@ class ArchivePlayerAdmin(ImportExportModelAdmin):
     get_attacker_points.admin_order_field = "att_points"  # Set the sorting field
 
 
+class NTTeamsStatsAdmin(admin.ModelAdmin):
+    list_display = ["countryid", "teamid", "ntmatches"]
+    list_filter = ["countryid", "teamid"]
+    search_fields = ["countryid", "teamid"]
+
+admin.site.register(NTTeamsStats, NTTeamsStatsAdmin)
 admin.site.register(ArchivePlayer, ArchivePlayerAdmin)

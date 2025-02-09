@@ -1,28 +1,40 @@
 from .models import Player, ArchivePlayer
 from django_tables2.views import MultiTableMixin
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .utils import (
     get_fullname_wrapper,
     get_att_wrapper,
     get_gk_wrapper,
     get_def_wrapper,
     get_mid_wrapper,
+    get_wing_wrapper,
 )
+from .forms import PlayerManualUpdateForm, PlayerForm
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, FormView
 from .menu import NTDB_SUB_MENU
 from .filters import PlayerAgeFilter, ArchivePlayerAgeFilter
 from .tables import (
     GKPlayerTable,
     DefPlayerTable,
     MidPlayerTable,
+    WingPlayerTable,
     AttPlayerTable,
     return_distinct_all_time_records_by_position,
     GKArchivePlayerTable,
     DefArchivePlayerTable,
     MidArchivePlayerTable,
+    WingArchivePlayerTable,
     AttArchivePlayerTable,
     ArchivePlayerDetailsTable,
+    NTGamesArchivePlayerTable,
+    NTGoalsArchivePlayerTable,
+    NTAssistsArchivePlayerTable,
+    GamesArchivePlayerTable,
+    GoalsArchivePlayerTable,
+    AssistsArchivePlayerTable,
+    NTTeamsStatsTable,
 )
 from sokker_base.models import Country, PointsRequirementsCountry, Team
 from django.db.models.functions import Lower
@@ -38,14 +50,165 @@ from decimal import Decimal
 from datetime import datetime
 from django.urls import reverse
 from django.http import HttpResponse
-import os
+from .utils import extract_skill_value, set_pharse_player_data
+from .models import NTTeamsStats
+import json
 
 logger = logging.getLogger(__name__)
 
 
 class NTDBIndex(TemplateView):
-    template_name = "ntdb/ntdb-index.html"  # Create this template
+    template_name = "ntdb/ntdb-index.html"
 
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            parsed_body = urllib.parse.parse_qs(request.body.decode("utf-8"))
+        except UnicodeDecodeError:
+            parsed_body = urllib.parse.parse_qs(request.body.decode("latin-1"))
+
+        pid = parsed_body.get("pid", [""])[0]
+        player_data = parsed_body.get("player_data", [""])[0]   
+
+        logger.debug("Body: %s", parsed_body)
+        
+        # Process form data here
+        # Add your form processing logic
+        
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = _("NTDB Index")
+        context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
+        return context
+
+
+class PlayerManualUpdate(LoginRequiredMixin, FormView):
+    template_name = "ntdb/player-manual-update.html"
+    form_class = PlayerManualUpdateForm
+
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class()
+        step = request.POST.get("step", None)
+        playerForm = None
+        saved = False
+        sokker_id = request.GET.get("sokker_id", None)
+        if step == "1":
+            form = self.form_class(request.POST)
+            if form.is_valid():
+                pid = form.cleaned_data["pid"]
+                player_data = form.cleaned_data["player_data"]
+                # Extract values for each skill
+                sta = extract_skill_value(player_data, "stamina")
+                kee = extract_skill_value(player_data, "keeper")
+                pac = extract_skill_value(player_data, "pace")
+                def_skill = extract_skill_value(player_data, "defender")
+                tec = extract_skill_value(player_data, "technique")
+                pla = extract_skill_value(player_data, "playmaker")
+                pas = extract_skill_value(player_data, "passing")
+                str_skill = extract_skill_value(player_data, "striker")
+
+                player = Player.objects.filter(sokker_id=pid).first()
+
+                # Initialize form data with skills from parameters
+                player_form_data = {
+                    'sokker_id': pid,
+                    'skillstamina': sta,
+                    'skillkeeper': kee,
+                    'skillpace': pac,
+                    'skilldefending': def_skill,
+                    'skilltechnique': tec,
+                    'skillplaymaking': pla,
+                    'skillpassing': pas,
+                    'skillscoring': str_skill,
+                    'player_data': player_data,
+                }
+
+                # If player exists, add additional fields from database
+                if player:
+                    playerForm = PlayerForm(instance=player, initial=player_form_data)
+                else:
+                    playerForm = PlayerForm(initial=player_form_data)
+            else:
+                playerForm = None
+
+        if step == "2":
+            playerForm = PlayerForm(request.POST)
+            if playerForm.is_valid():  # Check if form is valid first
+                # Create data dictionary for form initialization
+                form_data = {
+                    'pid': playerForm.cleaned_data["sokker_id"],
+                    'player_data': playerForm.cleaned_data["player_data"]
+                }
+                form = PlayerManualUpdateForm(initial=form_data)
+                # Set the date before saving
+                player = Player.objects.filter(sokker_id=playerForm.cleaned_data["sokker_id"]).first()
+                if player:
+                    player.skillstamina = playerForm.cleaned_data["skillstamina"]
+                    player.skillkeeper = playerForm.cleaned_data["skillkeeper"]
+                    player.skillpace = playerForm.cleaned_data["skillpace"]
+                    player.skilldefending = playerForm.cleaned_data["skilldefending"]
+                    player.skilltechnique = playerForm.cleaned_data["skilltechnique"]
+                    player.skillplaymaking = playerForm.cleaned_data["skillplaymaking"]
+                    player.skillpassing = playerForm.cleaned_data["skillpassing"]
+                    player.skillscoring = playerForm.cleaned_data["skillscoring"]
+                    player.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    saved = True
+                    player.save()
+                else:
+                    player = Player()
+                    player.sokker_id = playerForm.cleaned_data["sokker_id"]
+                    player.skillstamina = playerForm.cleaned_data["skillstamina"]
+                    player.skillkeeper = playerForm.cleaned_data["skillkeeper"]
+                    player.skillpace = playerForm.cleaned_data["skillpace"]
+                    player.skilldefending = playerForm.cleaned_data["skilldefending"]
+                    player.skilltechnique = playerForm.cleaned_data["skilltechnique"]
+                    player.skillplaymaking = playerForm.cleaned_data["skillplaymaking"]
+                    player.skillpassing = playerForm.cleaned_data["skillpassing"]
+                    player.skillscoring = playerForm.cleaned_data["skillscoring"]
+                    player.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    player.save()
+                    saved = True
+                  
+                
+            else:
+                # Handle invalid form case
+               
+                form = PlayerManualUpdateForm(initial={'pid': sokker_id})  # Create empty form if validation fails
+      
+        context = self.get_context_data(form=form, playerForm=playerForm, saved=saved, **kwargs)
+        return self.render_to_response(context)
+        
+    def get(self, request, *args, **kwargs):
+        # Get sokker_id from URL parameters
+        sokker_id = request.GET.get("sokker_id", None)
+        # Initialize form with sokker_id if provided
+        player_data = set_pharse_player_data(None)
+        if sokker_id:
+            player = Player.objects.filter(sokker_id=sokker_id).first()
+            if player:
+                player_data = set_pharse_player_data(player) 
+
+        form = self.form_class(initial={'pid': sokker_id, 'player_data': player_data}) if sokker_id else self.form_class(initial={'player_data': player_data})
+        context = self.get_context_data(form=form, **kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = _("Player Manual Update")
+        context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
+        return context
 
 class PlayerUpdate(TemplateView):
     template_name = "ntdb/skill-form.html"  # Create this template
@@ -86,12 +249,19 @@ class PlayerUpdate(TemplateView):
         req = PointsRequirementsCountry.objects.filter(
             country__code=countryid, age=age
         ).first()
+    
         # fallback to bulgaria
         if not req:
+            logger.error("No requirements found for country: %s age: %s", countryid, age)
             req = PointsRequirementsCountry.objects.filter(
-                country__code=54, age=age
+                country__code=countryid, age=28
             ).first()
-
+        if not req:
+            logger.error("No requirements found for country: %s age: %s", "BG", age)
+            req = PointsRequirementsCountry.objects.filter(
+                country__code=54, age=28
+            ).first()
+            
         if not player:
             player = Player()
         if pid:
@@ -121,7 +291,8 @@ class PlayerUpdate(TemplateView):
                 or Decimal(player.calculate_gk_points()) >= req.gk_points
             ):
                 player.save()
-                logger.debug("Saved: %s", player)
+                logger.debug("Player saved: %s", player)
+
 
                 url = f"https://sokker.org/api/player/{player.sokker_id}"
                 print("sokker id" ": " + str(player.sokker_id))
@@ -180,6 +351,13 @@ class PlayerUpdate(TemplateView):
                     player.injurydays = injury["daysRemaining"]
                     player.daily_update = current_date
                     player.save()
+                    logger.debug("Player saved: %s", player)
+                else:
+                    logger.error("call to sokker failed: %s", pid)
+            else:
+                logger.error("Player do not meet requirements: %s", pid)
+        else:
+            logger.error("Player not found: %s", pid)
 
         context = self.get_context_data(**kwargs)  # Optionally, get context data
         return self.render_to_response(context)
@@ -237,6 +415,7 @@ class PlayerHistory(MultiTableMixin, TemplateView):
     context_object_name = "objects"
     country = None  # Initialize class attribute to store country_name
     player = None
+    is_active = False
     tables = []
 
     def dispatch(self, request, *args, **kwargs):
@@ -253,12 +432,13 @@ class PlayerHistory(MultiTableMixin, TemplateView):
         try:
             sokker_id = int(self.sokker_id)
             player = Player.objects.filter(sokker_id=sokker_id).first()
+            self.is_active = True
         except ValueError:
             # Handle the error, log it, or provide a fallback
             player = None  # or some other default behavior
         if not player:
-            player = ArchivePlayer.objects.filter(sokker_id=self.sokker_id).first()
-
+            player = ArchivePlayer.objects.filter(sokker_id=self.sokker_id).order_by("-age").first()
+            self.is_active = False
         self.player = player
         if self.player:
             self.tables = [
@@ -268,6 +448,7 @@ class PlayerHistory(MultiTableMixin, TemplateView):
                         att_points=get_att_wrapper(),
                         def_points=get_def_wrapper(),
                         mid_points=get_mid_wrapper(),
+                        wing_points=get_wing_wrapper(),
                         gk_points=get_gk_wrapper(),
                     ).filter(sokker_id=self.player.sokker_id),
                     order_by="-age",
@@ -293,6 +474,7 @@ class PlayerHistory(MultiTableMixin, TemplateView):
         context["menu_type"] = "NTDB"
         context["country"] = self.country
         context["player"] = self.player
+        context["is_active"] = self.is_active
         return context
 
 
@@ -303,7 +485,7 @@ class BestPlayers(MultiTableMixin, FilterView):
     tables = []
     age_filter = None
     filterset_class = PlayerAgeFilter
-    table_pagination = {"per_page": 50}
+    table_pagination = {"per_page": 100}
 
     def dispatch(self, request, *args, **kwargs):
         self.country_name = kwargs.get("country_name")
@@ -352,6 +534,16 @@ class BestPlayers(MultiTableMixin, FilterView):
                     .exclude(surname=""),
                     order_by="-mid_points",
                 ),
+                WingPlayerTable(
+                    Player.objects.annotate(fullname=get_fullname_wrapper())
+                    #.filter(position="MID")
+                    .filter(countryid=self.country.code)
+                    .filter(age__lte=end_age)
+                    .filter(age__gte=start_age)
+                    .exclude(name="")
+                    .exclude(surname=""),
+                    order_by="-wing_points",
+                ),
                 AttPlayerTable(
                     Player.objects.annotate(fullname=get_fullname_wrapper())
                     .filter(position="ATT")
@@ -373,29 +565,183 @@ class BestPlayers(MultiTableMixin, FilterView):
         context["page_siblings"] = NTDB_SUB_MENU
         context["menu_type"] = "NTDB"
         context["country"] = self.country
+        context["submenu"] = 'best' 
+        context["active_table"] = 1
         return context
 
 
-def debug_view(request, country_name):
-    # Get the client's IP address
-    # Set the log file path (adjust this as needed)
-    LOG_FILE_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "ip_logs.txt"
-    )
-    ip_address = request.META.get("REMOTE_ADDR")
-    user_agent = request.META.get("HTTP_USER_AGENT")
+class BestPlayersAllStats(MultiTableMixin, FilterView):
+    template_name = "ntdb/players-best.html"
+    context_object_name = "objects"
+    country = None  # Initialize class attribute to store country_name
+    age_filter = None
+    filterset_class = ArchivePlayerAgeFilter
+    table_pagination = {"per_page": 100}
 
-    # Get the current date and time
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    def dispatch(self, request, *args, **kwargs):
 
-    # Log the IP address and current time to a file
-    with open(LOG_FILE_PATH, "a") as log_file:
-        log_file.write(
-            f"IP: {ip_address}, DateTime: {current_time} , UserAgent: {user_agent} \n"
+        self.country_name = kwargs.get("country_name")
+        self.country = (
+            Country.objects.annotate(name_lower=Lower("name"))
+            .filter(name_lower=self.country_name.lower())
+            .first()
         )
 
-    # Your view logic here
-    return HttpResponse("Best players view was moved")
+        self.age_filter = request.GET.get("age")
+        if not self.age_filter:
+            start_age = 16
+            end_age = 40
+        else:
+            start_age = self.age_filter
+            end_age = self.age_filter
+
+        self.tables = [
+            NTGamesArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "NT_GAMES", self.country, start_age, end_age
+                ),
+                order_by="ntmatches_max",
+            ),
+            NTGoalsArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "NT_GOALS", self.country, start_age, end_age
+                ),
+                order_by="ntgoals_max",
+            ),
+            NTAssistsArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "NT_ASSISTS", self.country, start_age, end_age
+                ),
+                order_by="ntassists_max",
+            ),
+            GamesArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "GAMES", self.country, start_age, end_age
+                ),
+                order_by="games_max",
+            ),
+            GoalsArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "GOALS", self.country, start_age, end_age
+                ),
+                order_by="goals_max",
+            ),
+            AssistsArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "ASSISTS", self.country, start_age, end_age
+                ),
+                order_by="assists_max",
+            ),
+           
+        ]
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Add additional variables to the context
+        context["page_title"] = _("Best Players All Time Stats")
+        context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
+        context["country"] = self.country
+        context["submenu"] = 'all_stats'
+        context["active_table"] = 1
+        return context
+
+
+class BestPlayersAllStatsTeams(MultiTableMixin, TemplateView):
+    template_name = "ntdb/players-best.html"
+    context_object_name = "objects"
+    country = None  # Initialize class attribute to store country_name
+    age_filter = None
+    table_pagination = {"per_page": 100}
+    active_table = 1
+    def dispatch(self, request, *args, **kwargs):
+        self.country_name = kwargs.get("country_name")
+        self.country = (
+            Country.objects.annotate(name_lower=Lower("name"))
+            .filter(name_lower=self.country_name.lower())
+            .first()
+        )
+
+        # Get sort parameters from request
+        table1_sort = request.GET.get('table_0-sort', None)
+        table2_sort = request.GET.get('table_1-sort', None)
+        
+        # Set active_table based on sort parameters
+        if table1_sort and table2_sort:
+            self.active_table = 1
+        elif table1_sort:
+            self.active_table = 1
+        elif table2_sort:
+            self.active_table = 2
+        if not table1_sort:
+            table1_sort = '-ntmatches'
+        if not table2_sort:
+            table2_sort = '-ntmatches'
+        self.tables = [
+            NTTeamsStatsTable(
+                NTTeamsStats.objects.filter(countryid=self.country.code, stat_type="team").order_by(table1_sort),
+                order_by=table1_sort,
+            ),
+            NTTeamsStatsTable(
+                NTTeamsStats.objects.filter(countryid=self.country.code, stat_type="youth").order_by(table2_sort),
+                order_by=table2_sort,
+            ),
+        ]
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Add additional variables to the context
+        context["page_title"] = _("Best Players All Time Stats Teams")
+        context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
+        context["country"] = self.country
+        context["submenu"] = 'stats_teams'
+        context["active_table"] = self.active_table  # Add active_table to context
+        return context
+
+
+class BestPlayersTeamStats(TemplateView):
+    template_name = "ntdb/players-best-team.html"
+    context_object_name = "objects"
+    country = None  # Initialize class attribute to store country_name
+    age_filter = None
+
+
+    def dispatch(self, request, *args, **kwargs):
+
+        self.country_name = kwargs.get("country_name")
+        self.team_id = kwargs.get("team_id")
+        self.country = (
+            Country.objects.annotate(name_lower=Lower("name"))
+            .filter(name_lower=self.country_name.lower())
+            .first()
+        )
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        team = Team.objects.filter(id=self.team_id).first()
+        team_stats = NTTeamsStats.objects.filter(countryid=self.country.code, stat_type="team", teamid=self.team_id).order_by("-ntmatches").first()
+        youth_stats = NTTeamsStats.objects.filter(countryid=self.country.code, stat_type="youth", teamid=self.team_id).order_by("-ntmatches").first()
+        if isinstance(team_stats.json_data, str):
+            team_stats.json_data = json.loads(team_stats.json_data)
+        if isinstance(youth_stats.json_data_youth, str):
+            youth_stats.json_data_youth = json.loads(youth_stats.json_data_youth)
+        # Add additional variables to the context
+        context["page_title"] = _("Best Players All Time Stats Teams")
+        context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
+        context["country"] = self.country
+        context["submenu"] = 'stats_teams'
+        context["team"] = team
+        context["team_stats"] = team_stats
+        context["youth_stats"] = youth_stats
+        context["active_table"] = 1
+        return context
+
 
 
 class BestPlayersAll(MultiTableMixin, FilterView):
@@ -442,6 +788,12 @@ class BestPlayersAll(MultiTableMixin, FilterView):
                 ),
                 order_by="-mid_points",
             ),
+            WingArchivePlayerTable(
+                return_distinct_all_time_records_by_position(
+                    "WING", self.country, start_age, end_age
+                ),
+                order_by="-wing_points",
+            ),
             AttArchivePlayerTable(
                 return_distinct_all_time_records_by_position(
                     "ATT", self.country, start_age, end_age
@@ -453,9 +805,12 @@ class BestPlayersAll(MultiTableMixin, FilterView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
         # Add additional variables to the context
         context["page_title"] = _("Best Players All Time")
         context["page_siblings"] = NTDB_SUB_MENU
         context["menu_type"] = "NTDB"
         context["country"] = self.country
+        context["submenu"] = 'all'
+        context["active_table"] = 1
         return context

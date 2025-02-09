@@ -77,112 +77,35 @@ apt install postgresql-15-postgis-3
 
 ## install in psql
 
-ALTER DATABASE mrcps_dev SET search_path=public,postgis,contrib;
-\connect mrcps_dev;
-
-CREATE SCHEMA postgis;
-
-CREATE EXTENSION postgis SCHEMA postgis;
-
-fly ssh console --app
-
-# export game sql example
-
-SELECT
-G.g_id AS id,
-CASE
-WHEN G.c_id = 1 THEN 6
-WHEN G.c_id = 2 THEN 7
-WHEN G.c_id = 3 THEN 8
-WHEN G.c_id = 4 THEN 9
-WHEN G.c_id = 5 THEN 10
-ELSE G.c_id -- This ensures that other values remain unchanged
-END AS c_id,
-T1.t_sokker_id AS t_id_h,
-T2.t_sokker_id AS t_id_v,
-G.g_status,
-G.group_id,  
- G.goals_home,
-G.goals_away,
-G.cup_round,
-G.matchID,
-G.playoff_position
-FROM `games` AS G
-JOIN `teams` AS T1 ON G.t_id_h = T1.t_id
-JOIN `teams` AS T2 ON G.t_id_v = T2.t_id;
 
 
-find . -type d -name "__pycache__" -exec rm -rf {} +
+ psql -U debug  -h localhost -p 5432 -d  sokker_web2 < structure.sql
+
+ pg_dump -U sokker_web -h localhost -p  5432 --schema-only -f structure.sql sokker_web
 
 
- SELECT G.g_id AS id, T1.t_sokker_id AS t_id_h, T2.t_sokker_id AS t_id_v, G.g_status, 
- CASE
-WHEN G.c_id = 22 THEN 446
-WHEN G.c_id = 21 THEN 447
-WHEN G.c_id = 24 THEN 448
-WHEN G.c_id = 25 THEN 449
-WHEN G.c_id = 26 THEN 450
-WHEN G.c_id = 27 THEN 451
-WHEN G.c_id = 28 THEN 452
-WHEN G.c_id = 29 THEN 453
-WHEN G.c_id = 30 THEN 454
-WHEN G.c_id = 31 THEN 455
-WHEN G.c_id = 32 THEN 456
-WHEN G.c_id = 33 THEN 457
-WHEN G.c_id = 34 THEN 458
-WHEN G.c_id = 35 THEN 459
+source /Users/svetlozar.viktorov/Projects/envs/sokker/env/bin/activate
+source load_env.sh 
 
-ELSE G.c_id -- This ensures that other values remain unchanged
-END AS c_id,G.group_id, G.goals_home, G.goals_away, G.cup_round, G.matchID, G.playoff_position FROM `games` AS G JOIN `teams` AS T1 ON G.t_id_h = T1.t_id JOIN `teams` AS T2 ON G.t_id_v = T2.t_id
+docker-compose up db -d
 
+# NTDB TEAM STATS
+ python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntmatches
+ python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntassists
+ python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntgoals
 
-  SELECT
- CASE
-WHEN G.c_id = 22 THEN 446
-WHEN G.c_id = 21 THEN 447
-WHEN G.c_id = 24 THEN 448
-WHEN G.c_id = 25 THEN 449
-WHEN G.c_id = 26 THEN 450
-WHEN G.c_id = 27 THEN 451
-WHEN G.c_id = 28 THEN 452
-WHEN G.c_id = 29 THEN 453
-WHEN G.c_id = 30 THEN 454
-WHEN G.c_id = 31 THEN 455
-WHEN G.c_id = 32 THEN 456
-WHEN G.c_id = 33 THEN 457
-WHEN G.c_id = 34 THEN 458
-WHEN G.c_id = 35 THEN 459
+python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntmatches
+python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntassists
+python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntgoals
 
-ELSE G.c_id -- This ensures that other values remain unchanged
-END AS c_id,
-G.g_id,
-T1.t_sokker_id as t_id
- FROM `cups_teams` AS G 
- JOIN `teams` AS T1 ON G.t_id = T1.t_id 
- LIMIT 1000
+# CL GAMES FETCH
+python manage.py fetch_cl_games --c_id=460
 
+# CL STANDINGS
+python manage.py update_standings_arcades
 
-  SELECT
- CASE
-WHEN G.c_id = 22 THEN 446
-WHEN G.c_id = 21 THEN 447
-WHEN G.c_id = 24 THEN 448
-WHEN G.c_id = 25 THEN 449
-WHEN G.c_id = 26 THEN 450
-WHEN G.c_id = 27 THEN 451
-WHEN G.c_id = 28 THEN 452
-WHEN G.c_id = 29 THEN 453
-WHEN G.c_id = 30 THEN 454
-WHEN G.c_id = 31 THEN 455
-WHEN G.c_id = 32 THEN 456
-WHEN G.c_id = 33 THEN 457
-WHEN G.c_id = 34 THEN 458
-WHEN G.c_id = 35 THEN 459
+# NTDB update active players
+python manage.py sokker_update_public
 
-ELSE G.c_id -- This ensures that other values remain unchanged
-END AS c_id,
-G.g_id,
-T1.t_sokker_id as t_id
- FROM `cups_draw` AS G 
- JOIN `teams` AS T1 ON G.t_id = T1.t_id 
- LIMIT 1000
+# Clear cache
+python manage.py clear_cache

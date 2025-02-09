@@ -9,7 +9,7 @@
           {% else %}
 
               {% if menu_type == 'NTDB' %} 
-              <li> <a href="{% url sibling.url country_name=country.name  %}" {% if sibling.title == page_title %}class="active"{% endif%}>{% if country %}{{ country.name }} -  {% endif %}{{ sibling.title }}</a> </li>
+              <li> <a href="{% url sibling.url country_name=country.name  %}" {% if sibling.title == page_title %}class="active"{% endif%}>{{ sibling.title }}</a> </li>
               {% endif %} 
               {% if menu_type == 'EURO' or menu_type == 'ARCADES' %}
               <li> <a href="{{ sibling.url }}" {% if sibling.title == page_title %}class="active"{% endif%}>{{ sibling.title }}</a> </li>

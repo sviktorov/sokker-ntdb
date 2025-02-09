@@ -18,16 +18,43 @@ CL_TEAMS = [
     ]
 
 
+def get_next_day(date_str):
+    """
+    Get the next day from a given date string.
+    
+    Args:
+        date_str (str): Date string in format 'YYYY-MM-DD'
+        
+    Returns:
+        str: Next day's date in format 'YYYY-MM-DD'
+    """
+    current_date = datetime.strptime(date_str, '%Y-%m-%d')
+    next_date = current_date + timedelta(days=1)
+    return next_date.strftime('%Y-%m-%d')
+
 def get_next_monday_or_saturday(start_date):
     """
     Get the next Monday or Saturday from the given date.
 
     Args:
-        start_date (datetime): The date to start from.
+        start_date (str or datetime): The date to start from. Can be a string in format 'YYYY-MM-DD' 
+                                    or a datetime object.
 
     Returns:
         datetime: The next Monday or Saturday.
     """
+    # Handle empty or None input by using current date
+    if not start_date:
+        start_date = datetime.now()
+    
+    # Convert string to datetime if needed
+    if isinstance(start_date, str):
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            # Handle invalid date string by using current date
+            start_date = datetime.now()
+
     days_ahead_monday = (7 - start_date.weekday() + 0) % 7  # 0 for Monday
     days_ahead_saturday = (7 - start_date.weekday() + 5) % 7  # 5 for Saturday
 
@@ -41,6 +68,36 @@ def get_next_monday_or_saturday(start_date):
 
     return min(next_monday, next_saturday)
 
+def get_next_thursday(start_date):
+    """
+    Get the next Thursday from the given date.
+
+    Args:
+        start_date (str or datetime): The date to start from. Can be a string in format 'YYYY-MM-DD' 
+                                    or a datetime object.
+
+    Returns:
+        datetime: The next Thursday.
+    """
+    # Handle empty or None input by using current date
+    if not start_date:
+        start_date = datetime.now()
+    
+    # Convert string to datetime if needed
+    if isinstance(start_date, str):
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            # Handle invalid date string by using current date
+            start_date = datetime.now()
+
+    days_ahead = (7 - start_date.weekday() + 3) % 7  # 3 for Thursday
+
+    if days_ahead == 0:  # If today is Thursday
+        days_ahead = 7
+
+    next_thursday = start_date + timedelta(days=days_ahead)
+    return next_thursday
 
 # Function to save fixtures to a file
 def save_fixtures_to_file(fixtures, filename="fixtures.json"):
@@ -260,8 +317,8 @@ def generate_fixtures_cl():
     Returns:
         list: A list of 8 rounds, each round containing 16 games in the format [round, home_id, away_id].
     """
-    seed = random.randint(1, 3)
-    filename = "cl_fixtures_{}.json".format(seed)
+
+    filename = "cl.json"
     fixtures = load_fixtures_from_file(filename)
     if fixtures:
         return fixtures, filename

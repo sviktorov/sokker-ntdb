@@ -198,4 +198,5 @@ class CupDetails(MultiTableMixin, TemplateView):
         context["cup"] = cup_object
         context["page_siblings"] = menu
         context["menu_type"] = "ARCADES"
+        context["groups"] = range(1, cup_object.c_groups +1)
         return context

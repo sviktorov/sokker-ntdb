@@ -38,7 +38,7 @@ class Cup(models.Model):
     c_active = models.BooleanField(default=False)  # Assuming this is a boolean field
     is_cl = models.BooleanField(default=False)
     c_start_date = models.DateTimeField(null=True, blank=True, default=None) 
-
+    rating_limit = models.FloatField(null=True, blank=True, default=None)
     def __str__(self):
         return self.c_name
 
@@ -49,6 +49,8 @@ class CupTeams(models.Model):
     t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
     g_id = models.IntegerField()
     pot_id = models.IntegerField(null=True, blank=True, default=0)
+    rating = models.FloatField(null=True, blank=True, default=0)
+    cl_draw = models.IntegerField(null=True, blank=True, default=0)
 
     def __str__(self):
         return f"Game {self.id}: {self.c_id} vs {self.t_id}"
@@ -86,19 +88,50 @@ class Game(models.Model):
         null=True,
         blank=True,
     )
-    g_status = models.CharField(max_length=50)
+    g_status = models.CharField(max_length=50, null=True, blank=True, default="")
     group_id = models.CharField()
     goals_home = models.IntegerField(null=True, blank=True)
     goals_away = models.IntegerField(null=True, blank=True)
+    rating_home = models.FloatField(null=True, blank=True, default=None)
+    rating_away = models.FloatField(null=True, blank=True, default=None)
     cup_round = models.CharField(max_length=50)
     matchID = models.CharField(max_length=255)
     playoff_position = models.CharField(max_length=50, null=True, blank=True)
+    
 
     def __str__(self):
         return (
             f"Game {self.id}: {self.t_id_h} vs {self.t_id_v} - Status: {self.g_status}"
         )
 
+    def score_display(self):
+        if self.goals_home is not None and self.goals_away is not None:
+            return f"{self.goals_home} - {self.goals_away}"
+        return "N/A"
+    
+    def score_display_invert(self):
+        if self.goals_home is not None and self.goals_away is not None:
+            return f"{self.goals_away} - {self.goals_home}"
+        return "N/A"
+
+    def score_display_by_team(self, team_id):
+        if self.t_id_h.id == team_id:
+            return self.score_display()
+        else:
+            return self.score_display_invert()
+    
+    def score_points_by_team(self, team_id):
+        if self.t_id_h.id == team_id:
+            return self.home_points()
+        else:
+            return self.away_points()
+
+    def score_display_by_team_as_class(self, team_id):
+        if self.t_id_h.id == team_id:
+            return self.home_status()
+        else:
+            return self.away_status()
+    
     def away_points(self):
         if self.goals_home is None or self.goals_away is None:
             return 0

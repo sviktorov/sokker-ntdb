@@ -1,0 +1,92 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load cache %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% load i18n %}
+{% block title %}{{ cup.c_name }}{% endblock %}
+{% load custom_tags_arcades %}
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}  
+<style>
+    .game-statistics td.win strong {
+        color:#28a745 !important;
+    }
+    .game-statistics td.loss strong {
+        color:#dc3545 !important;
+    }
+    .game-statistics td.draw strong {
+        color:#38a1f3 !important;
+    }
+</style>
+
+<div class="main-content innerpagebg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+       <!--Start-->
+       <div class="matach-groups">
+            <div class="container">
+                {% include "arcades/includes/submenu.html" with cup=cup %} 
+                <div class="game-statistics">
+                    <h4>Cup POT Statistics</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="text-right">POTS</th>
+                                {% for pot in distinct_pots %}
+                                    <th class="text-center" colspan="3">POT {{ pot }}</th>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <th class="text-left">TEAMS</th>
+                                {% for pot in distinct_pots %}
+                                    <th class="text-center">Game 1</th>
+                                    <th class="text-center">Game 2</th>
+                                    <th class="text-center">Points</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rank in rank_groups %}
+                            <tr>
+                                <td class="text-left">{{ forloop.counter }}. {{ rank.t_id.name }}</td>
+                                    {% for pot in distinct_pots %}
+                                        {% get_team_pot_game c_id=cup.id team_id=rank.t_id.id  pot_id=pot game_number=1  as game1 %}
+                                        {% get_team_pot_game c_id=cup.id team_id=rank.t_id.id  pot_id=pot game_number=2  as game2 %}
+                                        <td data-points="{% score_points_for_team game1 rank.t_id.id %}" class="{% score_display_for_team_as_class game1 rank.t_id.id %}"><strong>{% score_display_for_team game1 rank.t_id.id %}</strong></td>
+                                        <td data-points="{% score_points_for_team game2 rank.t_id.id %}" class="{% score_display_for_team_as_class game2 rank.t_id.id %}"><strong>{% score_display_for_team game2 rank.t_id.id %}</strong></td>
+                                        <td></td>
+                                    {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all rows in the table
+        const rows = document.querySelectorAll('.game-statistics tbody tr');
+        
+        rows.forEach(row => {
+            // For each row, get all pairs of game cells (excluding the team name cell and points cells)
+            const gameCells = row.querySelectorAll('td[data-points]');
+            
+            // Process cells in pairs (game1 and game2 for each pot)
+            for(let i = 0; i < gameCells.length; i += 2) {
+                const game1Points = parseInt(gameCells[i].getAttribute('data-points')) || 0;
+                const game2Points = parseInt(gameCells[i + 1].getAttribute('data-points')) || 0;
+                const totalPoints = game1Points + game2Points;
+                
+                // The points cell is right after each pair of game cells
+                const pointsCell = gameCells[i + 1].nextElementSibling;
+                pointsCell.textContent = totalPoints;
+            }
+        });
+    });
+</script>
+{% endblock %}

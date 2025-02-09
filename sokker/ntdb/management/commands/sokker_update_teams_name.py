@@ -15,7 +15,7 @@ class Command(BaseCommand):
         response = auth_sokker()
         now = datetime.now()
         today_date = datetime.now().date()
-        teams = Team.objects.exclude(daily_update__date=today_date)
+        teams = Team.objects.exclude(daily_update__date=today_date).exclude(name__isnull=False).exclude(name='')
 
         if response:
             # Query all records from the Player table

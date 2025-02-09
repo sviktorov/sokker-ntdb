@@ -5,6 +5,7 @@
 {% load i18n %}
 {% block title %}{{ cup.c_name }}{% endblock %}
 {% load custom_tags %}
+{% load custom_tags_arcades %}
 {% block content %}
 {% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}
   
@@ -63,10 +64,15 @@
                                        </div>
                                        {% for round in rounds %}
 
-                                          {% get_group_games_arcades cup_id=cup.pk group_id=group rounds=round as group_games %}                      
+                                          {% get_group_games_arcades cup_id=cup.pk group_id=group rounds=round as group_games %}    
+                                          {% if round == 1 %}
+                                            {% define val=cup.c_start_date as  next_cl_date %}            
+                                          {% else %}
+                                             {% get_next_cl_date date=next_cl_date as next_cl_date %}                  
+                                          {% endif %}
                                           <div class="col-lg-6 col-md-6">
                                              <div class="group-box">
-                                                <h6>{{ cup.c_name}} - Round {{ round }}</h6>
+                                                <h6>{{ cup.c_name}} - Round {{ round }} - {{ next_cl_date|date:"d.m.Y" }}</h6>
                                                 <ul>
                                                    {% for game in group_games %}
                                                       {% include "arcades/includes/game_block_fixtures.html" with  game=game cup=cup %}       

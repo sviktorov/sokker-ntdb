@@ -1,0 +1,173 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% load ntdb %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
+
+
+<div class="main-content wf100"> 
+    <section class="team wf100 p80">
+        <div class="container">
+            
+            {% if team %}
+            <div class="row">
+              <h3>Team in sokker: {{ team.name }}</h3>
+            </div>
+            {% endif %}
+
+
+            <div class="row">
+                <div class="product-tabs">
+                    <nav>
+                        <div class="nav nav-tabs" id="nav-tab" role="tablist"> 
+                            <a class="nav-item nav-link {% if active_table == 1 %}active{% endif %}" id="nav-1-tab" data-toggle="tab" href="#nav-1" role="tab" aria-controls="nav-1" aria-selected="true">NT Players in Team</a> 
+                            <a class="nav-item nav-link {% if active_table == 2 %}active{% endif %}" id="nav-2-tab" data-toggle="tab" href="#nav-2" role="tab" aria-controls="nav-2" aria-selected="false">NT Players from Youth Team</a>
+                        </div>
+                     </nav>
+                     <div class="tab-content" id="nav-tabContent">
+                        <!-- Render the tables -->
+                        <div class="tab-pane {% if active_table == 1 %}active{% else %}show fade{% endif %}" id="nav-1" role="tabpanel" aria-labelledby="nav-1">
+                                <div class="col-lg-12 col-md-12"> 
+                                    <div class="career-facts">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="white-space: nowrap; min-width: 250px; width: auto;">Player</th>
+                                                <th colspan="4">NT Matches</th>
+                                                <th colspan="4">NT Goals</th>
+                                                <th colspan="4">NT Assists</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th colspan="2">NT</th>
+                                                <th colspan="2">NT U21</th>
+                                                <th colspan="2">NT</th>
+                                                <th colspan="2">NT U21</th>
+                                                <th colspan="2">NT</th>
+                                                <th colspan="2">NT U21</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                        {% for player in team_stats.json_data %}
+                                        <tr>
+                                            <td>{% get_player_stats sokker_id=player stat_type='name' as p_name %}{{ p_name }} 
+                                                <a href="/ntdb/{{ country.name }}/player-history/{{ player }}"><i class="fas fa-chart-line"></i></a> 
+                                                <a href="https://sokker.org/player/PID/{{ player.sokker_id }}"><i class="fas fa-futbol"></i></a>
+                                            </td>
+                                            <td>{% get_player_stats sokker_id=player stat_type='ntmatches' as ntmatches %}{{ ntmatches }}</td>
+                                            <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='team' stat_name='ntmatches' season_limit=16  as ntmatches_in %}{{ ntmatches_in }}</td>
+                                            <td>{% get_player_stats sokker_id=player stat_type='ntmatches' age_limit=21 as ntmatches_21 %}{{ ntmatches_21 }}</td>
+                                            <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='team' stat_name='ntmatches' age_limit=21 season_limit=16 as ntmatches_in %}{{ ntmatches_in }}</td>
+
+                                            <td>{% get_player_stats sokker_id=player stat_type='ntgoals' as ntgoals %}{{ ntgoals }}</td>
+                                            <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='team' stat_name='ntgoals' season_limit=16 as ntgoals_in %}{{ ntgoals_in }}</td>
+                                            <td>{% get_player_stats sokker_id=player stat_type='ntgoals' age_limit=21 as ntgoals_21 %}{{ ntgoals_21 }}</td>
+                                            <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='team' stat_name='ntgoals' season_limit=16 as ntgoals_in %}{{ ntgoals_in }}</td>
+
+
+                                            <td>{% get_player_stats sokker_id=player stat_type='ntassists' as ntassists %}{{ ntassists }}</td>
+                                            <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='team' stat_name='ntassists'  as ntassists_in %}{{ ntassists_in }}</td>
+                                            <td>{% get_player_stats sokker_id=player stat_type='ntassists' age_limit=21 as ntassists_21 %}{{ ntassists_21 }}</td>
+                                            <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='team' stat_name='ntassists' age_limit=21 as ntassists_in %}{{ ntassists_in }}</td>
+
+                                        </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                        </table>    
+                                    </div>
+                                </div>
+                        </div>
+                        <div class="tab-pane a {% if active_table == 2 %}active{% else %}show fade{% endif %}" id="nav-2" role="tabpanel" aria-labelledby="nav-2">
+                            <div class="col-lg-12 col-md-12"> 
+                                <div class="career-facts">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th style="white-space: nowrap; min-width: 250px; width: auto;">Player</th>
+                                                <th colspan="4">NT Matches</th>
+                                                <th colspan="4">NT Goals</th>
+                                                <th colspan="4">NT Assists</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th colspan="2">NT</th>
+                                                <th colspan="2">NT U21</th>
+                                                <th colspan="2">NT</th>
+                                                <th colspan="2">NT U21</th>
+                                                <th colspan="2">NT</th>
+                                                <th colspan="2">NT U21</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                                <th>All</th>
+                                                <th>In</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {% for player in youth_stats.json_data_youth %}
+                                            <tr>
+                                                <td>{% get_player_stats sokker_id=player stat_type='name' as p_name %}{{ p_name }} 
+                                                    <a href="/ntdb/{{ country.name }}/player-history/{{ player }}"><i class="fas fa-chart-line"></i></a> 
+                                                    <a href="https://sokker.org/player/PID/{{ player.sokker_id }}"><i class="fas fa-futbol"></i></a>
+                                                </td>
+                                            
+                                                <td>{% get_player_stats sokker_id=player stat_type='ntmatches' age_limit=21 as ntmatches %}{{ ntmatches }}</td>
+                                                <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='youth' age_limit=21 stat_name='ntmatches' season_limit=16  as ntmatches_in %}{{ ntmatches_in }}</td>
+                                                <td>{% get_player_stats sokker_id=player stat_type='ntmatches' age_limit=21 as ntmatches_21 %}{{ ntmatches_21 }}</td>
+                                                <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='youth' stat_name='ntmatches' age_limit=21 season_limit=16 as ntmatches_in %}{{ ntmatches_in }}</td>
+    
+                                                <td>{% get_player_stats sokker_id=player stat_type='ntgoals' age_limit=21 as ntgoals %}{{ ntgoals }}</td>
+                                                <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='youth' age_limit=21 stat_name='ntgoals' season_limit=16 as ntgoals_in %}{{ ntgoals_in }}</td>
+                                                <td>{% get_player_stats sokker_id=player stat_type='ntgoals' age_limit=21 as ntgoals_21 %}{{ ntgoals_21 }}</td>
+                                                <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='youth' stat_name='ntgoals' age_limit=21 season_limit=16 as ntgoals_in %}{{ ntgoals_in }}</td>
+    
+    
+                                                <td>{% get_player_stats sokker_id=player stat_type='ntassists' age_limit=21 as ntassists %}{{ ntassists }}</td>
+                                                <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='youth' stat_name='ntassists' age_limit=21 season_limit=16 as ntassists_in %}{{ ntassists_in }}</td>
+                                                <td>{% get_player_stats sokker_id=player stat_type='ntassists' age_limit=21 as ntassists_21 %}{{ ntassists_21 }}</td>
+                                                <td>{% get_player_stats_in_team team_id=team.id sokker_id=player stat_type='youth' stat_name='ntassists' age_limit=21 season_limit=16 as ntassists_in %}{{ ntassists_in }}</td>
+    
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>   
+                                </div>
+                            </div>
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

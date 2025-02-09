@@ -1,4 +1,4 @@
-from .models import Player, ArchivePlayer
+from .models import Player, ArchivePlayer, NTTeamsStats
 from sokker_base.models import Country
 from django_filters import FilterSet
 import django_tables2 as tables
@@ -9,6 +9,13 @@ from .utils import (
     get_mid_wrapper,
     get_att_wrapper,
     get_fullname_wrapper,
+    get_wing_wrapper,
+    get_ntgames_wrapper,
+    get_ntgoals_wrapper,
+    get_ntassists_wrapper,
+    get_games_wrapper,
+    get_goals_wrapper,
+    get_assists_wrapper,
 )
 from django.urls import reverse
 from django.utils.safestring import mark_safe
@@ -18,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 class TeamColumn(tables.Column):
+    _country_cache = {}  # Class-level cache for country names
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.orderable = False
@@ -31,9 +40,59 @@ class TeamColumn(tables.Column):
         if team is None:
             return "x"  # Return a default value if teamid is not found
 
+        flag_image = ""
+        if team and team.country:
+            flag_image = f"https://sokker.org/static/pic/flags/{team.country.code}.svg"
+
+        # Use cached country name if available
+        if record.countryid not in self._country_cache:
+            country = Country.objects.filter(code=record.countryid).first()
+            self._country_cache[record.countryid] = country.name if country else None
+        
+        country_name = self._country_cache[record.countryid]
+        
         url = f"https://sokker.org/en/app/team/{team.id}/"
-        html_string = f'<a href="{url}" target="_blank"><img width="20" height="13" src="https://sokker.org/static/pic/flags/{team.country.code}.svg" alt="Team Flag">{team.name}</a>'
+        url2 = reverse('best_players_team_stats', kwargs={'team_id': team.id, 'country_name': country_name})
+        html_string = f'{team.name} <img width="20" height="13" src="{flag_image}" alt="Team Flag"> \
+                        <a href="{url2}" target="_blank"><i class="fas fa-chart-line"></i></a> \
+                        <a href="{url}" target="_blank"><i class="fas fa-futbol"></i></a>'
+        return mark_safe(html_string)  # Mark HTML as safe for renderingMark HTML as safe for rendering
+
+
+class YouthTeamColumn(tables.Column):
+    _country_cache = {}  # Class-level cache for country names
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.orderable = False
+        self.verbose_name = _("Youth Team")
+
+    def render(self, value, record):
+        logger.debug("render() called with value: %s, record: %s", value, record)
+        team = getattr(
+            record, "youthteamid", None
+        )  # Get the teamid attribute from the record
+        if team is None:
+            return "x"  # Return a default value if teamid is not found
+
+        flag_image = ""
+        if team and team.country:
+            flag_image = f"https://sokker.org/static/pic/flags/{team.country.code}.svg"
+
+        # Use cached country name if available
+        if record.countryid not in self._country_cache:
+            country = Country.objects.filter(code=record.countryid).first()
+            self._country_cache[record.countryid] = country.name if country else None
+        
+        country_name = self._country_cache[record.countryid]
+        
+
+        url = f"https://sokker.org/en/app/team/{team.id}/"
+        url2 = reverse('best_players_team_stats', kwargs={'team_id': team.id, 'country_name': country_name})
+        html_string = f'{team.name} <img width="20" height="13" src="{flag_image}" alt="Team Flag"> \
+                        <a href="{url2}" target="_blank"><i class="fas fa-chart-line"></i></a> \
+                        <a href="{url}" target="_blank"><i class="fas fa-futbol"></i></a>'
         return mark_safe(html_string)  # Mark HTML as safe for rendering
+
 
 
 class SokkerID(tables.Column):
@@ -49,7 +108,7 @@ class SokkerID(tables.Column):
         if sokker_id is None:
             return "-"  # Return a default value if sokker_id is not found
         url = "https://sokker.org/player/PID/{}".format(sokker_id)
-        html_string = f'<a href="{url}" target="_blank">link</a>'
+        html_string = f'<a href="{url}" target="_blank"><i class="fas fa-futbol"></i></a>'
         return mark_safe(html_string)
 
 
@@ -61,6 +120,7 @@ class RankInTable(tables.TemplateColumn):
 
 
 class FullNameColumn(tables.Column):
+    _country_cache = {}  # Class-level cache for country names
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.orderable = False  # Set the column as not orderable
@@ -82,13 +142,19 @@ class FullNameColumn(tables.Column):
         country_id = record.countryid
         if not country_id:
             country_id = 54
-        country = Country.objects.filter(code=country_id).first()
+        if country_id not in self._country_cache:
+            country = Country.objects.filter(code=country_id).first()
+            self._country_cache[country_id] = country.name if country else None
+        country_name = self._country_cache[country_id]
 
         url = reverse(
             "player_history",
-            kwargs={"sokker_id": sokker_id, "country_name": country.name},
+            kwargs={"sokker_id": sokker_id, "country_name": country_name},
         )
-        html_string = f'<a href="{url}">{value}</a>'
+ # Return a default value if sokker_id is not found
+        url2 = "https://sokker.org/player/PID/{}".format(sokker_id)
+        html_string = f'{value} <a href="{url}" target="_blank"><i class="fas fa-chart-line"></i></a> \
+                       <a href="{url2}" target="_blank"><i class="fas fa-futbol"></i></a>'
         return mark_safe(html_string)
 
 
@@ -140,6 +206,21 @@ class MidPointsColumn(tables.Column):
         return (queryset, True)
 
 
+class WingPointsColumn(tables.Column):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.verbose_name = _("WING")
+
+    def order(self, queryset, is_descending):
+        if is_descending:
+            order_by_string = "-wing_points"
+        else:
+            order_by_string = "wing_points"
+        queryset = queryset.annotate(
+            wing_points=get_wing_wrapper(),
+        ).order_by(order_by_string)
+        return (queryset, True)
+
 class AttPointsColumn(tables.Column):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -157,8 +238,9 @@ class AttPointsColumn(tables.Column):
 
 
 class PlayerTable(tables.Table):
+    teamid = TeamColumn()
+    youthteamid = YouthTeamColumn()
     rank = RankInTable("{{ row_counter|add:'1' }}")
-    sokker_id = SokkerID()
     fullname = FullNameColumn()
 
     def get_queryset(self):
@@ -170,14 +252,14 @@ class PlayerTable(tables.Table):
     class Meta:
         model = Player
         per_page = 100
-        fields = ("rank", "sokker_id", "fullname", "age")
-        sequence = ("rank", "sokker_id", "fullname", "age")
+        fields = ("rank", "fullname", "age", "teamid", "youthteamid")
+        sequence = ("rank", "fullname", "age", "teamid", "youthteamid")
 
 
 class ArchivePlayerTable(tables.Table):
-    team_link = TeamColumn()
+    teamid = TeamColumn()
+    youthteamid = YouthTeamColumn()
     rank = RankInTable("{{ row_counter|add:'1' }}")
-    sokker_id = SokkerID()
     fullname = FullNameColumn()
 
     def get_queryset(self):
@@ -190,8 +272,8 @@ class ArchivePlayerTable(tables.Table):
     class Meta:
         model = ArchivePlayer
         per_page = 100
-        fields = ("rank", "sokker_id", "fullname", "age", "teamid")
-        sequence = ("rank", "sokker_id", "fullname", "age", "teamid")
+        fields = ("rank", "fullname", "age", "teamid", "youthteamid")
+        sequence = ("rank", "fullname", "age", "teamid", "youthteamid")
 
 
 class GKPlayerTable(PlayerTable):
@@ -209,8 +291,8 @@ class GKPlayerTable(PlayerTable):
     class Meta:
         model = Player
         template_name = "django_tables2/bootstrap.html"
-        fields = ("rank", "sokker_id", "fullname", "age", "gk_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "gk_points")
+        fields = ("rank", "fullname", "age", "gk_points")
+        sequence = ("rank", "fullname", "age", "gk_points")
 
 
 class GKArchivePlayerTable(ArchivePlayerTable):
@@ -226,8 +308,8 @@ class GKArchivePlayerTable(ArchivePlayerTable):
         return queryset.order_by("-gk_points")
 
     class Meta:
-        fields = ("rank", "sokker_id", "fullname", "age", "gk_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "gk_points")
+        fields = ("rank", "fullname", "age", "gk_points")
+        sequence = ("rank", "fullname", "age", "gk_points")
 
 
 class DefPlayerTable(PlayerTable):
@@ -243,8 +325,8 @@ class DefPlayerTable(PlayerTable):
         return queryset.order_by("-def_points")
 
     class Meta:
-        fields = ("rank", "sokker_id", "fullname", "age", "def_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "def_points")
+        fields = ("rank", "fullname", "age", "def_points")
+        sequence = ("rank", "fullname", "age", "def_points")
 
 
 class DefArchivePlayerTable(ArchivePlayerTable):
@@ -261,8 +343,8 @@ class DefArchivePlayerTable(ArchivePlayerTable):
 
     class Meta:
         template_name = "django_tables2/bootstrap.html"
-        fields = ("rank", "sokker_id", "fullname", "age", "def_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "def_points")
+        fields = ("rank", "fullname", "age", "def_points")
+        sequence = ("rank", "fullname", "age", "def_points")
 
 
 class MidPlayerTable(PlayerTable):
@@ -271,15 +353,31 @@ class MidPlayerTable(PlayerTable):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.annotate(
-            def_points=get_mid_wrapper(),
+            mid_points=get_mid_wrapper(),
         )
 
         queryset.filter(position="MID")
         return queryset.order_by("-mid_points")
 
     class Meta:
-        fields = ("rank", "sokker_id", "fullname", "age", "mid_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "mid_points")
+        fields = ("rank", "fullname", "age", "mid_points")
+        sequence = ("rank", "fullname", "age", "mid_points")
+
+class WingPlayerTable(PlayerTable):
+    wing_points = WingPointsColumn()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            wing_points=get_wing_wrapper(),
+        )
+
+        queryset.filter(position="MID")
+        return queryset.order_by("-wing_points")
+
+    class Meta:
+        fields = ("rank", "fullname", "age", "wing_points")
+        sequence = ("rank", "fullname", "age", "wing_points")
 
 
 class MidArchivePlayerTable(ArchivePlayerTable):
@@ -288,15 +386,31 @@ class MidArchivePlayerTable(ArchivePlayerTable):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.annotate(
-            def_points=get_mid_wrapper(),
+            mid_points=get_mid_wrapper(),
         )
 
         queryset.filter(position="MID")
         return queryset.order_by("-mid_points")
 
     class Meta:
-        fields = ("rank", "sokker_id", "fullname", "age", "mid_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "mid_points")
+        fields = ("rank", "fullname", "age", "mid_points")
+        sequence = ("rank", "fullname", "age", "mid_points")
+
+class WingArchivePlayerTable(ArchivePlayerTable):
+    wing_points = WingPointsColumn()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            def_points=get_wing_wrapper(),
+        )
+
+        queryset.filter(position="MID")
+        return queryset.order_by("-wing_points")
+
+    class Meta:
+        fields = ("rank", "fullname", "age", "wing_points")
+        sequence = ("rank", "fullname", "age", "wing_points")
 
 
 class AttPlayerTable(PlayerTable):
@@ -312,8 +426,8 @@ class AttPlayerTable(PlayerTable):
         return queryset.order_by("-att_points")
 
     class Meta:
-        fields = ("rank", "sokker_id", "fullname", "age", "att_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "att_points")
+        fields = ("rank", "fullname", "age", "att_points")
+        sequence = ("rank", "fullname", "age", "att_points")
 
 
 class AttArchivePlayerTable(ArchivePlayerTable):
@@ -329,8 +443,102 @@ class AttArchivePlayerTable(ArchivePlayerTable):
         return queryset.order_by("-att_points")
 
     class Meta:
-        fields = ("rank", "sokker_id", "fullname", "age", "att_points")
-        sequence = ("rank", "sokker_id", "fullname", "age", "att_points")
+        fields = ("rank", "fullname", "age", "att_points")
+        sequence = ("rank", "fullname", "age", "att_points")
+
+class NTGamesArchivePlayerTable(ArchivePlayerTable):
+    ntmatches_max = tables.Column(
+        verbose_name='NT Matches',  # Or whatever header you want to display
+        order_by=('-ntmatches_max',)
+    )
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(ntmatches_max=get_ntgames_wrapper()).order_by("-ntmatches_max")
+
+    class Meta:
+        exclude = ('age',)
+        fields = ("rank", "fullname", "ntmatches_max")
+        sequence = ("rank", "fullname", "ntmatches_max")
+
+class NTGoalsArchivePlayerTable(ArchivePlayerTable):
+    ntgoals_max = tables.Column(
+        verbose_name='NT Goals',  # Or whatever header you want to display
+        order_by=('-ntgoals_max',)
+    )
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(ntgoals_max=get_ntgoals_wrapper()).order_by("-ntgoals_max")
+
+    class Meta:
+        exclude = ('age',)
+        fields = ("rank", "fullname", "ntgoals_max")
+        sequence = ("rank", "fullname", "ntgoals_max")
+
+
+class NTAssistsArchivePlayerTable(ArchivePlayerTable):
+    ntassists_max = tables.Column(
+        verbose_name='NT Assists',  # Or whatever header you want to display
+        order_by=('-ntassists_max',)
+    )
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(ntassists_max=get_ntassists_wrapper()).order_by("-ntassists_max")
+
+    class Meta:
+        exclude = ('age',)
+        fields = ("rank", "fullname", "ntassists_max")
+        sequence = ("rank", "fullname", "ntassists_max")
+
+class GamesArchivePlayerTable(ArchivePlayerTable):
+    games_max = tables.Column(
+        verbose_name='Games',  # Or whatever header you want to display
+        order_by=('-games_max',)
+    )
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(games_max=get_games_wrapper()).order_by("-games_max")
+
+    class Meta:
+        exclude = ('age',)
+        fields = ("rank", "fullname", "games_max")
+        sequence = ("rank", "fullname", "games_max")
+
+class GoalsArchivePlayerTable(ArchivePlayerTable):
+    goals_max = tables.Column(
+        verbose_name='NT Goals',  # Or whatever header you want to display
+        order_by=('-goals_max',)
+    )
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(goals_max=get_goals_wrapper()).order_by("-goals_max")
+
+    class Meta:
+        fields = ("rank", "fullname", "goals_max")
+        sequence = ("rank", "fullname", "goals_max")
+
+
+
+class AssistsArchivePlayerTable(ArchivePlayerTable):
+    assists_max = tables.Column(
+        verbose_name='Assists',  # Or whatever header you want to display
+        order_by=('-assists_max',)
+    )
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(assists_max=get_assists_wrapper()).order_by("assists_max")
+
+    class Meta:
+        exclude = ('age',)
+        fields = ("rank", "fullname", "assists_max")
+        sequence = ("rank", "fullname", "assists_max")
+
+
+class NTGamesYouthTeamsArchivePlayerTable(ArchivePlayerTable):
+    class Meta:
+        exclude = ('age',)
+        fields = ("rank", "fullname")
+        sequence = ("rank", "fullname")   
 
 
 def return_distinct_all_time_records_by_position(
@@ -344,8 +552,9 @@ def return_distinct_all_time_records_by_position(
         aPlayers = (
             ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
             .annotate(gk_points=get_gk_wrapper())
-            .filter(position=sPosition)
+            .filter(gk_points__gt=0)
             .filter(countryid=country.code)
+            .filter(position=sPosition)
             .filter(age__lte=end_age)
             .filter(age__gte=start_age)
             .exclude(name="")
@@ -356,6 +565,7 @@ def return_distinct_all_time_records_by_position(
         aPlayers = (
             ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
             .annotate(def_points=get_def_wrapper())
+            .filter(def_points__gt=0)
             .filter(position=sPosition)
             .filter(countryid=country.code)
             .filter(age__lte=end_age)
@@ -368,6 +578,7 @@ def return_distinct_all_time_records_by_position(
         aPlayers = (
             ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
             .annotate(mid_points=get_mid_wrapper())
+            .filter(mid_points__gt=0)
             .filter(position=sPosition)
             .filter(countryid=country.code)
             .filter(age__lte=end_age)
@@ -376,11 +587,24 @@ def return_distinct_all_time_records_by_position(
             .exclude(surname="")
             .order_by("-mid_points")
         )
-
+    if sPosition == "WING":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(wing_points=get_wing_wrapper())
+            .filter(wing_points__gt=0)
+            #.filter(position="MID")
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("-wing_points")
+        )
     if sPosition == "ATT":
         aPlayers = (
             ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
             .annotate(att_points=get_att_wrapper())
+            .filter(att_points__gt=0)
             .filter(position=sPosition)
             .filter(countryid=country.code)
             .filter(age__lte=end_age)
@@ -388,6 +612,88 @@ def return_distinct_all_time_records_by_position(
             .exclude(name="")
             .exclude(surname="")
             .order_by("-att_points")
+        )
+    if sPosition == "NT_GAMES":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(ntmatches_max=get_ntgames_wrapper())
+            #.filter(position=sPosition)
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("ntmatches_max")
+        )
+    if sPosition == "NT_GAMES_YOUTH_TEAMS":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(ntmatches_max=get_ntgames_wrapper())
+            .filter(ntmatches_max__gt=0)
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("ntmatches_max")
+        )
+    if sPosition == "NT_GOALS":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(ntgoals_max=get_ntgoals_wrapper())
+            #.filter(position=sPosition)
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("ntgoals_max")
+        )
+    if sPosition == "NT_ASSISTS":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(ntassists_max=get_ntassists_wrapper())
+            #.filter(position=sPosition)
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("ntassists_max")
+        )
+    if sPosition == "ASSISTS":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(assists_max=get_assists_wrapper())
+            #.filter(position=sPosition)
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("assists_max")
+        )
+    if sPosition == "GOALS":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(goals_max=get_goals_wrapper())
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("goals_max")
+        )       
+    if sPosition == "GAMES":
+        aPlayers = (
+            ArchivePlayer.objects.annotate(fullname=get_fullname_wrapper())
+            .annotate(games_max=get_games_wrapper())
+            .filter(countryid=country.code)
+            .filter(age__lte=end_age)
+            .filter(age__gte=start_age)
+            .exclude(name="")
+            .exclude(surname="")
+            .order_by("games_max")
         )
     aPlayersDistinct = []
     for p in aPlayers:
@@ -408,7 +714,14 @@ class ArchivePlayerDetailsTable(ArchivePlayerTable):
     def_points = DefPointsColumn()
     gk_points = GkPointsColumn()
     mid_points = MidPointsColumn()
+    wing_points = WingPointsColumn()
     teamid = TeamColumn()
+    ntmatches = tables.Column(verbose_name=_("NT Matches"))
+    ntgoals = tables.Column(verbose_name=_("NT Goals"))
+    ntassists = tables.Column(verbose_name=_("NT Assists"))
+    matches = tables.Column(verbose_name=_("Matches"))
+    goals = tables.Column(verbose_name=_("Goals"))
+    assists = tables.Column(verbose_name=_("Assists"))
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -417,6 +730,13 @@ class ArchivePlayerDetailsTable(ArchivePlayerTable):
             gk_points=get_gk_wrapper(),
             def_points=get_def_wrapper(),
             mid_points=get_mid_wrapper(),
+            wing_points=get_wing_wrapper(),
+            matches=get_games_wrapper(),
+            goals=get_goals_wrapper(),
+            assists=get_assists_wrapper(),
+            ntmatches=get_ntgames_wrapper(),
+            ntgoals=get_ntgoals_wrapper(),
+            ntassists=get_ntassists_wrapper(),
         )
 
         return queryset.order_by("-age")
@@ -424,24 +744,41 @@ class ArchivePlayerDetailsTable(ArchivePlayerTable):
     class Meta:
         exclude = ("rank", "last_name")
         fields = (
-            "sokker_id",
             "fullname",
             "age",
             "gk_points",
             "att_points",
             "mid_points",
+            "wing_points",
             "def_points",
+            "ntmatches",
+            "ntgoals",
+            "ntassists",
             "teamid",
+            "youthteamid",
         )
         sequence = (
-            "sokker_id",
             "fullname",
             "age",
-            "team_link",
             "gk_points",
             "att_points",
             "mid_points",
+            "wing_points",
             "def_points",
+            "ntmatches",
+            "ntgoals",
+            "ntassists",
             "teamid",
+            "youthteamid",
         )
         per_page = 100
+
+class NTTeamsStatsTable(tables.Table):
+    teamid = TeamColumn()
+    ntmatches = tables.Column(verbose_name=_("NT Matches"))
+    ntgoals = tables.Column(verbose_name=_("NT Goals"))
+    ntassists = tables.Column(verbose_name=_("NT Assists"))
+
+    class Meta:
+        model = NTTeamsStats
+        exclude = ("id","countryid", "stat_type", "json_data_youth", "json_data")

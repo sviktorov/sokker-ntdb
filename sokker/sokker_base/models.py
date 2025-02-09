@@ -63,11 +63,14 @@ class PointsRequirementsCountry(models.Model):
 
 class Team(models.Model):
     id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=250)
+    name = models.CharField(max_length=250, blank=True, null=True)
     country = models.ForeignKey(
         Country, to_field="code", on_delete=models.CASCADE, blank=True, null=True
     )  # Foreign key to 'code'
     daily_update = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        if self and self.name:
+            return self.name
+        else:
+            return f"sokker id team - {self.id}"

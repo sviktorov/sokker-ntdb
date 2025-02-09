@@ -38,6 +38,7 @@ class PointsRequirementsCountryAdmin(ImportExportModelAdmin):
 
 @admin.register(Team)
 class TeamAdmin(ImportExportModelAdmin):
+    autocomplete_fields = ('country',)
     list_display = ("id", "name", "country", "daily_update")
     list_filter = ("country",)
     ordering = ("name",)
