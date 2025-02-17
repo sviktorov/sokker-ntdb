@@ -1,9 +1,14 @@
 import requests
 from django.shortcuts import render
-from .forms import FetchTacticDataForm, PostTacticDataForm, SwapPositionsForm
+from .forms import FetchTacticDataForm, PostTacticDataForm, SwapPositionsForm, PlayerPredictionForm
+from ntdb.forms import PlayerManualUpdateForm, PlayerForm
 import re
 from django.utils.translation import gettext_lazy as _
-
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import FormView
+from sokker_base.api import get_sokker_seasons, auth_sokker, get_season_week 
+from ntdb.utils import extract_skill_value, INITIAL_PHARSE_PLAYER
+from django import forms
 PLAYER_SLOT = 70
 
 
@@ -91,3 +96,168 @@ def fetch_tactics_data(request):
             "form3": form3,
         },
     )
+
+
+class PlayerPrediction(FormView):
+    template_name = "tools/player-prediction.html"
+    form_class = PlayerPredictionForm
+    season_week = None
+    day_week = None
+    training_sessions = None
+    season = None
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        # Initialize season data only once
+        if self.season_week is None:
+            cookie = auth_sokker()
+            seasons = get_sokker_seasons(cookie).json()
+            season = seasons[0]
+            self.season = season
+            self.season_week, self.day_week, self.training_sessions = get_season_week(season)
+            
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        player_form_data = None
+        extra_skills_form_data = None
+        if form.is_valid():
+            current_age = form.cleaned_data["current_age"]
+            target_age = form.cleaned_data["target_age"]
+            player_data = form.cleaned_data["player_data"]
+            extra_trainings = form.cleaned_data["extra_trainings"]
+            #training_distribution = form.cleaned_data["training_distribution"]
+            
+            # Extract values for each skill
+            sta = extract_skill_value(player_data, "stamina")
+            kee = extract_skill_value(player_data, "keeper")
+            pac = extract_skill_value(player_data, "pace")
+            def_skill = extract_skill_value(player_data, "defender")
+            tec = extract_skill_value(player_data, "technique")
+            pla = extract_skill_value(player_data, "playmaker")
+            pas = extract_skill_value(player_data, "passing")
+            str_skill = extract_skill_value(player_data, "striker")
+
+            sta_trainings = extract_skill_value(extra_trainings, "stamina")
+            kee_trainings = extract_skill_value(extra_trainings, "keeper")
+            pac_trainings = extract_skill_value(extra_trainings, "pace")
+            def_trainings = extract_skill_value(extra_trainings, "defender")
+            tec_trainings = extract_skill_value(extra_trainings, "technique")
+            pla_trainings = extract_skill_value(extra_trainings, "playmaker")
+            pas_trainings = extract_skill_value(extra_trainings, "passing")
+            str_trainings = extract_skill_value(extra_trainings, "striker")
+
+            
+            
+            age_difference = target_age - current_age
+            training_sessions = self.training_sessions + (age_difference-1)*13
+            # Initialize form data with skills from parameters
+            player_form_data = {
+                'age': current_age,
+                'skillstamina': sta,
+                'skillkeeper': kee,
+                'skillpace': pac,
+                'skilldefending': def_skill,
+                'skilltechnique': tec,
+                'skillplaymaking': pla,
+                'skillpassing': pas,
+                'skillscoring': str_skill,
+                'player_data': player_data,
+                'current_age': current_age,
+
+            }
+            playerForm = PlayerForm(initial=player_form_data)
+            
+            # Only hide fields that exist in the form
+            if 'sokker_id' in playerForm.fields:
+                playerForm.fields['sokker_id'].widget = forms.HiddenInput()
+            
+            # Always add and set age field as hidden
+            if 'age' not in playerForm.fields:
+                playerForm.fields['age'] = forms.IntegerField(
+                    required=False,
+                    widget=forms.HiddenInput()
+                )
+            else:
+                playerForm.fields['age'].widget = forms.HiddenInput()
+            
+            if 'name' in playerForm.fields:
+                playerForm.fields['name'].widget = forms.HiddenInput()
+            if 'surname' in playerForm.fields:
+                playerForm.fields['surname'].widget = forms.HiddenInput()
+
+            # Create extra_skills form data
+            extra_skills_form_data = {
+                'skillstamina': sta_trainings,
+                'skillkeeper': kee_trainings,
+                'skillpace': pac_trainings,
+                'skilldefending': def_trainings,
+                'skilltechnique': tec_trainings,
+                'skillplaymaking': pla_trainings,
+                'skillpassing': pas_trainings,
+                'skillscoring': str_trainings,
+            }
+            print(extra_skills_form_data)
+     
+            
+
+            # Update the form's initial data
+            form = self.form_class(initial={
+                **form.cleaned_data,
+                'training_sessions': training_sessions,
+                'current_age': current_age,
+            })
+        else:
+            playerForm = PlayerForm(initial=player_form_data)
+            
+            # Only hide fields that exist in the form
+            if 'sokker_id' in playerForm.fields:
+                playerForm.fields['sokker_id'].widget = forms.HiddenInput()
+            
+            # Always add and set age field as hidden
+            if 'age' not in playerForm.fields:
+                playerForm.fields['age'] = forms.IntegerField(
+                    required=False,
+                    widget=forms.HiddenInput()
+                )
+            else:
+                playerForm.fields['age'].widget = forms.HiddenInput()
+            
+            if 'name' in playerForm.fields:
+                playerForm.fields['name'].widget = forms.HiddenInput()
+            if 'surname' in playerForm.fields:
+                playerForm.fields['surname'].widget = forms.HiddenInput()
+
+            
+        
+        context = self.get_context_data(form=form, playerForm=playerForm, extra_skills_form_data=extra_skills_form_data, **kwargs)
+        return self.render_to_response(context)
+        
+    def get(self, request, *args, **kwargs):
+        # Get sokker_id from URL parameters
+        sokker_id = request.GET.get("sokker_id", None)
+        # Initialize form with all required initial data
+        initial_data = {
+            'player_data': INITIAL_PHARSE_PLAYER.format("", "", "", "", "", "", "", ""),
+            'extra_trainings': INITIAL_PHARSE_PLAYER.format("", "", "", "", "", "", "", ""),
+            #'training_distribution': INITIAL_PHARSE_PLAYER.format("", "", "", "", "", "", "", ""),
+            'current_age': None,
+            'target_age': None
+        }
+        form = self.form_class(initial=initial_data)
+        playerForm = PlayerForm()
+        context = self.get_context_data(form=form, playerForm=playerForm, **kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = _("Player Prediction")
+        context["menu_type"] = "Tools"  
+        context["season_week"] = self.season_week
+        context["day_week"] = self.day_week
+        context["training_sessions"] = self.training_sessions
+        context["season"] = self.season
+        return context
+
+
+

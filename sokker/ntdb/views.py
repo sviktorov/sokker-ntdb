@@ -53,8 +53,29 @@ from django.http import HttpResponse
 from .utils import extract_skill_value, set_pharse_player_data
 from .models import NTTeamsStats
 import json
+import sys
 
 logger = logging.getLogger(__name__)
+
+
+class NTDBAdminDashboard(LoginRequiredMixin, TemplateView):
+    template_name = "ntdb/ntdb-admin-dashboard.html"
+
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = _("NTDB Index")
+        context["page_siblings"] = NTDB_SUB_MENU
+        context["menu_type"] = "NTDB"
+        return context
 
 
 class NTDBIndex(TemplateView):
@@ -65,19 +86,7 @@ class NTDBIndex(TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        try:
-            parsed_body = urllib.parse.parse_qs(request.body.decode("utf-8"))
-        except UnicodeDecodeError:
-            parsed_body = urllib.parse.parse_qs(request.body.decode("latin-1"))
 
-        pid = parsed_body.get("pid", [""])[0]
-        player_data = parsed_body.get("player_data", [""])[0]   
-
-        logger.debug("Body: %s", parsed_body)
-        
-        # Process form data here
-        # Add your form processing logic
-        
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
 
@@ -162,7 +171,7 @@ class PlayerManualUpdate(LoginRequiredMixin, FormView):
                     player.skillplaymaking = playerForm.cleaned_data["skillplaymaking"]
                     player.skillpassing = playerForm.cleaned_data["skillpassing"]
                     player.skillscoring = playerForm.cleaned_data["skillscoring"]
-                    player.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    player.date = datetime.now().strftime("%Y-%m-%d")
                     saved = True
                     player.save()
                 else:
@@ -176,7 +185,7 @@ class PlayerManualUpdate(LoginRequiredMixin, FormView):
                     player.skillplaymaking = playerForm.cleaned_data["skillplaymaking"]
                     player.skillpassing = playerForm.cleaned_data["skillpassing"]
                     player.skillscoring = playerForm.cleaned_data["skillscoring"]
-                    player.date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    player.date = datetime.now().strftime("%Y-%m-%d")
                     player.save()
                     saved = True
                   
@@ -363,51 +372,33 @@ class PlayerUpdate(TemplateView):
         return self.render_to_response(context)
 
 
-@login_required
-def CommandUpdateTeams(request):
-    buffer = StringIO()
-    call_command("sokker_update_teams_names")
-    # Get the output from the string buffer
-    command_output = buffer.getvalue()
-
-    # Close the string buffer
-    buffer.close()
-    return HttpResponse(command_output)
-
 
 @login_required
-def CommandFixPlayerPosition(request):
-    buffer = StringIO()
-    call_command("fix_player_position")
-    # Get the output from the string buffer
-    command_output = buffer.getvalue()
-    # Close the string buffer
-    buffer.close()
-    return HttpResponse(command_output)
+def RunCommand(request):
+    data = json.loads(request.body)
+    command = data.get("command", "")
+    params = data.get("params", "")
+    
+    try:
 
+        old_stdout = sys.stdout
+        sys.stdout = mystdout = StringIO()
 
-@login_required
-def CommandFormPlayerUpdate(request):
-    buffer = StringIO()
-    call_command("sokker_update_public")
-    # Get the output from the string buffer
-    command_output = buffer.getvalue()
-
-    # Close the string buffer
-    buffer.close()
-    return HttpResponse(command_output)
-
-
-@login_required
-def CommandArchivePlayers(request):
-    buffer = StringIO()
-    call_command("copy_players_to_archive")
-    # Get the output from the string buffer
-    command_output = buffer.getvalue()
-
-    # Close the string buffer
-    buffer.close()
-    return HttpResponse(command_output)
+        # Convert params string into kwargs dictionary
+        kwargs = {}
+        if params:
+            param_pairs = [p.split('=') for p in params.split()]
+            for key, value in param_pairs:
+                key = key.lstrip('-')  # Remove leading dashes
+                kwargs[key] = value
+                
+        call_command(command, **kwargs)
+        command_output = mystdout.getvalue()
+    finally:
+        sys.stdout = old_stdout
+        mystdout.close()
+        
+    return HttpResponse(json.dumps({"output": command_output}), content_type="application/json")
 
 
 class PlayerHistory(MultiTableMixin, TemplateView):

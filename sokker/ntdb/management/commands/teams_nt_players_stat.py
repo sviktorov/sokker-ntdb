@@ -6,9 +6,16 @@ import json
 class Command(BaseCommand):
     help = "Calculate nt team stats ntplayers count"
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--country_code',
+            type=str,
+            help=_('Filter players by country code (e.g., 54)'),
+            required=True,
+        )
 
     def handle(self, *args, **options):
-        country_code = 54
+        country_code = options['country_code']
         # Initialize dictionary to store team stats
         team_stats = {}  # {teamid: total_games}
         youth_team_stats = {} # {teamid: total_games}
@@ -23,7 +30,6 @@ class Command(BaseCommand):
                 continue
             count += 1
             unique_players_youth.append(player.sokker_id)
-            print(player.sokker_id, player.name, player.surname)
             age_seasons = ArchivePlayer.objects.filter(sokker_id=player.sokker_id).order_by("-age", "-ntmatches")
             previous_age = 0
             player_youth_teams_ids = []
@@ -45,9 +51,8 @@ class Command(BaseCommand):
                     youth_team_stats[age_season.youthteamid] = 1
                     youth_players_in_team[age_season.youthteamid] = [player.sokker_id]        
         
-        print("\nYouth Team Statistics:")
+        print("Youth Team Statistics:")
         for teamid, total_games in youth_team_stats.items():
-            print(teamid, total_games)
             stat = NTTeamsStats.objects.filter(countryid=country_code, stat_type="youth", teamid=teamid).first()
             if stat:
                 stat.ntplayers = total_games
@@ -91,7 +96,7 @@ class Command(BaseCommand):
                     team_stats[age_season.teamid] = 1
                     players_in_team[age_season.teamid] = [player.sokker_id]
         # Print final team statistics
-        print("\nTeam Statistics:")
+        print("Team Statistics:")
         for teamid, total_games in team_stats.items():
             print(teamid, total_games)
             stat = NTTeamsStats.objects.filter(countryid=country_code, stat_type="team", teamid=teamid).first()

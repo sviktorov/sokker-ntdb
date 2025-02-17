@@ -90,13 +90,13 @@ source load_env.sh
 docker-compose up db -d
 
 # NTDB TEAM STATS
- python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntmatches
- python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntassists
- python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntgoals
+ python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntmatches --country_code=54
+ python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntassists --country_code=54
+ python manage.py teams_nt_attribute_stat --stat-type=team --stat-field=ntgoals --country_code=54
 
-python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntmatches
-python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntassists
-python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntgoals
+python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntmatches --country_code=54
+python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntassists --country_code=54
+python manage.py teams_nt_attribute_stat --stat-type=youth --stat-field=ntgoals --country_code=54
 
 # CL GAMES FETCH
 python manage.py fetch_cl_games --c_id=460
@@ -104,8 +104,8 @@ python manage.py fetch_cl_games --c_id=460
 # CL STANDINGS
 python manage.py update_standings_arcades
 
-# NTDB update active players
-python manage.py sokker_update_public
-
 # Clear cache
 python manage.py clear_cache
+
+# NTDB update active players
+python manage.py sokker_update_public

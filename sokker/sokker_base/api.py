@@ -1,5 +1,29 @@
 import requests
 import os
+from datetime import datetime
+
+
+def get_season_week(season_data):
+    today = datetime.now().date()
+    start_date = datetime.strptime(season_data['start']['date']['value'], "%Y-%m-%d").date()
+    end_date = datetime.strptime(season_data['end']['date']['value'], "%Y-%m-%d").date()
+    weeks_difference = ((today - start_date).days) // 7
+    days_difference = ((today - start_date).days) % 7
+    
+    # Calculate remaining Wednesdays
+    remaining_days = (end_date - today).days
+    # Get current weekday (0 = Monday, ..., 6 = Sunday)
+    current_weekday = today.weekday()
+    # Wednesday is weekday 2
+    days_until_next_wednesday = (2 - current_weekday) % 7
+    
+    # If today is Wednesday, include it in the count
+    if current_weekday == 2:
+        remaining_wednesdays = (remaining_days + days_until_next_wednesday) // 7 + 1
+    else:
+        remaining_wednesdays = (remaining_days + days_until_next_wednesday) // 7
+    
+    return weeks_difference, 7-days_difference, remaining_wednesdays
 
 # https://sokker.org/apidoc.html
 def auth_sokker():
@@ -25,7 +49,7 @@ def get_sokker_transfers(cookie):
         "accept": "application/json",
         "Cookie": cookie,
     }
-    url = f"https://sokker.org/api/transfer?filter[nationality]=54&filter[limit]=1000"
+    url = f"https://sokker.org/api/transfer?filter[nationality]=54&filter[limit]=10000"
     # Send GET request
     
     return requests.get(url, headers=headers)
@@ -127,13 +151,21 @@ def get_sokker_seasons(cookie):
     url = f"https://sokker.org/api/seasons"
     return requests.get(url, headers=headers)
 
+def get_sokker_season_data(season_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/season/{season_id}"
+    return requests.get(url, headers=headers)
+
+
 def get_sokker_team_match_data_arcade(team_id, season, cookie):
     headers = {
         "accept": "application/json",
         "Cookie": cookie,
     }
     url = f"https://sokker.org/api/league/51530/match?filter[team]={team_id}&filter[season]={season}&filter[limit]=200"
-    print("team id : " + str(team_id))
     # Send GET request
     data = {}
     

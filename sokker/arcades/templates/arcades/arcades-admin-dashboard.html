@@ -1,0 +1,257 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load custom_tags_base %}
+{% load custom_tags_arcades %}
+{% load i18n %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">            
+            <div class="row">
+
+                <div class="point-table-widget">
+                    {% get_active_cups as active_cups %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{% trans "Cup" %}</th>
+                                {% for cup in active_cups %}
+                                    <th colspan="2">{{ cup.c_name }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{% trans "Update Standings" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="update_standings_arcades" 
+                                                data-params="--cup_id={{ cup.pk }}">
+                                            {% trans "Update Standings" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>{% trans "Clear Cache" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="clear_cache" 
+                                                data-params="">
+                                            {% trans "Clear Cache" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td>{% trans "Fetch Games from Sokker only when sokker is up" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="fetch_cl_games" 
+                                                data-params="--c_id={{ cup.pk }}">
+                                            {% trans "Fetch Games" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>  
+                            <tr>
+                                <td>{% trans "Generate fixtures group stage" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="fixtures_arcades" 
+                                                data-params="--c_id={{ cup.pk }}">
+                                            {% trans "Generate fixtures" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>  
+                            <tr>
+                                <td>{% trans "Useful links" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <a href="/en/arcades/{{ cup.category.slug }}/{{ cup.pk }}/" target="_blank">{% trans "Link to Homepage" %}</a>
+                                    </td>
+                                    <td>
+                                        <a href="/en/arcades/{{ cup.category.slug }}/{{ cup.pk }}/fixtures/1/" target="_blank">{% trans "Link to Fixtures" %}</a>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                            <td>{% trans "Useful links CMS" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                       <a href="/en/admin/arcades/game/?c_id__id__exact={{ cup.pk }}" target="_blank">{% trans "Link to games" %}</a>
+                                    </td>
+                                    <td>
+                                        <a href="/en/admin/arcades/rankgroups/?c_id__id__exact={{ cup.pk }}" target="_blank">{% trans "Link to standings" %}</a>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+.loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-radius: 50%;
+    border-top: 3px solid #3498db;
+    animation: spin 1s linear infinite;
+    margin-left: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader.hidden {
+    display: none;
+}
+
+/* Add new styles */
+.status-message {
+    max-height: 200px;  /* Adjust height as needed */
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f9f9f9;
+}
+
+.status-message:empty {
+    display: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.update-standings-btn');
+    
+    buttons.forEach(button => {
+        const loader = document.createElement('div');
+        loader.className = 'loader hidden';
+        button.parentNode.appendChild(loader);
+
+        button.addEventListener('click', async function() {
+            const command = this.dataset.command;
+            const params = this.dataset.params;
+            const statusDiv = this.parentNode.nextElementSibling.querySelector('.status-message');
+            
+            if (!statusDiv) {
+                console.error('Status div not found');
+                return;
+            }
+            
+            this.disabled = true;
+            loader.classList.remove('hidden');
+            statusDiv.textContent = '{% trans "Updating..." %}';
+            
+            try {
+                const response = await fetch('{% url "run_command" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        command: command,
+                        params: params
+                    })
+                });
+                
+                const data = await response.json();
+                
+                // Clear the status div
+                statusDiv.textContent = '';
+                statusDiv.className = 'status-message text-success';
+
+                // Split the output into lines and animate them
+                if (data.output) {
+                    const lines = data.output.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        if (lines[i].trim()) {  // Skip empty lines
+                            await animateLine(statusDiv, lines[i]);
+                        }
+                    }
+                }
+            } catch (error) {
+                statusDiv.textContent = '{% trans "Error occurred" %}';
+                statusDiv.className = 'status-message text-danger';
+            } finally {
+                this.disabled = false;
+                loader.classList.add('hidden');
+            }
+        });
+    });
+
+    // Function to animate a single line
+    async function animateLine(container, text) {
+        const line = document.createElement('div');
+        line.style.opacity = '0';
+        container.appendChild(line);
+        
+        // Add text in chunks of 5 characters with minimal delay
+        const chunkSize = 5;
+        for (let i = 0; i < text.length; i += chunkSize) {
+            line.textContent = text.substring(0, i + chunkSize);
+            await new Promise(resolve => setTimeout(resolve, 1));
+        }
+        
+        // Complete any remaining text
+        line.textContent = text;
+        
+        // Quick fade in
+        await new Promise(resolve => {
+            line.style.transition = 'opacity 0.05s';
+            line.style.opacity = '1';
+            setTimeout(resolve, 50);
+        });
+
+        // Auto-scroll to bottom
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}

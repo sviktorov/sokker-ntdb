@@ -91,3 +91,6 @@ class Command(BaseCommand):
                         game.save()
             cup.c_status = "ready"
             cup.save()
+        else:
+            self.stdout.write(self.style.ERROR("Cup is not in the correct status to generate fixtures"))
+            return

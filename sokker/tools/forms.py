@@ -1,6 +1,19 @@
 from django import forms
 
 
+class PlayerPredictionForm(forms.Form):
+    training_sessions = forms.IntegerField(
+        label="Training Sessions", 
+        required=False,
+        widget=forms.HiddenInput()
+    )
+    current_age = forms.IntegerField(label="Current Age")
+    target_age = forms.IntegerField(label="Target Age")
+    talent = forms.FloatField(label="Talent", min_value=3)
+    player_data = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)  
+    extra_trainings = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)
+    # training_distribution = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)
+
 class FetchTacticDataForm(forms.Form):
     id = forms.CharField(label="ID", max_length=100)
 

@@ -1,0 +1,764 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% block title %}{{ page_title }}{% endblock %}
+{% load ntdb %}
+{% block content %}
+
+<div id="init-data" 
+     data-season="{{ season.season }}" 
+     data-week="{{ season_week }}">
+     {% if extra_skills_form_data %}
+        {% for key, value in extra_skills_form_data.items %}
+            <input type="hidden" name="start_skill_sublevel_{{ key }}" value="{{ value }}">
+        {% endfor %}
+    {% endif %}
+</div>
+
+<script>
+    // Move these outside ALL event handlers and functions to make them truly global
+    let trainingLog = null;
+    let trainingHistory = []; // Global array to track ALL training actions
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize trainingLog immediately
+        trainingLog = document.getElementById('training-log');
+        if (!trainingLog) {
+            console.error('Training log element not found!');
+            return;
+        }
+
+        var form = document.getElementById('player-update-form');
+        var submitButton = form.querySelector('button[type="submit"]');
+        var trainingSessionsField = form.querySelector('[name="training_sessions"]');
+        var playerForm = document.getElementById('player-update-form-2');
+        
+        // Define constants first
+        const DEFAULT_TRAINING_SESSIONS = 1;
+        const AGE_DECREASE_PER_SESSION = 1.1;
+        const START_AGE = 16;
+        const SKILL_FACTORS = {
+            'pace': 0.662,
+            'technique': 0.882,
+            'passing': 1.0,
+            'keeper': 1.0,
+            'defender': 0.809,
+            'playmaker': 1.0,
+            'striker': 0.809
+        };
+        
+        // Update constant name for clarity
+        const GENERAL_TRAINING_PERCENTAGE = 0.15; // 15% general training effect
+        
+        // Get data from hidden element
+        const initData = document.getElementById('init-data');
+        const initialSeason = parseInt(initData.dataset.season);
+        const initialWeek = parseInt(initData.dataset.week);
+        let currentSeason = initialSeason;
+        let currentWeek = initialWeek;
+        const ageField = document.querySelector('input[name="age"]');
+        const ageFeedback = document.getElementById('age-feedback');
+        const seasonFeedback = document.getElementById('season-feedback');
+        const weekFeedback = document.getElementById('week-feedback');
+        const remainingSessionsSpan = document.getElementById('remaining-sessions');
+        
+        // Get current player age
+        const currentAgeField = document.querySelector('input[name="current_age"]');
+        const currentAge = currentAgeField ? parseInt(currentAgeField.value) : START_AGE;
+
+        // Set initial values for feedback spans
+        if (ageField) {
+            ageFeedback.textContent = ageField.value || currentAge;
+        }
+        seasonFeedback.textContent = currentSeason;
+        weekFeedback.textContent = currentWeek;
+        remainingSessionsSpan.textContent = trainingSessionsField.value || '0';
+        
+        // Add a Map to store fractional progress for each skill
+        const skillProgress = new Map();
+        
+        // Add this near the top of the script where other constants are defined
+        const startSublevels = {};
+        document.querySelectorAll('input[name^="start_skill_sublevel_"]').forEach(input => {
+            const skillName = input.name.replace('start_skill_sublevel_', '');
+            const baseSublevel = input.value || '0';
+            console.log(`Processing ${skillName} with base sublevel:`, baseSublevel);
+            
+            // Initialize the sublevel directly from the input value
+            startSublevels[skillName] = parseFloat(baseSublevel);
+            
+            // Initialize the skill progress with the starting sublevel
+            skillProgress.set(skillName, parseFloat(baseSublevel));
+        });
+
+        // Make sure extra trainings are included in the init-data div
+        console.log('Init data content:', initData.innerHTML);
+
+        // Add this function near the top of the DOMContentLoaded handler
+        function calculateNeededSessions(skillName) {
+            const cleanSkillName = skillName.toLowerCase().replace('skill', '');
+            const factor = SKILL_FACTORS[cleanSkillName] || 1.0;
+            
+            const exactSessions = DEFAULT_TRAINING_SESSIONS / factor;
+            
+            // Store the fractional part
+            const currentProgress = skillProgress.get(cleanSkillName) || 0;
+            const newProgress = currentProgress + (exactSessions - Math.ceil(exactSessions));
+            skillProgress.set(cleanSkillName, newProgress);
+            
+            // If accumulated progress >= 1, reduce needed sessions by 1
+            if (newProgress >= 1) {
+                skillProgress.set(cleanSkillName, newProgress - 1);
+                return Math.ceil(exactSessions) - 1;
+            }
+            
+            return Math.ceil(exactSessions);
+        }
+
+        // Add function to calculate age-based skill decrease
+        function calculateAgeDecrease(currentAge) {
+            if (currentAge <= START_AGE) {
+                return 0;
+            }
+            // Calculate compounding 1.1 increase in sessions needed for each year after 16
+            const yearsAfter16 = currentAge - START_AGE;
+            return Math.pow(1.1, yearsAfter16) - 1;
+        }
+
+        // Show/hide skill buttons based on training sessions
+        function updateSkillButtons() {
+            const sessions = parseInt(trainingSessionsField.value) || 0;
+            const skillFields = playerForm.querySelectorAll('input[type="number"]');
+            
+            skillFields.forEach(field => {
+                const fieldContainer = field.closest('.mb-3');
+                const buttonsContainer = fieldContainer.querySelector('.skill-buttons');
+                
+                // Remove the original label if it exists
+                const originalLabel = fieldContainer.querySelector('label');
+                if (originalLabel) {
+                    originalLabel.remove();
+                }
+                
+                if (sessions > 0) {
+                    if (!buttonsContainer) {
+                        field.dataset.initialValue = field.value;
+                        
+                        // Move the field after removing the original label
+                        fieldContainer.removeChild(field);
+                        
+                        const buttons = `
+                            <label>${field.name.replace('skill', '').toLowerCase()}</label>
+                            <div class="skill-buttons">
+                                <button type="button" class="btn btn-sm btn-secondary minus-skill" ${field.value <= parseInt(field.dataset.initialValue) ? 'disabled' : ''}>-</button>
+                                <button type="button" class="btn btn-sm btn-secondary plus-skill" ${sessions < 3 ? 'disabled' : ''}>+</button>
+                            </div>
+                            <div class="feedback-row">
+                                <div class="alert alert-info py-1 px-2 d-inline-block mb-0" style="font-size: 0.875rem;">
+                                    Sessions used: <strong><span class="sessions-used">0</span></strong> for <strong><span class="levels-changed">0</span></strong> levels
+                                    <br>
+                                    Starting sessions: <strong><span class="start-sublevel">${startSublevels[field.name] || '0'}</span></strong>
+                                    <br>
+                                    Current sublevel: <strong><span class="current-sublevel">${skillProgress.get(field.name) || '0.00'}</span></strong>
+                                </div>
+                                <span class="sessions-feedback"></span>
+                            </div>`;
+                        fieldContainer.insertAdjacentHTML('afterbegin', buttons);
+                        
+                        // Insert the input field after the label
+                        const label = fieldContainer.querySelector('label');
+                        label.insertAdjacentElement('afterend', field);
+                        
+                        // Add tracking for used starting sessions
+                        const usedStartingSessions = new Map();
+
+                        // Store initial training sessions
+                        const initialTrainingSessions = parseInt(trainingSessionsField.value);
+                        trainingSessionsField.dataset.initialValue = initialTrainingSessions;
+
+                        // Function to handle skill changes
+                        function handleSkillChange(skill, increment, isReplay = false) {
+                            const cleanSkillName = skill.name;
+                            const isStamina = cleanSkillName.includes('stamina');
+                            const maxValue = isStamina ? 11 : 18;
+                            const currentValue = parseInt(skill.value || 0);
+                            const initialValue = parseInt(skill.dataset.initialValue || 0);
+                            const fieldContainer = skill.closest('.mb-3');
+                            const feedbackSpan = fieldContainer.querySelector('.sessions-feedback');
+                            const sessionsUsedSpan = fieldContainer.querySelector('.sessions-used');
+                            const levelsChangedSpan = fieldContainer.querySelector('.levels-changed');
+                            const startSublevel = startSublevels[cleanSkillName] || 0;
+                            
+                            const neededSessions = calculateNeededSessions(cleanSkillName);
+
+                            if (increment) {
+                                // Calculate age-based decrease
+                                const ageDecrease = calculateAgeDecrease(currentAge);
+                                const effectiveIncrease = Math.max(0, 1 - ageDecrease);
+                                
+                                if (effectiveIncrease > 0) {
+                                    skill.value = currentValue + effectiveIncrease;
+                                    
+                                    // Show age decrease feedback
+                                    if (feedbackSpan) {
+                                        feedbackSpan.textContent = `Age penalty: -${ageDecrease.toFixed(1)} levels`;
+                                        feedbackSpan.style.color = '#d32f2f';  // Red color for decrease
+                                        feedbackSpan.style.opacity = '1';
+                                        setTimeout(() => {
+                                            feedbackSpan.style.opacity = '0';
+                                        }, 2000);
+                                    }
+
+                                    // Check if we have unused starting sessions
+                                    const hasStartingSessions = startSublevel > 0 && !usedStartingSessions.has(cleanSkillName);
+                                    
+                                    if (parseInt(trainingSessionsField.value) >= neededSessions && currentValue < maxValue) {
+                                        skill.value = currentValue + 1;
+                                        
+                                        // If we have starting sessions, use them first
+                                        if (hasStartingSessions) {
+                                            usedStartingSessions.set(cleanSkillName, true);
+                                            // Don't deduct from training sessions for the first increase
+                                            if (feedbackSpan) {
+                                                feedbackSpan.textContent = `Used starting sessions for first increase`;
+                                                feedbackSpan.style.opacity = '1';
+                                                setTimeout(() => {
+                                                    feedbackSpan.style.opacity = '0';
+                                                }, 2000);
+                                            }
+                                        } else {
+                                            trainingSessionsField.value = parseInt(trainingSessionsField.value) - neededSessions;
+                                        }
+
+                                        // Update sessions used and levels display
+                                        const currentSessionsUsed = parseInt(sessionsUsedSpan.textContent || 0);
+                                        const currentLevelsChanged = parseInt(levelsChangedSpan.textContent || 0);
+                                        sessionsUsedSpan.textContent = hasStartingSessions ? currentSessionsUsed : currentSessionsUsed + neededSessions;
+                                        levelsChangedSpan.textContent = currentLevelsChanged + 1;
+
+                                        // Add 0.15 to hidden progress for all OTHER skills
+                                        document.querySelectorAll('.mb-3').forEach(container => {
+                                            const otherSkill = container.querySelector('input[type="number"]');
+                                            if (otherSkill && otherSkill.name !== cleanSkillName) {
+                                                const otherSkillName = otherSkill.name;
+                                                const currentProgress = skillProgress.get(otherSkillName) || 0;
+                                                const newProgress = currentProgress + 0.15;
+                                                
+                                                skillProgress.set(otherSkillName, newProgress);
+
+                                                // Show feedback for other skills
+                                                const otherFeedbackSpan = container.querySelector('.sessions-feedback');
+                                                if (otherFeedbackSpan) {
+                                                    const otherValue = parseInt(otherSkill.value || 0);
+                                                    otherFeedbackSpan.style.color = '#1976d2';
+                                                    otherFeedbackSpan.textContent = `Level ${otherValue} + ${newProgress.toFixed(2)} sublevel`;
+                                                    otherFeedbackSpan.style.opacity = '1';
+                                                    setTimeout(() => {
+                                                        otherFeedbackSpan.style.opacity = '0';
+                                                    }, 2000);
+                                                }
+
+                                                // Update sublevel display
+                                                const sublevelSpan = container.querySelector('.current-sublevel');
+                                                if (sublevelSpan) {
+                                                    sublevelSpan.textContent = newProgress.toFixed(2);
+                                                }
+
+                                                // If we've accumulated a full session
+                                                if (newProgress >= 1) {
+                                                    const bonusSessions = Math.floor(newProgress);
+                                                    const remainingProgress = newProgress - bonusSessions;
+                                                    skillProgress.set(otherSkillName, remainingProgress);
+                                                    trainingSessionsField.value = parseInt(trainingSessionsField.value) + bonusSessions;
+                                                }
+                                            }
+                                        });
+                                    }
+
+                                    // Store in global history
+                                    trainingHistory.push({
+                                        type: 'increase',
+                                        skillElement: skill,
+                                        skillName: cleanSkillName,
+                                        from: currentValue,
+                                        to: currentValue + 1,
+                                        sessions: neededSessions,
+                                        agePenalty: ageDecrease,
+                                        remainingSessions: parseInt(trainingSessionsField.value),
+                                        generalTrainingEffects: {},
+                                        timestamp: Date.now()
+                                    });
+                                    
+                                    console.log('Global training history after increase:', trainingHistory);
+                                    
+                                    // Only create log entry if not replaying
+                                    if (!isReplay) {
+                                        const logEntry = document.createElement('div');
+                                        logEntry.className = 'alert alert-success';
+                                        logEntry.dataset.actionId = trainingHistory.length - 1;
+                                        logEntry.innerHTML = `
+                                            Increased ${skill.name.replace('skill', '').toLowerCase()} 
+                                            from ${currentValue} to ${currentValue + 1}
+                                            (Used ${neededSessions} sessions, Age penalty: -${ageDecrease.toFixed(1)})
+                                        `;
+                                        trainingLog.insertBefore(logEntry, trainingLog.firstChild);
+                                    }
+
+                                    // Update sublevel display
+                                    const sublevelSpan = fieldContainer.querySelector('.current-sublevel');
+                                    if (sublevelSpan) {
+                                        const currentProgress = skillProgress.get(cleanSkillName) || 0;
+                                        sublevelSpan.textContent = currentProgress.toFixed(2);
+                                    }
+                                } else {
+                                    // Show message that age prevents improvement
+                                    if (feedbackSpan) {
+                                        feedbackSpan.textContent = `Too old for improvement`;
+                                        feedbackSpan.style.color = '#d32f2f';
+                                        feedbackSpan.style.opacity = '1';
+                                        setTimeout(() => {
+                                            feedbackSpan.style.opacity = '0';
+                                        }, 2000);
+                                    }
+                                    return;  // Exit without using training sessions
+                                }
+                            } else {
+                                if (currentValue < initialValue) {
+                                    return;
+                                }
+                                
+                                // Find ALL increases for this skill in the history
+                                const skillIncreases = trainingHistory.filter(entry => 
+                                    entry.type === 'increase' && 
+                                    entry.skillElement.name === cleanSkillName
+                                );
+                                
+                                console.log('Training history before:', trainingHistory);
+                                console.log('Skill increases found:', skillIncreases);
+                                
+                                if (skillIncreases.length > 0) {
+                                    // Get the last increase for this skill
+                                    const lastIncrease = skillIncreases[skillIncreases.length - 1];
+                                    
+                                    // Remove this increase from the history
+                                    const increaseIndex = trainingHistory.indexOf(lastIncrease);
+                                    trainingHistory.splice(increaseIndex, 1);
+                                    
+                                    console.log('Training history after removal:', trainingHistory);
+                                    
+                                    // Reset all skills to initial values
+                                    document.querySelectorAll('#player-update-form-2 input[type="number"]').forEach(skillInput => {
+                                        skillInput.value = skillInput.dataset.initialValue;
+                                        
+                                        // Reset starting sessions usage tracking
+                                        usedStartingSessions.delete(skillInput.name);
+                                        
+                                        // Restore starting sublevel for each skill
+                                        const skillName = skillInput.name;
+                                        skillProgress.set(skillName, startSublevels[skillName] || 0);
+                                        
+                                        console.log(`Reset ${skillInput.name} to ${skillInput.value} with sublevel ${startSublevels[skillName] || 0}`);
+                                    });
+                                    
+                                    // Reset training sessions to initial value
+                                    trainingSessionsField.value = trainingSessionsField.dataset.initialValue;
+                                    
+                                    // Clear skill progress
+                                    skillProgress.clear();
+                                    
+                                    // Clear training log
+                                    trainingLog.innerHTML = '';
+                                    
+                                    // Replay all remaining increases in chronological order
+                                    console.log('Starting replay of remaining actions:', trainingHistory);
+                                    trainingHistory.forEach((action, index) => {
+                                        console.log(`Replaying action ${index}:`, action);
+                                        
+                                        // Create log entry before replay
+                                        const logEntry = document.createElement('div');
+                                        logEntry.className = 'alert alert-success';
+                                        logEntry.dataset.actionId = index;
+                                        logEntry.innerHTML = `
+                                            Increased ${action.skillElement.name.replace('skill', '').toLowerCase()} 
+                                            from ${action.from} to ${action.to}
+                                            (Used ${action.sessions} sessions, Age penalty: -${action.agePenalty.toFixed(1)})
+                                        `;
+                                        trainingLog.insertBefore(logEntry, trainingLog.firstChild);
+                                        
+                                        // Then replay the action
+                                        handleSkillChange(action.skillElement, true, true);
+                                    });
+                                }
+                            }
+
+                            // Update remaining sessions display
+                            remainingSessionsSpan.textContent = trainingSessionsField.value;
+
+                            // Update button states
+                            updateButtonStates();
+                        }
+
+                        // Add click handlers
+                        const plusBtn = fieldContainer.querySelector('.plus-skill');
+                        const minusBtn = fieldContainer.querySelector('.minus-skill');
+                        
+                        plusBtn.addEventListener('click', () => handleSkillChange(field, true, false));
+                        minusBtn.addEventListener('click', () => handleSkillChange(field, false, false));
+                    }
+                } else if (buttonsContainer) {
+                    buttonsContainer.remove();
+                    // Re-add the original label and ensure proper order
+                    fieldContainer.innerHTML = ''; // Clear container
+                    fieldContainer.insertAdjacentHTML('afterbegin', `<label>${field.name.replace('skill', '').toLowerCase()}</label>`);
+                    fieldContainer.appendChild(field);
+                }
+            });
+        }
+
+        trainingSessionsField.addEventListener('input', function() {
+            remainingSessionsSpan.textContent = this.value || '0';
+            updateSkillButtons();
+        });
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            form.submit();
+        });
+        
+        // Initial check
+        updateSkillButtons();
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInOut {
+                0% { opacity: 0; transform: translateY(-10px); }
+                20% { opacity: 1; transform: translateY(0); }
+                80% { opacity: 1; }
+                100% { opacity: 0; }
+            }
+            .sessions-feedback {
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: #2e7d32;
+                background-color: #e8f5e9;
+                padding: 4px 8px;
+                border-radius: 4px;
+                margin-left: 8px;
+                white-space: nowrap;
+                vertical-align: middle;
+                min-height: 48px;
+                line-height: 1.2;
+                display: inline-flex;
+                align-items: center;
+                opacity: 0;  /* Start hidden */
+            }
+            .alert.py-1 {
+                display: inline-flex;
+                vertical-align: middle;
+                white-space: nowrap;
+                min-height: 48px;
+                align-items: center;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                margin-left: 16px;
+            }
+            .feedback-row {
+                display: inline-flex;
+                align-items: center;
+                min-height: 48px;
+            }
+            input[type="number"].form-control {
+                width: 45px;
+                display: inline-block;
+                padding: 4px 8px;
+                height: 32px;
+                font-size: 0.9rem;
+                /* Remove spinner buttons for number inputs */
+                -moz-appearance: textfield;
+            }
+            /* Remove spinner buttons for Chrome, Safari, Edge, Opera */
+            input[type="number"].form-control::-webkit-outer-spin-button,
+            input[type="number"].form-control::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            /* Center the text in the input */
+            input[type="number"].form-control {
+                text-align: center;
+            }
+            .mb-3 {
+                min-height: 48px;
+                display: flex;
+                align-items: center;
+                flex-wrap: nowrap;
+            }
+            .mb-3 label {
+                display: inline-block;
+                width: 100px;
+                margin-bottom: 0;
+                font-size: 0.9rem;
+                text-transform: capitalize;
+            }
+            .status-display {
+                display: inline-flex;
+                margin-left: 10px;
+                color: #1976d2;
+                font-weight: 500;
+                white-space: nowrap;
+                align-items: center;
+                min-height: 48px;
+            }
+            .skill-buttons {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                margin-left: 8px;
+                min-height: 48px;
+            }
+            .skill-buttons button {
+                padding: 4px 8px;
+                min-width: 32px;
+            }
+            .skill-buttons .alert {
+                margin-left: 16px;
+                margin-bottom: 0;
+            }
+            .sessions-feedback {
+                margin-left: 8px;
+                transition: opacity 0.3s ease;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Add status display in a visible location after the hidden field
+        const sessionsFeedback = document.createElement('span');
+        sessionsFeedback.className = 'sessions-feedback';
+        sessionsFeedback.style.display = 'none';  // Hide the element
+        
+        // Insert after the first form-group/row
+        const firstFormGroup = document.querySelector('.form-group, .row');
+        firstFormGroup.parentNode.insertBefore(sessionsFeedback, firstFormGroup.nextSibling);
+
+        // Update sessions feedback when value changes
+        const updateSessionsFeedback = () => {
+            sessionsFeedback.textContent = `${trainingSessionsField.value} sessions left`;
+        };
+
+        // Add this near the top after other variable declarations
+        const skillFactorsTable = document.getElementById('skill-factors-table');
+        if (skillFactorsTable) {
+            const tableContent = Object.entries(SKILL_FACTORS)
+                .map(([skill, factor]) => {
+                    const exactSessions = DEFAULT_TRAINING_SESSIONS / factor;
+                    const neededSessions = Math.ceil(exactSessions);
+                    const fractionalPart = exactSessions % 1;
+                    return `
+                        <tr>
+                            <td class="text-capitalize">${skill}</td>
+                            <td>${factor.toFixed(3)}</td>
+                            <td>${neededSessions} (${(fractionalPart * 100).toFixed(1)}% progress)</td>
+                        </tr>
+                    `;
+                }).join('');
+            skillFactorsTable.innerHTML = tableContent;
+        }
+
+        // Create and add info section if it doesn't exist
+        let infoSection = document.querySelector('.training-info-section');
+        console.log('Initial info section:', infoSection);
+
+        if (!infoSection) {
+            const container = document.querySelector('.row:nth-child(3)'); // Get the third row
+            console.log('Container found:', container);
+            
+            if (container) {
+                infoSection = document.createElement('div');
+                infoSection.className = 'alert alert-info col-12 mt-4';
+                infoSection.innerHTML = `
+                    <h4>Skill Training Information</h4>
+                    <div id="skill-factors-table"></div>
+                    <hr class="my-2">
+                    <p><strong>Age Effect on Training:</strong></p>
+                    <ul>
+                        <li>Base training effectiveness at age ${START_AGE}</li>
+                        <li>After age ${START_AGE}, training becomes progressively harder:</li>
+                        <ul>
+                            <li>Age ${START_AGE + 1}: +${((AGE_DECREASE_PER_SESSION - 1) * 100).toFixed(1)}% more sessions needed (${AGE_DECREASE_PER_SESSION}x)</li>
+                            <li>Age ${START_AGE + 2}: +${((Math.pow(AGE_DECREASE_PER_SESSION, 2) - 1) * 100).toFixed(1)}% more sessions needed (${AGE_DECREASE_PER_SESSION}² = ${Math.pow(AGE_DECREASE_PER_SESSION, 2).toFixed(3)}x)</li>
+                            <li>Age ${START_AGE + 3}: +${((Math.pow(AGE_DECREASE_PER_SESSION, 3) - 1) * 100).toFixed(1)}% more sessions needed (${AGE_DECREASE_PER_SESSION}³ = ${Math.pow(AGE_DECREASE_PER_SESSION, 3).toFixed(3)}x)</li>
+                            <li>And so on, compounding by ${AGE_DECREASE_PER_SESSION} each year</li>
+                        </ul>
+                        <li>Example: At age ${START_AGE + 2}, if base training needs 3 sessions, it will actually need 3 * ${Math.pow(AGE_DECREASE_PER_SESSION, 2).toFixed(3)} = ${(3 * Math.pow(AGE_DECREASE_PER_SESSION, 2)).toFixed(2)} sessions</li>
+                    </ul>
+                `;
+                container.appendChild(infoSection);
+                console.log('Info section added:', infoSection);
+            }
+        }
+
+        // Add console log for debugging
+        console.log('SKILL_FACTORS:', SKILL_FACTORS);
+        console.log('skillFactorsTable element:', skillFactorsTable);
+        console.log('Table HTML generated:', skillFactorsTable?.innerHTML);
+
+        function updateButtonStates() {
+            const skillInputs = document.querySelectorAll('#player-update-form-2 input[type="number"]');
+            const availableSessions = parseInt(trainingSessionsField.value || 0);
+
+            skillInputs.forEach(skill => {
+                const currentValue = parseInt(skill.value || 0);
+                const initialValue = parseInt(skill.dataset.initialValue || 0);
+                const isStamina = skill.name.toLowerCase().includes('stamina');
+                const maxValue = isStamina ? 11 : 18;
+                
+                const container = skill.closest('.mb-3');
+                const plusBtn = container.querySelector('.plus-skill');
+                const minusBtn = container.querySelector('.minus-skill');
+                
+                if (plusBtn) {
+                    const neededSessions = calculateNeededSessions(skill.name);
+                    plusBtn.disabled = availableSessions < neededSessions || currentValue >= maxValue;
+                }
+                
+                if (minusBtn) {
+                    minusBtn.disabled = currentValue <= initialValue;
+                }
+            });
+        }
+
+        // Add this line after any skill value changes
+        document.querySelectorAll('#player-update-form-2 input[type="number"]').forEach(input => {
+            input.addEventListener('change', updateButtonStates);
+        });
+    });
+
+    // Add this function to calculate the starting sublevel including extra sessions
+    function calculateStartingSublevel(skillName, baseSublevel) {
+        const extraTrainingsInput = document.querySelector('input[name="extra_trainings"]');
+        if (!extraTrainingsInput) {
+            console.error('Extra trainings input not found in DOM');
+            // Check if the input might be in the init-data div
+            const initData = document.getElementById('init-data');
+            console.log('Init data available:', !!initData);
+            if (initData) {
+                console.log('Init data content:', initData.innerHTML);
+            }
+            return baseSublevel;
+        }
+
+        // Debug logs
+        console.log('Base sublevel:', baseSublevel);
+        console.log('Extra trainings input value:', extraTrainingsInput.value);
+        console.log('Skill name:', skillName);
+        
+        try {
+            const extraTrainings = JSON.parse(extraTrainingsInput.value || '{}');
+            console.log('Parsed extra trainings:', extraTrainings);
+            
+            // Convert skillName to match the format in extraTrainings
+            const cleanSkillName = skillName.replace('start_skill_sublevel_', '');
+            const formattedSkillName = cleanSkillName.startsWith('skill') ? cleanSkillName : 'skill' + cleanSkillName.toLowerCase();
+            console.log('Formatted skill name:', formattedSkillName);
+            
+            const extraSessions = parseInt(extraTrainings[formattedSkillName] || 0);
+            console.log('Extra sessions:', extraSessions);
+            
+            // Each training session adds 0.25 to the sublevel
+            const totalSublevel = parseFloat(baseSublevel) + (extraSessions * 0.25);
+            console.log('Total sublevel:', totalSublevel);
+            
+            return totalSublevel.toFixed(2);
+        } catch (error) {
+            console.error('Error parsing extra trainings:', error);
+            console.error('Error details:', error.message);
+            return baseSublevel;
+        }
+    }
+</script>
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+            <div class="row">
+                <h1>Player Prediction Tool</h1>
+            </div>
+            <div class="row">
+                <h2>Start with Sokker Season: {{ season.season }} week: {{ season_week }} sessions left: {{ training_sessions }}</h2>
+            </div>
+            <div class="row">
+                <div class="col-lg-4 col-md-4 team-two">
+                    <h3>Step 1 - Set the age till which you want to train</h3>
+
+                    <form id="player-update-form" method="POST">
+                        <input type="hidden" name="step" value="1">
+                        {% csrf_token %}
+                        {% bootstrap_form form %}
+                        <button type="submit" class="btn btn-primary mt-3">Calculate remaining sessions</button>
+                    </form>
+                </div>
+                <div class="col-lg-8 col-md-8 team-two">
+                    <h3>Player outcome at age <span id="age-feedback">{% if playerForm.age.value %}{{ playerForm.age.value }}{% else %}--{% endif %}</span></h3>
+                    <div class="alert alert-info mb-3" role="alert">
+                        Season: <strong><span id="season-feedback">{{ currentSeason }}</span></strong>
+                        &nbsp;&nbsp;|&nbsp;&nbsp;
+                        Week: <strong><span id="week-feedback">{{ currentWeek }}</span></strong>
+                    </div>
+                    <div class="alert alert-info mb-3" role="alert">
+                        Remaining training sessions: <strong><span id="remaining-sessions">{{ training_sessions }}</span></strong>
+                    </div>
+                    <form id="player-update-form-2" method="POST">
+                        <input type="hidden" name="step" value="2">
+                        {% csrf_token %}
+                        {% bootstrap_form playerForm %}
+                    </form>
+                    <!-- Add training log container -->
+                    <h3>Training Path</h3>
+                    <div id="training-log" class="mt-4"></div>
+                </div>
+            </div>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Skill Training Factors</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Skill</th>
+                                                <th>Factor</th>
+                                                <th>Sessions Needed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="skill-factors-table">
+                                            <!-- Table content will be populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="alert alert-info">
+                                        <p><strong>Note:</strong> Training factors affect the number of sessions needed for skill improvement.</p>
+                                        <p>For example, with factor 0.662 (Pace):</p>
+                                        <ul>
+                                            <li>Base sessions (3) ÷ 0.662 = 4.53 sessions</li>
+                                            <li>Rounds up to 5 sessions needed</li>
+                                            <li>Stores 53% progress towards next bonus</li>
+                                        </ul>
+                                        <p class="mb-0">When accumulated progress reaches 100%, one less session will be needed for the next improvement.</p>
+                                        <p><strong>General Training:</strong> When training a skill, other skills receive a 15% general training effect based on their current level.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+

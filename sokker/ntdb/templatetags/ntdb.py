@@ -253,6 +253,11 @@ def get_player_skill_progression(player, position):
     # Create history data
     history = [(record.age, record.skill_points) for record in best]
     data = np.array(history)
+    if len(data) == 0:
+        return {
+            'plot': None
+        }
+
 
     # Convert to DataFrame and sort by age
     df = pd.DataFrame(data, columns=["Age", position])

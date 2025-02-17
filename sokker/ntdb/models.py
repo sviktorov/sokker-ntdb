@@ -156,7 +156,7 @@ class Player(models.Model):
         req = PointsRequirementsCountry.objects.filter(
             age=self.age, country__code=self.countryid
         ).first()
-        print(req)
+        
         if not req:
             req = (
                 PointsRequirementsCountry.objects.filter(

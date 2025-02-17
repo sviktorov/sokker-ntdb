@@ -9,4 +9,9 @@ urlpatterns = [
         views.fetch_tactics_data,
         name="tactics_transfer",
     ),
+    path(
+        "player-prediction",
+        views.PlayerPrediction.as_view(),
+        name="player_prediction",
+    ),
 ]

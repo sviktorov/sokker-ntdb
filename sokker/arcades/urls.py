@@ -5,6 +5,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "admin-dashboard",
+        views.ArcadesAdminDashboard.as_view(),
+        name="admin_dashboard_arcades",
+    ),
+    path(
         "cups",
         views.CupIndex.as_view(),
         name="arcade_cup_index",

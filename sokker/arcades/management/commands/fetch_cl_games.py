@@ -30,7 +30,6 @@ class Command(BaseCommand):
         except Cup.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Cup with ID {c_id} does not exist"))
             return
-        print(cup.c_draw_status, cup.c_status)
         if cup.c_draw_status == "done" and cup.c_status == "ready":
             cookie = auth_sokker()
             today_date = datetime.now().date()
@@ -71,7 +70,6 @@ class Command(BaseCommand):
                 group_id=1, 
             ).exclude(g_status__in=["DN", "REP", "ADJ", "yes"]).order_by("cup_round")
             for game in games:
-                print(game.id, game.t_id_h, game.t_id_v , game.g_status)
                 data = get_sokker_team_match_data_arcade(game.t_id_h.id, season_ids_str, cookie).json()
                 round = str(game.cup_round)
                 if 'matches' not in data:
@@ -82,7 +80,7 @@ class Command(BaseCommand):
                 # Add check for day difference
                 round_date_obj = datetime.strptime(round_date[round], "%Y-%m-%d").date()
                 days_difference = (round_date_obj - today_date).days
-                print(f"Days until round {round}: {days_difference}")
+                # print(f"Days until round {round}: {days_difference}")
                 
                 # Skip if the round date is more than 7 days away
                 if days_difference > 7:
@@ -91,14 +89,12 @@ class Command(BaseCommand):
 
                 for match in data["matches"]:
                     was_played = match["time"]["wasPlayed"]
-                    print(was_played)
                     home_team_id = match["home"]["id"]
                     away_team_id = match["away"]["id"]
                     # print(was_played, home_team_id, away_team_id, game.t_id_h.id, game.t_id_v.id)
                     flag = False
                     if (str(home_team_id) == str(game.t_id_h.id) or  str(away_team_id) == str(game.t_id_h.id)) and (str(home_team_id) == str(game.t_id_v.id) or str(away_team_id) == str(game.t_id_v.id)):
                         flag = True
-                        print(match["score"])
                         if str(home_team_id) == str(game.t_id_h.id):
                             home_match = True
                             home_goal = match["score"]["home"]
@@ -109,7 +105,6 @@ class Command(BaseCommand):
                             home_match = False
                     if not flag:
                         continue
-                    print("match", home_goal, away_goal)
                     time = match["time"]["time"]["dateTime"]
                     day = time[:10]
                     # cover case when game is arranged after midnight sokker time
@@ -123,11 +118,8 @@ class Command(BaseCommand):
                     possible_days = [round_date[round], next_day, next_thursday, next_thursday_day, next_thursday_from_today, next_thursday_from_today_day, next_thursday_from_round_day]
                     if is_thursday:
                         possible_days.append(today_date_str)
-                    print(round_date[round], possible_days)
                     if day in possible_days  or match["id"] == game.matchID:
-                        print(match["id"], game.matchID)
                         if was_played:  
-                            print("was played")
                             if home_goal is not None and away_goal is not None:
                                 game.g_status = "yes"
                             else:
@@ -140,6 +132,7 @@ class Command(BaseCommand):
                             game.g_status = "arranged"
                         game.matchID = match["id"]
                         game.save()
+                        print(game.id, game.g_status,game.t_id_h, game.t_id_v, game.goals_home, game.goals_away)
                         break
 
                

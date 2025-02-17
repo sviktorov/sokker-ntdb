@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--country-code',
+            '--country_code',
             type=str,
             help=_('Filter players by country code (e.g., 54)'),
             required=True,
@@ -21,10 +21,11 @@ class Command(BaseCommand):
         country_code = kwargs['country_code'].upper()
         cookie = auth_sokker()
         transfers = get_sokker_transfers(cookie).json()
+        stats = []
         for transfer in transfers['transfers']:
             player_country_code = transfer['player']['info']['country']['code']
             if str(player_country_code) == str(country_code):
-                characteristics = transfer['player']['characteristics']
+                characteristics = transfer['player']['info']['characteristics']
                 age = characteristics['age']
                 req_age = age
                 if req_age > 28:
@@ -39,10 +40,9 @@ class Command(BaseCommand):
 
                 player = Player.objects.filter(sokker_id=sokker_id).first()
                 if player:
-                   print(player.name, player.surname, "Update")
+                   print(player.name, player.surname, "Updating")
                 else:
-                    player = Player()
-        
+                    player = Player()     
                 player.sokker_id = sokker_id
                 player.countryid = country_code
                 player.age = age
@@ -67,9 +67,10 @@ class Command(BaseCommand):
                     or Decimal(player.calculate_gk_points()) >= req.gk_points
                 ):
                     player.save()
+                    stats.append(player.sokker_id)
+                    print(player.name, player.surname, "Saved")
                 else:
                     print(player.name, player.surname, "Not saved do not meet requirements")
 
-                
-
         print(_("Script completed"))
+        print(_("Total players saved:{} ").format(len(stats)))

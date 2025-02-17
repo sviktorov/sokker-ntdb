@@ -5,7 +5,12 @@ from . import views
 
 urlpatterns = [
     path(
-        "",
+        "admin-dashboard",
+        views.NTDBAdminDashboard.as_view(),
+        name="admin_dashboard",
+    ),
+    path(
+        "index",
         views.NTDBIndex.as_view(),
         name="ntdb_index",
     ),
@@ -51,14 +56,6 @@ urlpatterns = [
         views.PlayerHistory.as_view(),
         name="player_history",
     ),
-    path(
-        "form-player-update/", views.CommandFormPlayerUpdate, name="form_player_update"
-    ),
-    path("archive-players/", views.CommandArchivePlayers, name="archive_players"),
-    path("update-teams/", views.CommandUpdateTeams, name="sokker_update_teams"),
-    path(
-        "fix-player-position/",
-        views.CommandFixPlayerPosition,
-        name="fix_player_position",
-    ),
+
+    path("run-command/", views.RunCommand, name="run_command"),
 ]

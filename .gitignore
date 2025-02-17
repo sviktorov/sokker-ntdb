@@ -2,3 +2,5 @@
 __pycache__
 prod.sql
 .env
+*.DS_Store
+.DS_Store

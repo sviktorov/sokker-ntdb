@@ -11,7 +11,7 @@ from django.db.models.functions import Cast
 import json
 from collections import defaultdict
 from django.core.cache import cache
-
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 ARCADES_SUB_MENU = [
     {"title": _("Arcade tournaments"), "url": "/en/arcades/cups"},
@@ -25,6 +25,24 @@ def pass_category_to_menu(category: CupCategory):
         item["url"] = item["url"].format(category.slug)
         menu.append(item)
     return menu
+
+class ArcadesAdminDashboard(LoginRequiredMixin, TemplateView):
+    template_name = "arcades/arcades-admin-dashboard.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = _("Administration Arcade")
+        context["page_siblings"] = ARCADES_SUB_MENU
+        context["menu_type"] = "ARCADES"
+        return context
 
 
 class CLFixtures(TemplateView):

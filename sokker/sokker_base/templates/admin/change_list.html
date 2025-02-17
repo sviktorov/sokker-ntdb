@@ -36,33 +36,7 @@
 }
 
 </style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('execute-command-form-button-teams').addEventListener('click', function(event) {
-        event.preventDefault();
-        this.disabled = true;
-        document.getElementById('output').innerHTML = "Script in progress please wait!";
-        fetch('{% url "sokker_update_teams" %}', {
-            method: 'GET',
-            credentials: 'same-origin'
-        }).then(function(response) {
-            if (response.ok) {
-                return response.text();
-            }
-            throw new Error('Network response was not ok.');
-        }).then(function(data) {
-            console.log(data);
-            document.getElementById('output').innerHTML = data;
-          
-        }).catch(function(error) {
-            console.error('There was a problem with the fetch operation:', error);
-            document.getElementById('output').innerHTML = error;
 
-        });
-    });
-});
-
-</script>
 {% endif %}
 {% endblock %}
 {% block content_title %}
@@ -74,7 +48,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block object-tools-items %}
     {{ block.super }}
-    {% if extra_actions %}
-    <li><a href="{% url 'sokker_update_teams' %}" class="button" id="execute-command-form-button-teams">Update Teams</a></li>
-    {% endif %}
+    
 {% endblock %}

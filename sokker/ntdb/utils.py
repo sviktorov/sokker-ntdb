@@ -5,9 +5,9 @@ from ntdb.models import ArchivePlayer
 
 import re
 
-
+INITIAL_PHARSE_PLAYER = " [{}] stamina [{}] keeper\n [{}] pace [{}] defender\n [{}] technique [{}] playmaker\n [{}] passing [{}] striker"
 def set_pharse_player_data(player):
-    player_data = "formidable [{}] stamina	tragic [{}] keeper\ndivine [{}] pace	divine [{}] defender\nincredible [{}] technique	very good [{}] playmaker\nexcellent [{}] passing	adequate [{}] striker"
+    player_data = INITIAL_PHARSE_PLAYER
     if not player:
         return player_data.format("", "", "", "", "", "", "", "")
     player_data = player_data.format(

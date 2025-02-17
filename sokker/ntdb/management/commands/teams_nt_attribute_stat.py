@@ -21,9 +21,15 @@ class Command(BaseCommand):
             default='None',
             help='Type of statistics to calculate: youth, team, or both'
         )
+        parser.add_argument(
+            '--country_code',
+            type=str,
+            help=_('Filter players by country code (e.g., 54)'),
+            required=True,
+        )
 
     def handle(self, *args, **options):
-        country_code = 54
+        country_code = options['country_code']
         # Initialize dictionary to store team stats
         team_stats = {}  # {teamid: total_games}
         stat_type = options['stat_type']
@@ -47,7 +53,7 @@ class Command(BaseCommand):
             sort_field = "-ntassists"
         unique_players = []
         count = 0
-        # NTTeamsStats.objects.filter(countryid=country_code, stat_type="team").delete()
+
         for player in players:  
             if player.sokker_id in unique_players:
                 continue
@@ -67,25 +73,23 @@ class Command(BaseCommand):
                     continue
                 previous_age = current_age
                 games = get_player_stat_for_age_season_type(player.sokker_id, age_season.age, stat_field, max_limit) 
-                print(age_season.age, games, age_season.teamid, age_season.ntassists)              
+                # print(age_season.age, games, age_season.teamid, age_season.ntassists)              
                 if games > 0:
                     if stat_type == "team":
-                        print(age_season.age,player.name, player.surname, games,age_season.teamid)
                         if age_season.teamid in team_stats:
                             team_stats[age_season.teamid] = team_stats[age_season.teamid] + games
                         else:
                             team_stats[age_season.teamid] = games
                     elif stat_type == "youth":
-                        print(age_season.age, player.name, player.surname, games,age_season.youthteamid)
                         if age_season.youthteamid in team_stats:
                             team_stats[age_season.youthteamid] = team_stats[age_season.youthteamid] + games
                         else:
                             team_stats[age_season.youthteamid] = games
         
         # Print final team statistics
-        print("\nTeam Statistics:")
+        print(f"{stat_type} Statistics:")
         for teamid, total_games in team_stats.items():
-            print(teamid, total_games)
+            # print(teamid, total_games)
             stat = NTTeamsStats.objects.filter(countryid=country_code, stat_type=stat_type, teamid=teamid).first()
             if stat:
                 setattr(stat, stat_field, total_games)
@@ -97,6 +101,6 @@ class Command(BaseCommand):
                 stat.teamid = teamid
                 setattr(stat, stat_field, total_games)
                 stat.save()
-            print(f"Team {teamid}: {total_games} assists")
+            print(f"Team {teamid}: {total_games} {stat_field}")
 
         print(_("Script completed"))

@@ -36,79 +36,7 @@
 }
 
 </style>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('execute-command-form-button').addEventListener('click', function(event) {
-        event.preventDefault();
-        this.disabled = true;
-        document.getElementById('output').innerHTML = "Script in progress please wait!";
-        fetch('{% url "form_player_update" %}', {
-            method: 'GET',
-            credentials: 'same-origin'
-        }).then(function(response) {
-            if (response.ok) {
-                return response.text();
-            }
-            throw new Error('Network response was not ok.');
-        }).then(function(data) {
-            console.log(data);
-            document.getElementById('output').innerHTML = data;
-          
-        }).catch(function(error) {
-            console.error('There was a problem with the fetch operation:', error);
-            document.getElementById('output').innerHTML = error;
 
-        });
-    });
-
-    document.getElementById('fix-player-position').addEventListener('click', function(event) {
-        event.preventDefault();
-        this.disabled = true;
-        document.getElementById('output').innerHTML = "Script in progress please wait!";
-        fetch('{% url "fix_player_position" %}', {
-            method: 'GET',
-            credentials: 'same-origin'
-        }).then(function(response) {
-            if (response.ok) {
-                return response.text();
-            }
-            throw new Error('Network response was not ok.');
-        }).then(function(data) {
-            console.log(data);
-            document.getElementById('output').innerHTML = data;
-          
-        }).catch(function(error) {
-            console.error('There was a problem with the fetch operation:', error);
-            document.getElementById('output').innerHTML = error;
-
-        });
-    });
-
-    document.getElementById('execute-archive-players').addEventListener('click', function(event) {
-        event.preventDefault();
-        document.getElementById('output').innerHTML = "Script in progress please wait!";
-
-        fetch('{% url "archive_players" %}', {
-            method: 'GET',
-            credentials: 'same-origin'
-        }).then(function(response) {
-            if (response.ok) {
-                return response.text();
-            }
-            throw new Error('Network response was not ok.');
-        }).then(function(data) {
-            console.log(data);
-            // Handle success response
-            document.getElementById('output').innerHTML = data;
-        }).catch(function(error) {
-            console.error('There was a problem with the fetch operation:', error);
-            // Handle error
-            document.getElementById('output').innerHTML = error;
-        });
-    });
-});
-
-</script>
 {% endif %}
 {% endblock %}
 {% block content_title %}
@@ -121,9 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 {% block object-tools-items %}
     {{ block.super }}
-    {% if extra_actions %}
-    <li><a href="{% url 'form_player_update' %}" class="button" id="execute-command-form-button">Visible params update</a></li>
-    <li><a href="{% url 'archive_players' %}" class="button" id="execute-archive-players">Archive Players</a></li>
-    <li><a href="{% url 'fix_player_position' %}" class="button" id="fix-player-position">Fix Players Position</a></li>
-    {% endif %}
+
+    <li><a href="{% url 'admin_dashboard' %}" class="button" target="_blank" id="execute-command-form-button">Dashboard</a></li>
+    <li><a href="{% url 'player_manual_update' %}" class="button" target="_blank" id="execute-command-form-button">Manual Update</a></li>
 {% endblock %}

@@ -7,10 +7,21 @@ from arcades.models import Game, Cup, RankGroups
 class Command(BaseCommand):
     help = _("Update arcades classification tables")
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--cup-id',
+            type=int,
+            help=_('ID of the specific cup to update. If not provided, updates all active cups.'),
+            required=False
+        )
+
     def handle(self, *args, **options):
-        all_cups_active = Cup.objects.filter(c_active=True)
+        cup_id = options.get('cup_id')
+        if cup_id:
+            all_cups_active = Cup.objects.filter(id=cup_id)
+        else:
+            all_cups_active = Cup.objects.filter(c_active=True)
         for cup in all_cups_active:
-            print(cup.c_groups)
             for i in range(1, cup.c_groups + 1):
                 print("get games for group:", i)
                 all_games = Game.objects.filter(c_id=cup, group_id=i, g_status__in=["yes", "ADJ", "DN"])
@@ -19,7 +30,7 @@ class Command(BaseCommand):
                     if game.goals_away is None or game.goals_home is None:
                         continue
 
-                    print(game)
+                    print(game.t_id_h, game.t_id_v, game.goals_home, game.goals_away)
                     # home team update
                     team_data = RankGroups.objects.filter(
                         t_id=game.t_id_h, c_id=cup, g_id=i
@@ -109,3 +120,4 @@ class Command(BaseCommand):
                         elif status == _("loss"):
                             team_data.loose = team_data.loose + 1
                         team_data.save()
+        print("done please clear cache")
