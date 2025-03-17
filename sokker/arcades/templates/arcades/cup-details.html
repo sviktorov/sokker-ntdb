@@ -50,7 +50,7 @@
                     </div>
                 </div>
                 <div class="row">
-                        <div class="col-lg-3 col-md-3">
+                        <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols}}">
                             <div class="group-box">
                                 <h6>{% trans "Final" %}</h6>
                                 {% if final %}
@@ -71,12 +71,13 @@
                                 {% endif %}
                             </div>
                         </div>
-
-                
-                        <div class="col-lg-3 col-md-3">
+          
+                       
+                        <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
                             <div class="group-box">
+                                
+                                <h6>{% trans "Semifinals" %}</h6>
                                 {% if semi_finals|length > 0 %}
-                                    <h6>{% trans "Semifinals" %}</h6>
                                     <!--title end-->
                                     {% if cup.is_cl %}
                                         {% regroup semi_finals by playoff_position as grouped_games %}
@@ -91,29 +92,44 @@
                                 {% endif %}
                             </div>
                         </div>
-                
-                
-                        <div class="col-lg-3 col-md-3">
-                            <div class="group-box">
-                                {% if quarter_finals|length > 0 %}
+                   
+                    </div>
+                    <div class="row">
+                    <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
+                        {% if quarter_finals|length > 0 %}
+                        <div class="group-box">
+                             
                                     <h6>{% trans "Quarterfinals" %}</h6>
 
                                     {% if cup.is_cl %}
                                         {% regroup quarter_finals by playoff_position as grouped_games %}
+                                        
+                                        <ul>
+                                            <li><h2></h2></li>
+                                        </ul>
                                         {% for position in grouped_games %}
+                                                <ul style="padding: 5px; border-bottom: 1px solid #ddd;">
+                                                    <li><h2></h2></li>
+                                                </ul>
                                                 {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                                <ul>
+                                                    <li><h2></h2></li>
+                                                </ul>
+
                                         {% endfor %}
+
                                     {% else %}
                                         {% for game in quarter_finals %}
                                             {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
                                         {% endfor %}
                                     {% endif %}
-                                {% endif %}  
+                               
                             </div>
                         </div>
+                        {% endif %} 
                 
-                
-                        <div class="col-lg-3 col-md-3">
+                        {% if eight_finals|length > 0 %}
+                        <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
                             <div class="group-box">
     
                                 {% if eight_finals|length > 0 %}
@@ -134,7 +150,7 @@
                                 {% endif %}  
                             </div>
                         </div>
-            
+                        {% endif %}
                 </div>
                 {% endif %}
                 {% if cup.is_cl %}
@@ -147,14 +163,50 @@
                     </div>
                     <div class="row">
                         <div class="col-lg-6 col-md-6">
-                            <div class="group-box">
+                            
                                 {% if eight_finals_cl %}
                                     {% regroup eight_finals_cl by playoff_position as grouped_games %}
                                     {% for position in grouped_games %}
+                                    <div class="group-box">
                                         {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                    </div>
                                     {% endfor %}
                                 {% endif %}
-                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-2">
+                            {% if eight_finals_cl %}
+                                {% for position in grouped_games %}
+                                <ul class="playoff-connector">
+                                    {% if forloop.counter == 1 %}
+                                    <li class="space-first"></li>
+                                    {% endif %}
+                                    {% if forloop.counter > 1 %}
+                                    <li class="space"></li>  
+                                    {% endif %}
+                                    <li class="first-connector"></li>
+                                    <li class="second-connector"></li>
+                                    {% if forloop.counter < 8  %}
+                                    <li class="space"></li>
+                                    {% endif %}
+                                </ul>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-lg-4 col-md-4">            
+                                {% if eight_finals_cl %}
+                                    {% for position in grouped_games %}
+                                    {% if forloop.counter == 1 %}
+                                    <div style="height: 1px;width: 100%;"></div>  
+                                    {% endif %}
+                                    <div class="group-box">
+                                        {% include "arcades/includes/preliminaries_opponent.html" with game_list=position.list cup=cup %}       
+                                    </div>
+                                    {% if forloop.counter < 8 %}
+                                    <div style="height: 14px;width: 100%;"></div>  
+                                    {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            
                         </div>
                     </div>
                 {% endif %}
@@ -256,7 +308,69 @@ document.addEventListener('DOMContentLoaded', function() {
     color: #fff !important;
 }
 .border-bottom {
-    border-bottom: 2px solid #000 !important;
+    border-bottom: 1px solid #000 !important;
+}
+
+.playoff-connector {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.playoff-connector li {
+    height: 22px;
+    margin: 0;
+}
+
+.playoff-connector .first-connector {
+    margin-bottom: -1px;
+}
+
+.playoff-connector .second-connector {
+    margin-top: -1px;
+}
+
+/* Responsive styles */
+@media (min-width: 1200px) {
+    .playoff-connector .space {
+        height: 38px;
+        border: none;
+    }
+    .playoff-connector .space-first {
+        height: 27px;
+        border: none;
+    }
+}
+
+@media (max-width: 1199px) {
+    .playoff-connector .space {
+        height: 32px;
+        border: none;
+    }
+    .playoff-connector .space-first {
+        height: 22px;
+        border: none;
+    }
+}
+
+@media (max-width: 991px) {
+    .playoff-connector .space {
+        height: 28px;
+        border: none;
+    }
+    .playoff-connector .space-first {
+        height: 18px;
+        border: none;
+    }
+    .playoff-connector li {
+        height: 18px;
+    }
+}
+
+@media (max-width: 767px) {
+    .playoff-connector {
+        display: none;
+    }
 }
 </style>
 {% endif %}

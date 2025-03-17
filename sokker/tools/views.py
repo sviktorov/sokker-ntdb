@@ -104,12 +104,19 @@ class PlayerPrediction(FormView):
     season_week = None
     day_week = None
     training_sessions = None
+    training_sessions_to_spare = None
     season = None
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):
         # Initialize season data only once
         if self.season_week is None:
             cookie = auth_sokker()
+            if not cookie:
+                return render(request, 'error.html', {
+                    'page_title': _("Error"),
+                    'error_message': _("Sokker.org is currently unavailable. Please try again our tool later.")
+                })
+            
             seasons = get_sokker_seasons(cookie).json()
             season = seasons[0]
             self.season = season
@@ -151,6 +158,7 @@ class PlayerPrediction(FormView):
             
             age_difference = target_age - current_age
             training_sessions = self.training_sessions + (age_difference-1)*13
+            self.training_sessions_to_spare = training_sessions
             # Initialize form data with skills from parameters
             player_form_data = {
                 'age': current_age,
@@ -197,16 +205,14 @@ class PlayerPrediction(FormView):
                 'skillpassing': pas_trainings,
                 'skillscoring': str_trainings,
             }
-            print(extra_skills_form_data)
-     
-            
-
+        
             # Update the form's initial data
             form = self.form_class(initial={
                 **form.cleaned_data,
                 'training_sessions': training_sessions,
                 'current_age': current_age,
             })
+            
         else:
             playerForm = PlayerForm(initial=player_form_data)
             
@@ -250,13 +256,15 @@ class PlayerPrediction(FormView):
         return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
         context["page_title"] = _("Player Prediction")
         context["menu_type"] = "Tools"  
         context["season_week"] = self.season_week
         context["day_week"] = self.day_week
         context["training_sessions"] = self.training_sessions
-        context["season"] = self.season
+        context["season"] = self.season["season"]
+        context["training_sessions_to_spare"] = self.training_sessions_to_spare
         return context
 
 

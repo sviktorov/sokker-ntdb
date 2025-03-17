@@ -12,7 +12,9 @@ class PlayerPredictionForm(forms.Form):
     talent = forms.FloatField(label="Talent", min_value=3)
     player_data = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)  
     extra_trainings = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)
-    # training_distribution = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)
+    trainer_skill = forms.FloatField(label="Trainer Skill", min_value=1, max_value=17, initial=17)
+    play_time = forms.FloatField(label="Play Time", min_value=50, max_value=100, initial=96.00)
+    #main_trainer_skills = forms.CharField(widget=forms.Textarea(attrs={'rows': 6, 'cols': 100}), required=False)
 
 class FetchTacticDataForm(forms.Form):
     id = forms.CharField(label="ID", max_length=100)

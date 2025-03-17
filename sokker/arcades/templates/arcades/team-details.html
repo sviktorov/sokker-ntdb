@@ -1,0 +1,56 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% block title %}{{ page_title }}{% endblock %}
+{% load ntdb %}
+{% load i18n %}
+{% load custom_tags_arcades %}
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country %}
+ 
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">
+            <div class="row">
+                {% for cup_team in cup_teams %}
+                    {% get_team_standing_by_cup cup=cup_team.c_id team=cup_team.t_id as standing %}
+                    {% get_cup_team_games cup_id=cup_team.c_id team_id=cup_team.t_id as games %}
+                    <div class="col-lg-4 col-md-4">
+                        <div class="group-box">
+                            <div class="widget">
+                                <h6>{{ cup_team.c_id.c_name }} - Group stage</h6>
+                                <div class="match-results-table team-name">
+                                   <h3><i class="fas fa-star"></i> Points: {{ standing.points }}</h3>
+                                   <h3><i class="fas fa-futbol"></i> Games: {{ standing.games }}</h3>
+                                   <h3><i class="fas fa-trophy"></i> Wins: {{ standing.wins }}</h3>
+                                   <h3><i class="fas fa-handshake"></i> Draws: {{ standing.draw }}</h3>
+                                   <h3><i class="fas fa-thumbs-down"></i> Losses: {{ standing.loose }}</h3>
+                                   <h3><i class="fas fa-arrow-circle-up"></i> Gscored: {{ standing.gscored }}</h3>
+                                   <h3><i class="fas fa-arrow-circle-down"></i> Grecieved: {{ standing.grecieved }}</h3>
+                                   <h3><i class="fas fa-balance-scale"></i> Gdif: {{ standing.gdif }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8 col-md-8">
+                        <div class="group-box">
+                            <div class="widget">
+                               <h6>{{ cup_team.c_id.c_name }}</h6>
+                              
+                               {% for game in games %}
+                                <ul>
+                                    {% include "arcades/includes/game_block_fixtures.html" with  game=game cup=cup_team.c_id %}       
+                                </ul>
+                                {% endfor %}
+                               
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

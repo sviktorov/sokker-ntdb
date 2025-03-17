@@ -18,6 +18,33 @@ CL_TEAMS = [
     ]
 
 
+PLAYOFF_FIXTURES_CL = [
+    [9, 16, 17, "e1_cl", 1],
+    [9, 9, 24, "e2_cl", 8],
+    [9, 12, 21, "e3_cl", 5],
+    [9, 13, 20, "e4_cl", 4], 
+    [9, 15, 18, "e5_cl", 2], 
+    [9, 10 , 23,"e6_cl", 7],
+    [9, 11, 22, "e7_cl", 6],
+    [9, 14, 19, "e8_cl", 3],
+    [10, "e1_cl", 1, "e1"],
+    [10, "e2_cl", 8, "e2"],
+    [10, "e3_cl", 5, "e3"],
+    [10, "e4_cl", 4, "e4"],
+    [10, "e5_cl", 2, "e5"],
+    [10, "e6_cl", 7, "e6"],
+    [10, "e7_cl", 6, "e7"],
+    [10, "e8_cl", 3, "e8"],
+    [11, "e1", "e2", "q1"],
+    [11, "e3", "e4", "q2"],
+    [11, "e5", "e6", "q3"],
+    [11, "e7", "e8", "q4"],
+    [12, "q1", "q2", "s1"],
+    [12, "q3", "q4", "s2"],
+    [13, "s1", "s2", "final"]
+]
+
+
 def get_next_day(date_str):
     """
     Get the next day from a given date string.
@@ -30,6 +57,20 @@ def get_next_day(date_str):
     """
     current_date = datetime.strptime(date_str, '%Y-%m-%d')
     next_date = current_date + timedelta(days=1)
+    return next_date.strftime('%Y-%m-%d')
+
+def get_previous_day(date_str):
+    """
+    Get the next day from a given date string.
+    
+    Args:
+        date_str (str): Date string in format 'YYYY-MM-DD'
+        
+    Returns:
+        str: Next day's date in format 'YYYY-MM-DD'
+    """
+    current_date = datetime.strptime(date_str, '%Y-%m-%d')
+    next_date = current_date - timedelta(days=1)
     return next_date.strftime('%Y-%m-%d')
 
 def get_next_monday_or_saturday(start_date):

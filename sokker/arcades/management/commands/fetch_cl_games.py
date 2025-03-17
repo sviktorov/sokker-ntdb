@@ -4,7 +4,9 @@ from django.core.management.base import BaseCommand
 from arcades.models import Game, Cup
 from sokker_base.api import auth_sokker, get_sokker_seasons, get_sokker_team_match_data_arcade, get_sokker_match_lineup_data
 from datetime import datetime
-from arcades.utils import get_next_monday_or_saturday, get_next_day, get_next_thursday
+from arcades.utils import get_next_monday_or_saturday, get_next_day, get_previous_day, get_next_thursday
+from django.utils import timezone
+
 class Command(BaseCommand):
     help = _("Cup fixtures Euro")
 
@@ -30,13 +32,18 @@ class Command(BaseCommand):
         except Cup.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"Cup with ID {c_id} does not exist"))
             return
-        if cup.c_draw_status == "done" and cup.c_status == "ready":
+        if cup.c_status == "ready":
             cookie = auth_sokker()
             today_date = datetime.now().date()
             today_date_str = today_date.strftime("%Y-%m-%d")
+            # Add debug prints
+            print("Server timezone:", timezone.get_current_timezone())
+            print("Current time (with TZ):", timezone.now())
+            print("Today date:", today_date)
+            print("Today date (str):", today_date_str)
             # Check if today is Thursday
             is_thursday = today_date.weekday() == 3  # 3 represents Thursday (0 = Monday, 6 = Sunday)
-            
+            is_monday = today_date.weekday() == 0  # 0 represents Monday (0 = Monday, 6 = Sunday)
             print("Number of teams:", cup.c_teams)
             print("Number of groups:", cup.c_groups)
             round_range = range(1, 22)
@@ -66,10 +73,11 @@ class Command(BaseCommand):
             season_ids_str = ','.join(str(id) for id in season_ids)
 
             games = Game.objects.filter(
-                c_id=cup,
-                group_id=1, 
+                c_id=cup
             ).exclude(g_status__in=["DN", "REP", "ADJ", "yes"]).order_by("cup_round")
+
             for game in games:
+                print(game.id, game.t_id_h.id, game.t_id_v.id, game.cup_round)
                 data = get_sokker_team_match_data_arcade(game.t_id_h.id, season_ids_str, cookie).json()
                 round = str(game.cup_round)
                 if 'matches' not in data:
@@ -89,11 +97,15 @@ class Command(BaseCommand):
 
                 for match in data["matches"]:
                     was_played = match["time"]["wasPlayed"]
+
                     home_team_id = match["home"]["id"]
                     away_team_id = match["away"]["id"]
                     # print(was_played, home_team_id, away_team_id, game.t_id_h.id, game.t_id_v.id)
                     flag = False
-                    if (str(home_team_id) == str(game.t_id_h.id) or  str(away_team_id) == str(game.t_id_h.id)) and (str(home_team_id) == str(game.t_id_v.id) or str(away_team_id) == str(game.t_id_v.id)):
+                    # in groups stage home away can be reversed
+                    if (str(home_team_id) == str(game.t_id_h.id) or str(away_team_id) == str(game.t_id_h.id)) and \
+                       (str(home_team_id) == str(game.t_id_v.id) or str(away_team_id) == str(game.t_id_v.id)) and \
+                       (int(game.cup_round) < 9 and int(game.cup_round) > 0):
                         flag = True
                         if str(home_team_id) == str(game.t_id_h.id):
                             home_match = True
@@ -103,12 +115,20 @@ class Command(BaseCommand):
                             home_goal = match["score"]["away"]
                             away_goal = match["score"]["home"]
                             home_match = False
+                    if (int(game.cup_round) > 8) and (str(home_team_id) == str(game.t_id_h.id) and str(away_team_id) == str(game.t_id_v.id)):
+                        flag = True
+                        home_goal = match["score"]["home"]
+
+                        away_goal = match["score"]["away"]
+
+                        home_match = True
                     if not flag:
                         continue
                     time = match["time"]["time"]["dateTime"]
                     day = time[:10]
                     # cover case when game is arranged after midnight sokker time
                     next_day = get_next_day(day)
+                    previous_day = get_previous_day(day)
                     next_thursday = get_next_thursday(day).strftime("%Y-%m-%d")
                     next_thursday_day = get_next_day(next_thursday)
                     next_thursday_from_today = get_next_thursday(today_date_str).strftime("%Y-%m-%d")
@@ -116,8 +136,13 @@ class Command(BaseCommand):
                     next_thursday_from_round_day = get_next_day(round_date[round])
                     
                     possible_days = [round_date[round], next_day, next_thursday, next_thursday_day, next_thursday_from_today, next_thursday_from_today_day, next_thursday_from_round_day]
-                    if is_thursday:
-                        possible_days.append(today_date_str)
+                    yesterday = get_previous_day(today_date_str)
+                    possible_days.append(yesterday)
+                    possible_days.append(today_date_str)
+                    possible_days.append(previous_day)
+                    possible_days.append(today_date_str)
+
+
                     if day in possible_days  or match["id"] == game.matchID:
                         if was_played:  
                             if home_goal is not None and away_goal is not None:
@@ -131,6 +156,9 @@ class Command(BaseCommand):
                         else:
                             game.g_status = "arranged"
                         game.matchID = match["id"]
+                        print("save")
+                        print("was played", was_played)
+                        print("result",home_goal, away_goal)
                         game.save()
                         print(game.id, game.g_status,game.t_id_h, game.t_id_v, game.goals_home, game.goals_away)
                         break

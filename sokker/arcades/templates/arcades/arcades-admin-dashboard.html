@@ -82,7 +82,22 @@
                                         <div class="status-message"></div>
                                     </td>
                                 {% endfor %}
-                            </tr>  
+                            </tr>
+                            <tr>
+                                <td>{% trans "Generate fixtures  for playoffs" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="fixtures_playoff_cl" 
+                                                data-params="--c_id={{ cup.pk }}">
+                                            {% trans "Generate fixtures Playoffs" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>    
                             <tr>
                                 <td>{% trans "Useful links" %}</td>
                                 {% for cup in active_cups %}
