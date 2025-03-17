@@ -1,0 +1,15 @@
+{% load i18n %}
+{% load custom_tags_arcades %}
+<!--box start--> 
+<ul style="padding: 15px 5px 15px 5px; border-bottom: 1px solid #ddd;">
+    <li style="display: flex; align-items: center; margin-bottom: 10px;">
+        <div class="widget" style="width: 100%;">
+            {% for fixture in playoff_fixtures_cl %}
+                {% if fixture.3 == game_list.0.playoff_position %}
+                    <h2 class="{{ fixture.3 }}">{{ fixture.4 }}. {{ eight_finals_cl_teams|get_item:fixture.4 }}</h2>
+                {% endif %}
+            {% endfor %}
+        </div>       
+    </li>
+</ul>
+<!--box end-->

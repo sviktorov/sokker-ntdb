@@ -31,12 +31,14 @@ SECRET_KEY = "django-insecure-bqvgw&*o6fuaqv@ar5hcrk06wdmtyj042k&vc6l+mc%a2c3p1t
 DEBUG = True
 
 # SO ip 217.71.203.72
-ALLOWED_HOSTS = ["sokker.fly.dev", "127.0.0.1", "217.71.203.72", "66.241.124.19"]
+ALLOWED_HOSTS = ["sokker.fly.dev", "127.0.0.1", "217.71.203.72", "66.241.124.19", 
+                 "bonds-ir-sunny-impact.trycloudflare.com"]
 
 CSRF_TRUSTED_ORIGINS = [
     "https://sokker.fly.dev",
     "http://127.0.0.1",
     "http://217.71.203.72",
+    "https://bonds-ir-sunny-impact.trycloudflare.com"
 ]
 # Application definition
 

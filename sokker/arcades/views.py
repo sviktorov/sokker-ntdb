@@ -12,7 +12,8 @@ import json
 from collections import defaultdict
 from django.core.cache import cache
 from django.contrib.auth.mixins import LoginRequiredMixin
-
+from .utils import PLAYOFF_FIXTURES_CL
+from sokker_base.models import Team
 ARCADES_SUB_MENU = [
     {"title": _("Arcade tournaments"), "url": "/en/arcades/cups"},
     {"title": _("Stat Pots"), "url": "/en/arcades/{}cl-cup/stat-pots"},
@@ -181,11 +182,11 @@ class CupDetails(MultiTableMixin, TemplateView):
         ).first()
         semi_finals = Game.objects.filter(
             c_id=cup_id, playoff_position__in=["s1", "s2"]
-        ).order_by("playoff_position")
+        ).order_by("playoff_position", "id")
 
         quarter_finals = Game.objects.filter(
             c_id=cup_id, playoff_position__in=["q1", "q2", "q3", "q4"]
-        ).order_by("playoff_position")
+        ).order_by("playoff_position", "id")
 
         eight_finals = Game.objects.filter(
             c_id=cup_id,
@@ -199,7 +200,7 @@ class CupDetails(MultiTableMixin, TemplateView):
                 "e7",
                 "e8",
             ],
-        ).order_by("playoff_position")
+        ).order_by("playoff_position", "id")
         eight_finals_cl = Game.objects.filter(
             c_id=cup_id,
             playoff_position__in=[
@@ -212,7 +213,7 @@ class CupDetails(MultiTableMixin, TemplateView):
                 "e7_cl",
                 "e8_cl",
             ],
-        ).order_by("playoff_position")
+        ).order_by("playoff_position", "id")
         url = ""
         if cup_object:
             title = cup_object.c_name
@@ -237,13 +238,16 @@ class CupDetails(MultiTableMixin, TemplateView):
         if not any(item["url"] == url for item in menu):
             menu.append({"title": cup_object.c_name, "url": url})
         eight_finals_cl_teams = RankGroups.objects.filter(c_id=cup_object,g_id=1).order_by("-points","-gdif","-gscored")[:8]
+        if cup_object.is_cl:
+            playoff_cols = 6
+        else:
+            playoff_cols = 3
 
         context["final"] = final
         context["final_bronze"] = final_bronze
         context["semi_finals"] = semi_finals
         context["quarter_finals"] = quarter_finals
         context["eight_finals"] = eight_finals
-
         context["cup"] = cup_object
         context["page_siblings"] = menu
         context["menu_type"] = "EURO"
@@ -251,6 +255,8 @@ class CupDetails(MultiTableMixin, TemplateView):
         context["columns_2"] = columns_2
         context["eight_finals_cl"] = eight_finals_cl
         context["eight_finals_cl_teams"] = eight_finals_cl_teams
+        context["playoff_fixtures_cl"] = PLAYOFF_FIXTURES_CL
+        context["playoff_cols"] = playoff_cols
         return context
     
 
@@ -370,4 +376,21 @@ class CupStatPotsCLTemplate(TemplateView):
         context["menu_type"] = "EURO"
         context["distinct_pots"] = distinct_pots
         context["rank_groups"] = rank_groups
+        return context
+    
+class ArcadeTeamDetails(TemplateView):
+    template_name = "arcades/team-details.html"  # Create this template
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        team_id = kwargs.get("team_id")
+        team = Team.objects.filter(id=team_id).first()
+        cup_teams = CupTeams.objects.filter(t_id=team_id).order_by("-c_id").all()
+        print(cup_teams)
+        page_title = f"{team.name}"
+        context["page_title"] = page_title
+        context["team"] = team
+        context["menu_type"] = "EURO"
+        context["country"] = team.country
+        context["cup_teams"] = cup_teams
         return context

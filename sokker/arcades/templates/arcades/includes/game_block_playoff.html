@@ -1,7 +1,7 @@
 {% load i18n %}
 
 <!--box start--> 
-<ul>
+<ul class="{{ game.playoff_position }}">
     <li>  
         <img width="35"  src="https://sokker.org/static/pic/flags/{{ game.t_id_h.country.code }}.svg" alt="" />
         <strong><a style="color: #222222;" href="https://sokker.org/en/app/team/{{ game.t_id_h.id }}/" target="_blank">{{ game.t_id_h.name }}</a></strong>

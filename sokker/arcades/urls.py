@@ -10,6 +10,11 @@ urlpatterns = [
         name="admin_dashboard_arcades",
     ),
     path(
+        "team/<str:team_id>/",
+        views.ArcadeTeamDetails.as_view(),
+        name="arcade_team_details",
+    ),
+    path(
         "cups",
         views.CupIndex.as_view(),
         name="arcade_cup_index",
