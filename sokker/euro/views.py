@@ -11,15 +11,39 @@ from django.core.management import call_command
 from io import StringIO
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-
+from django.contrib.auth.mixins import LoginRequiredMixin
+from PIL import Image, ImageDraw, ImageFont
+from arcades.utils import get_flag_image, create_standings_table_image
 from django.views.decorators.cache import cache_control
-
+import io
+import matplotlib.font_manager as fm
+from django.views.decorators.cache import cache_page
+import math
 
 EURO_SUB_MENU = [
     {"title": _("Euros - listing"), "url": "/en/euro"},
     {"title": _("Medals"), "url": "/en/euro/medals"},
     {"title": _("Rank"), "url": "/en/euro/rank"},
 ]
+
+
+class EuroAdminDashboard(LoginRequiredMixin, TemplateView):
+    template_name = "euro/euro-admin-dashboard.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["page_title"] = _("Administration Arcade")
+        context["page_siblings"] = EURO_SUB_MENU
+        context["menu_type"] = "ARCADES"
+        return context
 
 
 def CommandFormPlayerUpdate(request):
@@ -200,3 +224,146 @@ class CupDetails(MultiTableMixin, TemplateView):
         context["menu_type"] = "ARCADES"
         context["groups"] = range(1, cup_object.c_groups +1)
         return context
+
+@cache_page(timeout=60 * 60 * 24)
+def cup_round_image(request, cup_id, group_id, round_id):
+    # Get default font
+    font_path = fm.findfont(fm.FontProperties())
+    title_font = ImageFont.truetype(font_path, 32)
+    sub_title_font = ImageFont.truetype(font_path, 26)
+
+    game_font = ImageFont.truetype(font_path, 16)
+
+    # Get your data
+    cup = Cup.objects.get(id=cup_id)
+    games = Game.objects.filter(c_id=cup_id, group_id=group_id).order_by("cup_round")
+    n_games = len(games)
+    padding = 60
+    width = 900
+    height = 100 + (n_games * 30)
+    # Create image
+    img = Image.new('RGB', (width, height), color='white')
+    draw = ImageDraw.Draw(img)
+    
+    # Draw title
+    draw.text((20, 10), f"{cup.c_name}", fill='black', font=title_font)
+    draw.text((20, 50), f"Group {group_id} ", fill='blue', font=sub_title_font)
+
+    # Draw games
+
+
+    flag_size = (26, 17)  # Adjust size as needed
+    y = 90
+    for game in games:
+        # Home team flag
+        home_flag = get_flag_image(game.t_id_h.t_nation, flag_size)
+        if home_flag:
+            img.paste(home_flag, (padding, y))
+
+        # Away team flag
+        away_flag = get_flag_image(game.t_id_v.t_nation, flag_size)
+        if away_flag:
+            img.paste(away_flag, (width - padding - flag_size[0], y))
+   
+        text_home = f"{game.t_id_h.t_name}" 
+        text_result = f"{game.goals_home} - {game.goals_away}".replace("None", " ")
+        text_away = f"{game.t_id_v.t_name}"
+
+        icon_color = {
+            'arranged': '#ffc107',  # warning yellow
+            'yes': '#28a745',      # success green
+            'REP': '#ffc107',      # warning yellow
+            'DN': '#dc3545',       # danger red
+            'ADJ': '#28a745',      # success green
+            'default': '#dc3545'   # danger red
+        }
+        # Draw colored circle for status
+        x = 450
+        font = ImageFont.truetype(font_path, 16)
+        symbol_color = icon_color.get(game.g_status, icon_color['default'])
+        draw.text((20, y), f"{game.cup_round}", fill='black', font=game_font)
+        draw.text((100, y), text_home, fill='black', font=game_font)
+        draw.text((380, y), text_result, fill='black', font=game_font)
+        draw.text((500, y), text_away, fill='black', font=game_font)
+
+        # Add small symbol inside circle based on status
+
+        if game.g_status == 'arranged':
+            draw.text((x, y), '✓', fill=symbol_color, font=font)
+        elif game.g_status == 'yes':
+            draw.text((x, y), '✓', fill=symbol_color, font=font)
+        elif game.g_status == 'REP':
+            draw.text((x, y), '↻', fill=symbol_color, font=font)
+        elif game.g_status == 'DN':
+            draw.text((x, y), '✕', fill=symbol_color, font=font)
+        elif game.g_status == 'ADJ':
+            draw.text((x, y), '⚖', fill=symbol_color, font=font)
+        else:
+            draw.text((x, y), '✕', fill=symbol_color, font=font)
+
+
+    
+        y += 30
+    
+    # Convert image to bytes
+    img_byte_array = io.BytesIO()
+    img.save(img_byte_array, format='PNG')
+    img_byte_array.seek(0)
+    
+    # Return image
+    response = HttpResponse(img_byte_array.getvalue(), content_type='image/png')
+    response['Content-Disposition'] = f'inline; filename="cup_{cup_id}_round_{round_id}.png"'
+    return response
+
+
+@cache_page(timeout=60 * 60 * 24)
+def cup_group_standings_image(request, cup_id, group_id):
+    # Get default font
+    font_path = fm.findfont(fm.FontProperties())
+    title_font = ImageFont.truetype(font_path, 32)
+    sub_title_font = ImageFont.truetype(font_path, 26)
+
+    # Get your data
+    cup = Cup.objects.get(id=cup_id)
+    group = RankGroups.objects.filter(c_id=cup, g_id=group_id).order_by("-points", "-gdif", "-gscored")
+    standings = []
+    position = 1
+    title = f"Group {group_id}"
+    promotion_limit = cup.c_g_winners / cup.c_groups
+    promotion_whole = int(promotion_limit)
+    has_extra = not math.isclose(promotion_limit, promotion_whole)
+
+    for team in group:
+        promotion = False
+        relegation = False
+
+        if position <= promotion_whole:
+            promotion = True
+        elif has_extra and position == promotion_whole + 1:
+            # This is the "neutral" position, neither promotion nor relegation
+            promotion = False
+            relegation = False
+        else:
+            relegation = True
+
+        standings.append({
+            "position": position,
+            "name": team.t_id.t_name,
+            "games": team.games,
+            "wins": team.wins,
+            "draw": team.draw,
+            "lost": team.loose,
+            "gd": str(team.gscored)  + " - " + str(team.grecieved),
+            "pts": team.points,
+            "promotion": promotion,
+            "relegation": relegation,
+            "country": team.t_id.t_nation
+        })
+        position += 1
+    return create_standings_table_image(standings, title, title_font)
+
+
+
+
+
+

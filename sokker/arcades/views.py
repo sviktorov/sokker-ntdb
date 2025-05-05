@@ -5,7 +5,7 @@ from .tables import RankGroupsTable
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
 from django.shortcuts import redirect
-from .utils import generate_fixtures_cl
+from .utils import generate_fixtures_cl, get_flag_image
 from django.db.models import Max, IntegerField
 from django.db.models.functions import Cast
 import json
@@ -14,6 +14,17 @@ from django.core.cache import cache
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .utils import PLAYOFF_FIXTURES_CL
 from sokker_base.models import Team
+from django.core.management import call_command
+from django.http import HttpResponseRedirect
+from io import StringIO
+from django.http import HttpResponse
+from PIL import Image, ImageDraw, ImageFont
+import io
+import matplotlib.font_manager as fm
+from .utils import create_standings_table_image
+from django.views.decorators.cache import cache_page
+from .templatetags.custom_tags_arcades import get_cup_round_date
+
 ARCADES_SUB_MENU = [
     {"title": _("Arcade tournaments"), "url": "/en/arcades/cups"},
     {"title": _("Stat Pots"), "url": "/en/arcades/{}cl-cup/stat-pots"},
@@ -394,3 +405,150 @@ class ArcadeTeamDetails(TemplateView):
         context["country"] = team.country
         context["cup_teams"] = cup_teams
         return context
+    
+def CommandFormPlayerUpdate(request):
+    c_id = request.GET.get("c_id")
+    buffer = StringIO()
+    if c_id:
+        call_command("draw_arcades", c_id=str(c_id), stdout=buffer)
+        cup = Cup.objects.filter(id=c_id).first()
+        category_slug = None
+        if cup:
+           category_slug = cup.category.slug# Get the output from the buffer
+        command_output = buffer.getvalue()
+        print(command_output)
+        buffer.close()
+        redirect_url = reverse("arcade_cup_draw", kwargs={"cup_id": str(c_id), "category_slug": category_slug})
+        return HttpResponseRedirect(redirect_url)
+    else:
+        # If 'c_id' is not provided, you can handle the error or set a default value
+        return HttpResponse("Error: c_id parameter is missing.", status=400)
+
+@cache_page(timeout=60 * 60 * 24)
+def cup_round_image(request, cup_id, round_id):
+    # Get default font
+    font_path = fm.findfont(fm.FontProperties())
+    title_font = ImageFont.truetype(font_path, 30)
+    sub_title_font = ImageFont.truetype(font_path, 22)
+    game_font = ImageFont.truetype(font_path, 16)
+
+    # Get your data
+    cup = Cup.objects.get(id=cup_id)
+    games = Game.objects.filter(c_id=cup_id, cup_round=round_id)
+    date_round = get_cup_round_date(cup.c_start_date, round_id).strftime("%d.%m.%Y")
+    # Create image
+    y = 95
+    height = 20 + (len(games) * 30) + y
+    img = Image.new('RGB', (800, height), color='white')
+    draw = ImageDraw.Draw(img)
+    
+    # Draw title
+
+    draw.text((20, 20), f"Cup: {cup.c_name} - Round {round_id} ", fill='black', font=title_font)
+    draw.text((20, 50), f"Date {date_round}", fill='black', font=sub_title_font)
+    # Draw games
+    width = 800
+    padding = 20
+    flag_size = (26, 17)  # Adjust size as needed
+
+    for game in games:
+        # Home team flag
+        home_flag = get_flag_image(game.t_id_h.country.code, flag_size)
+        if home_flag:
+            img.paste(home_flag, (padding, y))
+
+        # Away team flag
+        away_flag = get_flag_image(game.t_id_v.country.code, flag_size)
+        if away_flag:
+            img.paste(away_flag, (width - padding - flag_size[0], y))
+   
+        text_home = f"{game.t_id_h.name}" 
+        text_result = f"{game.goals_home} - {game.goals_away}".replace("None", "")
+        text_away = f"{game.t_id_v.name}"
+
+        icon_color = {
+            'arranged': '#ffc107',  # warning yellow
+            'yes': '#28a745',      # success green
+            'REP': '#ffc107',      # warning yellow
+            'DN': '#dc3545',       # danger red
+            'ADJ': '#28a745',      # success green
+            'default': '#dc3545'   # danger red
+        }
+        # Draw colored circle for status
+        x = 450
+        font = ImageFont.truetype(font_path, 16)
+        symbol_color = icon_color.get(game.g_status, icon_color['default'])
+        draw.text((60, y), text_home, fill='black', font=game_font)
+        draw.text((380, y), text_result, fill='black', font=game_font)
+        draw.text((500, y), text_away, fill='black', font=game_font)
+        circle_radius = 8
+        # Add small symbol inside circle based on status
+
+        if game.g_status == 'arranged':
+            draw.text((x, y), '✓', fill=symbol_color, font=font)
+        elif game.g_status == 'yes':
+            draw.text((x, y), '✓', fill=symbol_color, font=font)
+        elif game.g_status == 'REP':
+            draw.text((x, y), '↻', fill=symbol_color, font=font)
+        elif game.g_status == 'DN':
+            draw.text((x, y), '✕', fill=symbol_color, font=font)
+        elif game.g_status == 'ADJ':
+            draw.text((x, y), '⚖', fill=symbol_color, font=font)
+        else:
+            draw.text((x, y), '✕', fill=symbol_color, font=font)
+
+
+    
+        y += 30
+    
+    # Convert image to bytes
+    img_byte_array = io.BytesIO()
+    img.save(img_byte_array, format='PNG')
+    img_byte_array.seek(0)
+    
+    # Return image
+    response = HttpResponse(img_byte_array.getvalue(), content_type='image/png')
+    response['Content-Disposition'] = f'inline; filename="cup_{cup_id}_round_{round_id}.png"'
+    return response
+
+@cache_page(timeout=60 * 60 * 24)
+def cup_group_standings_image(request, cup_id, group_id):
+    # Get default font
+    font_path = fm.findfont(fm.FontProperties())
+    title_font = ImageFont.truetype(font_path, 32)
+
+    # Get your data
+    cup = Cup.objects.get(id=cup_id)
+    group = RankGroups.objects.filter(c_id=cup, g_id=group_id).order_by("-points", "-gdif", "-gscored")
+    standings = []
+    position = 1
+    title = f"Group {group_id}"
+    for team in group:
+        promotion = False
+        relegation = False
+        if cup.is_cl:
+            if position <=8:
+                promotion = True
+            elif position > 28:
+                relegation = True
+            print(position,promotion,relegation)
+       
+        else:
+            if position <=   cup.c_g_winners / cup.c_groups:
+                promotion = True
+        standings.append({
+            "position": position,
+            "name": team.t_id.name,
+            "games": team.games,
+            "wins": team.wins,
+            "draw": team.draw,
+            "lost": team.loose,
+            "gd": str(team.gscored)  + " - " + str(team.grecieved),
+            "pts": team.points,
+            "promotion": promotion,
+            "relegation": relegation,
+            "country": team.t_id.country.code
+        })
+        position += 1
+    return create_standings_table_image(standings, title, title_font)
+

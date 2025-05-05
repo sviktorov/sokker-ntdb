@@ -3,3 +3,5 @@ fly.toml
 .tox/
 .env
 *.sqlite3
+.sokkerenv/
+*.sql

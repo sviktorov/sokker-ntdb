@@ -54,6 +54,12 @@ from .utils import extract_skill_value, set_pharse_player_data
 from .models import NTTeamsStats
 import json
 import sys
+import os
+import matplotlib.pyplot as plt
+import pandas as pd
+import tempfile
+from django.core.cache import cache
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -478,7 +484,26 @@ class BestPlayers(MultiTableMixin, FilterView):
     filterset_class = PlayerAgeFilter
     table_pagination = {"per_page": 100}
 
+    def get_cache_key(self, position):
+        """
+        Generate a unique cache key based on GET parameters and position
+        """
+        # Get relevant parameters
+        params = {
+            'position': position,
+            'country': self.country.name if self.country else '',
+            'age': self.age_filter if self.age_filter else '',
+        }
+        
+        # Create a string representation of parameters
+        param_string = f"{params['position']}_{params['country']}_{params['age']}"
+        
+        # Create a hash of the parameters to use as cache key
+        cache_key = hashlib.md5(param_string.encode()).hexdigest()
+        return f"player_image_{cache_key}"
+
     def dispatch(self, request, *args, **kwargs):
+        position = request.GET.get("position")
         self.country_name = kwargs.get("country_name")
         self.country = (
             Country.objects.annotate(name_lower=Lower("name"))
@@ -486,6 +511,8 @@ class BestPlayers(MultiTableMixin, FilterView):
             .first()
         )
         self.age_filter = request.GET.get("age")
+        format_type = request.GET.get("format")
+
         if not self.age_filter:
             start_age = 16
             end_age = 40
@@ -546,7 +573,136 @@ class BestPlayers(MultiTableMixin, FilterView):
                     order_by="-att_points",
                 ),
             ]
+        if format_type == "image":
+            try:
+                # Get cache key
+                cache_key = self.get_cache_key(position)
+                
+                # Try to get cached image path
+                image_path = cache.get(cache_key)
+                
+                # If not in cache or file doesn't exist, generate new image
+                if not image_path or not os.path.exists(image_path):
+                    image_path = self.generate_image(position)
+                    if image_path and os.path.exists(image_path):
+                        # Cache the path for 1 hour (3600 seconds)
+                        cache.set(cache_key, image_path, 3600)
+                    
+                if image_path and os.path.exists(image_path):
+                    with open(image_path, 'rb') as f:
+                        return HttpResponse(f.read(), content_type='image/png')
+                else:
+                    return HttpResponse(json.dumps({"error": "Image not found"}), content_type="application/json")
+            except Exception as e:
+                return HttpResponse(json.dumps({"error": str(e)}), content_type="application/json")
+
+     
         return super().dispatch(request, *args, **kwargs)
+
+    def generate_image(self, position):
+        """
+        Generate an image with table view of the data using matplotlib
+        """
+        # Create a temporary directory if it doesn't exist
+        temp_dir = os.path.join(tempfile.gettempdir(), 'player_images')
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # Find the specific table based on position
+        target_table = None
+        for table in self.tables:
+            if position == "GK" and isinstance(table, GKPlayerTable):
+                target_table = table
+                break
+            elif position == "DEF" and isinstance(table, DefPlayerTable):
+                target_table = table
+                break
+            elif position == "MID" and isinstance(table, MidPlayerTable):
+                target_table = table
+                break
+            elif position == "WING" and isinstance(table, WingPlayerTable):
+                target_table = table
+                break
+            elif position == "ATT" and isinstance(table, AttPlayerTable):
+                target_table = table
+                break
+        
+        if target_table:
+            # Get the data from the table
+            data = []
+            for row in target_table.data:
+                player_data = [
+                    f"{row.name} {row.surname}",
+                    str(row.age),
+                    row.teamid.name if row.teamid else 'No Team',
+                ]
+                
+                # Add position-specific points
+                if position == "GK":
+                    player_data.append(str(row.gk_points))
+                elif position == "DEF":
+                    player_data.append(str(row.def_points))
+                elif position == "MID":
+                    player_data.append(str(row.mid_points))
+                elif position == "WING":
+                    player_data.append(str(row.wing_points))
+                elif position == "ATT":
+                    player_data.append(str(row.att_points))
+                    
+                data.append(player_data)
+
+            # Create figure and axis with extra space at top for title
+            fig = plt.figure(figsize=(12, 12))  # Increased height to accommodate title
+            ax = plt.gca()
+            
+            # Hide axes
+            ax.axis('tight')
+            ax.axis('off')
+            
+            # Create title based on whether age_filter exists
+            title = f'Best {position} Players - {self.country.name}'
+            if self.age_filter is not None:
+                title += f' age {self.age_filter}'
+            
+            # Add title first at the top
+            plt.title(title, 
+                     pad=10, 
+                     y=1.0,  # Position at the very top
+                     fontsize=12,
+                     fontweight='bold')
+            
+            # Create table with adjusted position
+            column_labels = ['Name', 'Age', 'Team', 'Points']
+            table = ax.table(cellText=data[:50],  # Limit to first 20 items
+                            colLabels=column_labels,
+                            cellLoc='center',
+                            loc='center',
+                            bbox=[0.05, 0.05, 0.9, 0.8])  # Adjust table position [left, bottom, width, height]
+            
+            # Style the table
+            table.auto_set_font_size(False)
+            table.set_fontsize(9)
+            
+            # Style header
+            for (row, col), cell in table.get_celld().items():
+                cell.PAD = 0.2  # Add padding to all cells
+                cell._text.set_horizontalalignment('center')  # Center text
+                
+                if row == 0:
+                    cell.set_text_props(weight='bold', color='white')
+                    cell.set_facecolor('#4472C4')
+                    cell.set_text_props(color='white')
+                else:
+                    cell.set_facecolor('#E6E6E6' if row % 2 else 'white')
+            
+            # Save to a file in the temporary directory with a unique name
+            cache_key = self.get_cache_key(position)
+            file_path = os.path.join(temp_dir, f"{cache_key}.png")
+            
+            plt.savefig(file_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            return file_path
+        else:
+            return None
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -717,10 +873,14 @@ class BestPlayersTeamStats(TemplateView):
         team = Team.objects.filter(id=self.team_id).first()
         team_stats = NTTeamsStats.objects.filter(countryid=self.country.code, stat_type="team", teamid=self.team_id).order_by("-ntmatches").first()
         youth_stats = NTTeamsStats.objects.filter(countryid=self.country.code, stat_type="youth", teamid=self.team_id).order_by("-ntmatches").first()
-        if isinstance(team_stats.json_data, str):
+        if team_stats and isinstance(team_stats.json_data, str):
             team_stats.json_data = json.loads(team_stats.json_data)
-        if isinstance(youth_stats.json_data_youth, str):
+        else:
+            team_stats = None
+        if youth_stats and isinstance(youth_stats.json_data_youth, str):
             youth_stats.json_data_youth = json.loads(youth_stats.json_data_youth)
+        else:
+            youth_stats = None
         # Add additional variables to the context
         context["page_title"] = _("Best Players All Time Stats Teams")
         context["page_siblings"] = NTDB_SUB_MENU

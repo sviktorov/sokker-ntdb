@@ -6,6 +6,17 @@ from ntdb.models import ArchivePlayer
 import re
 
 INITIAL_PHARSE_PLAYER = " [{}] stamina [{}] keeper\n [{}] pace [{}] defender\n [{}] technique [{}] playmaker\n [{}] passing [{}] striker"
+SKILLS_BG = {
+    "stamina": "издръжливост",
+    "keeper": "пазене",
+    "pace": "бързина",
+    "defender": "защита",
+    "technique": "техника",
+    "playmaker": "разиграване",
+    "passing": "подаване",
+    "striker": "голов нюх"
+}
+
 def set_pharse_player_data(player):
     player_data = INITIAL_PHARSE_PLAYER
     if not player:
@@ -20,7 +31,12 @@ def set_pharse_player_data(player):
 def extract_skill_value(text, skill_name):
     pattern = r'\[(\d+)\]\s*' + re.escape(skill_name)
     match = re.search(pattern, text)
-    return match.group(1) if match else ""
+    result = match.group(1) if match else ""
+    if result == "":
+        pattern = r'\[(\d+)\]\s*' + re.escape(SKILLS_BG[skill_name])
+        match = re.search(pattern, text)
+        result = match.group(1) if match else ""
+    return result
 
 
 def get_fullname_wrapper():

@@ -6,9 +6,36 @@ import sys
 import json
 from functools import lru_cache
 from datetime import datetime, timedelta
-
+from PIL import Image, UnidentifiedImageError
+import os
+from django.conf import settings
+import requests
+from io import BytesIO
+import cairosvg
+from django.core.cache import cache
+import hashlib
+from PIL import ImageDraw, ImageFont
+import matplotlib.font_manager as fm
+from django.http import HttpResponse
+import io
+import matplotlib.font_manager as fm
 # Increase the recursion depth to a higher value (e.g., 5000)
 sys.setrecursionlimit(130000)
+
+DRAW_STATUS_CHOICES = [
+    ('ready', 'Ready'),
+    ('done', 'Done'),
+    ('signup', 'Signup'),
+]
+
+CUP_STATUS_CHOICES = [
+    ('ready', 'Ready'),
+    ('done', 'Done'),
+    ('signup', 'Signup'),
+    ('draw', 'Draw'),   
+    ('fixtures', 'Fixtures'),
+]
+
 
 CL_TEAMS = [
         list(range(1, 10)),    # Pot 1: Teams 1 to 9
@@ -73,6 +100,42 @@ def get_previous_day(date_str):
     next_date = current_date - timedelta(days=1)
     return next_date.strftime('%Y-%m-%d')
 
+def get_next_monday_or_thursday(start_date):
+    """
+    Get the next Monday or Thursday from the given date.
+
+    Args:
+        start_date (str or datetime): The date to start from. Can be a string in format 'YYYY-MM-DD' 
+                                    or a datetime object.
+
+    Returns:
+        datetime: The next Monday or Thursday.
+    """
+    # Handle empty or None input by using current date
+    if not start_date:
+        start_date = datetime.now()
+    
+    # Convert string to datetime if needed
+    if isinstance(start_date, str):
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            # Handle invalid date string by using current date
+            start_date = datetime.now()
+
+    days_ahead_monday = (7 - start_date.weekday() + 0) % 7  # 0 for Monday
+    days_ahead_thursday = (7 - start_date.weekday() + 3) % 7  # 3 for Thursday
+
+    if days_ahead_monday == 0:  # If today is Monday
+        days_ahead_monday = 7
+    if days_ahead_thursday == 0:  # If today is Thursday
+        days_ahead_thursday = 7
+
+    next_monday = start_date + timedelta(days=days_ahead_monday)
+    next_thursday = start_date + timedelta(days=days_ahead_thursday)
+
+    return min(next_monday, next_thursday)
+
 def get_next_monday_or_saturday(start_date):
     """
     Get the next Monday or Saturday from the given date.
@@ -108,6 +171,38 @@ def get_next_monday_or_saturday(start_date):
     next_saturday = start_date + timedelta(days=days_ahead_saturday)
 
     return min(next_monday, next_saturday)
+
+def get_next_saturday(start_date):
+    """
+    Get the next Saturday from the given date.
+
+    Args:
+        start_date (str or datetime): The date to start from. Can be a string in format 'YYYY-MM-DD' 
+                                    or a datetime object.
+
+    Returns:
+        datetime: The next Saturday.
+    """
+    # Handle empty or None input by using current date
+    if not start_date:
+        start_date = datetime.now()
+    
+    # Convert string to datetime if needed
+    if isinstance(start_date, str):
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            # Handle invalid date string by using current date
+            start_date = datetime.now()
+
+    days_ahead = (7 - start_date.weekday() + 5) % 7  # 5 for Saturday
+
+    if days_ahead == 0:  # If today is Saturday
+        days_ahead = 7
+
+    next_saturday = start_date + timedelta(days=days_ahead)
+    return next_saturday
+
 
 def get_next_thursday(start_date):
     """
@@ -414,5 +509,164 @@ def generate_fixtures_cl():
     return fixtures, filename
    
 
+# Function to load and resize flag
+def get_flag_image(country_code, flag_size=(100, 100)):
+    # Create cache key from country_code
+    cache_key = f'flag_image_{country_code}'
+    
+    # Try to get from cache first
+    cached_image = cache.get(cache_key)
+    if cached_image:
+        return Image.open(BytesIO(cached_image)).resize(flag_size)
+    
+    try:
+        url = f"https://sokker.org/static/pic/flags/{country_code}.svg"  # adjust URL as needed
+        response = requests.get(url)
+        response.raise_for_status()
+        
+        if response.headers.get('content-type') == 'image/svg+xml':
+            png_data = cairosvg.svg2png(bytestring=response.content)
+            image = Image.open(BytesIO(png_data))
+        else:
+            image = Image.open(BytesIO(response.content))
+        
+        image = image.convert('RGBA')
+        image = image.resize(flag_size)  # Resize to flag_size
+        
+        # Cache the image
+        img_byte_array = BytesIO()
+        image.save(img_byte_array, format='PNG')
+        cache.set(cache_key, img_byte_array.getvalue(), timeout=86400)  # Cache for 24 hours
+        
+        return image
+        
+    except Exception as e:
+        print(f"Error processing image for country {country_code}: {e}")
+        return None
 
+COLORS = {
+    'header': '#dc3545',  # Blue
+    'row_even': 'lightblue',  # Light gray
+    'row_odd': '#38A1F3',
+    'highlight': '#ffd700',  # Gold for special rows
+    'promotion': '#38A1F3',  # rgb(56, 161, 243)
+    'relegation': '#dc3545',  # Light red
+    'normal': '#28a745'
+}
+    # Draw table borders and header
+def draw_cell(draw, font, x, y, width, height, text, bg_color='white', text_color='white'):
+    # Draw cell with background color
+    draw.rectangle([x, y, x + width, y + height], fill=bg_color, outline='black')
+    
+    # Draw text centered in cell
+    text_width = draw.textlength(str(text), font=font)
+    text_x = x + (width - text_width) // 2
+    text_y = y + (height - font.size) // 2
+    
+    # Choose text color based on background brightness
+    draw.text((text_x, text_y), str(text), fill=text_color, font=font)
 
+def create_standings_table_image(standings, title, title_font):
+    # Define dimensions and styling
+    padding = 20
+    title_padding = 20
+    cell_padding = 10
+    row_height = 40
+    col_widths = {
+        'pos': 50,      # Position
+        'country': 50,
+        'team': 300,    # Team name
+        'games': 60,    # Games played
+        'wins': 60,     # Wins
+        'draws': 60,    # Draws
+        'lost': 60,     # Losses
+        'gd': 100,       # Goal difference
+        'pts': 60       # Points
+    }
+    
+    # Calculate total width and height
+    width = sum(col_widths.values()) + (padding * 2)
+    height = (len(standings) + 1) * row_height + (padding * 2) + title_padding + title_font.size  # +1 for header
+    
+    # Create image
+    img = Image.new('RGB', (width, height), color='white')
+    draw = ImageDraw.Draw(img)
+    
+    # Load font
+    font_path = fm.findfont(fm.FontProperties())
+    font = ImageFont.truetype(font_path, 26)
+    title_font = ImageFont.truetype(font_path, 30)
+
+    # Draw title
+    draw.rectangle([padding, padding, width - padding, padding + title_font.size + title_padding], fill='white')
+    draw.text((padding, title_padding), title, fill='black', font=title_font)
+    
+    # Draw header
+    headers = ['Pos', '', 'Team', 'P', 'W', 'D', 'L', 'GD', 'Pts']
+    x = padding
+    y = title_padding + title_font.size + padding
+    
+    for header, width in zip(headers, col_widths.values()):
+        draw_cell(draw, font, x, y, width, row_height, header, bg_color=COLORS['header'], text_color='white')  # Blue header
+        x += width
+    
+    # Draw data rows
+    for idx, team in enumerate(standings, 1):
+        x = padding
+        y = padding + (idx * row_height) + title_font.size + title_padding  
+        
+        # Alternate row colors
+        if team['promotion']:
+            row_bg = COLORS['promotion']
+        elif team['relegation']:
+            row_bg = COLORS['relegation']
+        else:
+            row_bg = COLORS['normal']
+        
+        # Position
+        draw_cell(draw, font, x, y, col_widths['pos'], row_height, team['position'], row_bg, text_color='white')
+        x += col_widths['pos']
+        
+        flag_size = (30, 20)
+        flag = get_flag_image(team["country"], flag_size)
+        # Country
+     
+        draw_cell(draw, font, x, y, col_widths['country'], row_height, "", row_bg, text_color='white')
+        
+        if flag:
+            img.paste(flag, (x+10, y+10))
+        x += col_widths['country']
+        
+        # Team name
+        draw_cell(draw, font, x, y, col_widths['team'], row_height, team['name'], row_bg, text_color='white')
+        x += col_widths['team']
+        
+        # Games played
+        draw_cell(draw, font, x, y, col_widths['games'], row_height, team['games'], row_bg, text_color='white')
+        x += col_widths['games']
+        
+        # Wins
+        draw_cell(draw, font, x, y, col_widths['wins'], row_height, team['wins'], row_bg, text_color='white')
+        x += col_widths['wins']
+        
+        # Draws
+        draw_cell(draw, font, x, y, col_widths['draws'], row_height, team['draw'], row_bg, text_color='white')
+        x += col_widths['draws']
+        
+        # Losses
+        draw_cell(draw, font, x, y, col_widths['lost'], row_height, team['lost'], row_bg, text_color='white')
+        x += col_widths['lost']
+        
+        # Goal difference
+        draw_cell(draw, font, x, y, col_widths['gd'], row_height, team['gd'], row_bg, text_color='white')
+        x += col_widths['gd']
+        
+        # Points
+        draw_cell(draw, font, x, y, col_widths['pts'], row_height, team['pts'], row_bg, text_color='white')
+    
+    # Convert to bytes
+    img_byte_array = io.BytesIO()
+    img.save(img_byte_array, format='PNG')
+    img_byte_array.seek(0)
+    
+    return HttpResponse(img_byte_array.getvalue(), content_type='image/png')

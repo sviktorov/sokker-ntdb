@@ -125,16 +125,35 @@
 
                                     <div class="col-lg-12 col-md-6"> 
                                         <h2>Group {{ forloop.counter }}</h2>
+                                        {% include "arcades/includes/game_legend.html" %}       
                                         {% get_group_games cup_id=cup.pk group_id=forloop.counter as group_games %}
                                         <div class="match-results-list wf100">
-                                        <!--title start-->
-                                        <div class="nms-title">
-                                            <h4><span>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }}</span></h4>
-                                        </div>
-                                        <!--title end-->
-                                            {% for game in group_games %}
-                                                {% include "euro/includes/game_block.html" with  game=game cup=cup %}       
-                                            {% endfor %}
+                                            <!--title start-->
+                                            <div class="nms-title">
+                                                <h4><span>{{ cup.c_name}} - {% trans "Group" %} {{ forloop.counter }}</span></h4>
+                                            </div>
+                                            <!--title end-->
+                                            {% with current_round=group_games.0.cup_round %}
+                                                {% regroup group_games|dictsort:"cup_round" by cup_round as rounds %}
+                                                {% for round in rounds %}
+                                                    <h3>Round {{ round.grouper }} - {% get_round_date cup=cup round=round.grouper %}</h3>
+                                                    <div class="row">
+                                                        {% with games_count=round.list|length %}
+                                                            {% for game in round.list %}
+                                                                {% if games_count <= 2 %}
+                                                                    <div class="col-md-6">
+                                                                {% elif games_count <= 3 %}
+                                                                    <div class="col-md-4">
+                                                                {% else %}
+                                                                    <div class="col-md-3">
+                                                                {% endif %}
+                                                                    {% include "euro/includes/game_block_group.html" with game=game cup=cup %}
+                                                                </div>
+                                                            {% endfor %}
+                                                        {% endwith %}
+                                                    </div>
+                                                {% endfor %}
+                                            {% endwith %}
                                         </div>
                                         <div class="point-table-widget">
                                             {% cache 0 "rank_group_cache_key_{{ cup.pk }}_{{ forloop.counter }}" %}

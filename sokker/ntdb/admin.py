@@ -97,7 +97,9 @@ class PlayerAdmin(ImportExportModelAdmin):
    
     list_display = [
         "full_name",
-        "injurydays",
+        "edit_button",
+        "edit_button_manual",
+        "injurydays_with_class",
         "age",
         "value",
         "position_with_class",
@@ -118,12 +120,10 @@ class PlayerAdmin(ImportExportModelAdmin):
         "get_attacker_points",
         "get_goalie_points",
         "position_score",
-        "date",
-        "daily_update",
-        "retired",
-        "teamid",
-        "edit_button",
-        "edit_button_manual",
+        "last_update",
+        "daily_update_date",
+        # "retired",
+        # "teamid",
     ]  # Add any other fields you want to display in the list
     readonly_fields = (
         "injurydays",
@@ -147,11 +147,11 @@ class PlayerAdmin(ImportExportModelAdmin):
         "skillexperience",
         "skilldiscipline",
         "transferlist",
-        "date",
+        "last_update",
         "height",
         "weight",
         "modified",
-        "daily_update",
+        "daily_update_date",
         "retired",
     )
     ordering = ("-value",)
@@ -199,6 +199,7 @@ class PlayerAdmin(ImportExportModelAdmin):
         extra_context["extra_actions"] = True
         return super().changelist_view(request, extra_context=extra_context)
 
+
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
         queryset = queryset.annotate(
@@ -229,6 +230,22 @@ class PlayerAdmin(ImportExportModelAdmin):
                 queryset = queryset.filter(countryid=country_code)
         return queryset
 
+    def daily_update_date(self, obj):
+        if obj.daily_update:
+            return obj.daily_update.strftime('%Y-%m-%d')
+        return ''
+
+    daily_update_date.short_description = _("Daily update")
+    daily_update_date.admin_order_field = 'daily_update'
+
+    def last_update(self, obj):
+        if obj.date:
+            return obj.date[:10]
+        return ''
+
+    last_update.short_description = _("Last Update")
+    last_update.admin_order_field = 'date'
+
     def edit_button(self, obj):
         url = reverse(
             "admin:%s_%s_change" % (obj._meta.app_label, obj._meta.model_name),
@@ -258,7 +275,22 @@ class PlayerAdmin(ImportExportModelAdmin):
             full_name,
         )
 
-    full_name.short_description = _("Name")  # Set the custom label
+    full_name.short_description = _("Full Name")  # Set the custom label
+
+    def injurydays_with_class(self, obj):
+        injury_class = ""
+        if obj.injurydays > 0:
+            injury_class = "light_injury"
+        if obj.injurydays > 7:
+            injury_class = "medium_injury"
+        if obj.injurydays > 14:
+            injury_class = "heavy_injury"
+
+        return format_html('<span class="{}" >{}</span>',
+                           injury_class, 
+                           obj.injurydays)
+    injurydays_with_class.short_description = _("Inj")
+    injurydays_with_class.admin_order_field = 'injurydays' 
 
     def get_goalie_points(self, obj):
         return obj.gk_points

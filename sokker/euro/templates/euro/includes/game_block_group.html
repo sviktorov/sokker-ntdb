@@ -1,0 +1,62 @@
+{% load i18n %}
+{% load custom_tags_arcades %}
+{% load custom_tags %}
+<style>
+  .position-absolute {
+    top: 0;
+    right: 0;
+    margin-top: 10px;
+  }
+  
+  /* Target icons in the absolute positioned li */
+  li.position-absolute .badge i.fas {
+    font-size: 1.4em !important;
+  }
+
+  /* Or if you don't have the position-absolute class yet */
+  .game-block li:last-child .badge i.fas {
+    font-size: 1.4em !important;
+  }
+
+</style>
+
+        <!--box start--> 
+        <ul class="last-match">
+           <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_h.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_h.t_name }}</strong> </li>
+           <li class="mscore"> <span style="margin-top: 0;">{{ game.goals_home|show_goals }}</span> {{ game.home_status }} </li>
+           <li style="width: 100%;"></li>
+           <li class="team-name"> <img src="https://sokker.org/static/pic/flags/{{ game.t_id_v.t_sokker_id }}.svg" alt=""> <strong>{{ game.t_id_v.t_name }}</strong> </li>
+           <li class="mscore" style="display: block;"> 
+               <span style="margin-top: 0;">{{ game.goals_away|show_goals }}</span> 
+               {{ game.away_status }} 
+           </li>
+           <li style="width: 100%;">
+
+           </li>
+           <li class="match-info"> <strong>Round {{ game.cup_round }}</strong> <span>{% get_round_date cup=cup round=round.grouper %} </span> 
+            {% if game.matchID %}
+              {% if game.g_status == "arranged" %}
+                <a target="_blank" href="https://sokker.org/studio/matchID/{{game.matchID}}">Match Studio </a>
+              {% else %}
+                <a target="_blank" href="https://sokker.org/comment?matchID={{game.matchID}}">Match Report </a>
+              {% endif %}
+            {% endif %}
+            </li>
+          <li class="position-absolute" >
+            {% if game.g_status == "arranged" %}
+            <span class="badge badge-warning float-right"><a target="_blank" href="https://sokker.org/studio/matchID/{{ game.matchID }}/"><i class="fas fa-check"></i></a></span>
+            {% elif game.g_status == "yes" %}
+            <span class="badge badge-success float-right"><a target="_blank" href="https://sokker.org/comment?matchID={{ game.matchID }}"><i class="fas fa-futbol"></i></a></span>
+            {% elif game.g_status == "REP" %}
+            <span class="badge badge-warning float-right"><a target="_blank" href="https://sokker.org/studio/matchID/{{ game.matchID }}/"><i class="fas fa-times"></i></a></span>
+            {% elif game.g_status == "DN" %}
+            <span class="badge badge-danger float-right"><a target="_blank" href="https://sokker.org/studio/matchID/{{ game.matchID }}/"><i class="fas fa-ban"></i></a></span>
+            {% elif game.g_status == "ADJ" %}
+            <span class="badge badge-success float-right"><a target="_blank" href="https://sokker.org/studio/matchID/{{ game.matchID }}/"><i class="fas fa-pen"></i></a></span>
+            {% else %}
+            <span class="badge badge-danger float-right"><i class="fas fa-times"></i></span>
+            {% endif %}
+          </li>
+         </ul>
+        <!--box end-->
+

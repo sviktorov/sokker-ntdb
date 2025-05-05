@@ -7,8 +7,20 @@ from euro.models import Game, Cup, RankGroups
 class Command(BaseCommand):
     help = _("Update medals table")
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--cup-id',
+            type=int,
+            help=_('ID of the specific cup to update. If not provided, updates all active cups.'),
+            required=False
+        )
+
     def handle(self, *args, **options):
-        all_cups_active = Cup.objects.filter(c_active=True)
+        cup_id = options.get('cup_id')
+        if cup_id:
+            all_cups_active = Cup.objects.filter(id=cup_id)
+        else:
+            all_cups_active = Cup.objects.filter(c_active=True)
         for cup in all_cups_active:
             print(cup.c_groups)
             for i in range(1, cup.c_groups + 1):

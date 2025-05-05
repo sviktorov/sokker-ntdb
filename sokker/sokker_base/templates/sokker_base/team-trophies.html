@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %} 
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">            
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>Trophies {{ country_name }} {{ trophy_type }}</h3>
+                </div>
+
+                <div class="point-table-widget">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Team</th>
+                                <th>
+                                    <span class="medal gold" title="First Place">🥇</span>
+                                </th>
+                                <th>
+                                    <span class="medal silver" title="Second Place">🥈</span>
+                                </th>
+                                <th>
+                                    <span class="medal bronze" title="Third Place">🥉</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trophy in team_trophies %}
+                                <tr>
+                                    <td>{{ trophy.team_name }}</td>
+                                    <td>{{ trophy.first_place }}</td>
+                                    <td>{{ trophy.second_place }}</td>
+                                    <td>{{ trophy.third_place }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .medal {
+        font-size: 20px;
+        display: inline-block;
+    }
+    .table th, .table td {
+        text-align: center;
+        vertical-align: middle;
+    }
+    .table th:first-child, .table td:first-child {
+        text-align: left;
+    }
+    .point-table-widget {
+        width: 100%;
+        overflow-x: auto;
+    }
+    .table {
+        min-width: 600px;
+    }
+</style>
+{% endblock %}
+

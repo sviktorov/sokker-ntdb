@@ -74,3 +74,52 @@ class Team(models.Model):
             return self.name
         else:
             return f"sokker id team - {self.id}"
+
+TROPHY_TYPES = [
+    ('league', 'League'),
+    ('national_cup', 'National Cup'),
+    ('international', 'International'),
+    ('champions_cup', 'Champions Cup'),
+]
+
+
+class TeamTrophies(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, blank=True, null=True)
+    trophy_type = models.CharField(max_length=250, blank=True, null=True, choices=TROPHY_TYPES)
+    occurrences = models.IntegerField(blank=True, null=True)
+    level = models.IntegerField(blank=True, null=True)
+    position = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = _("Team Trophies")
+
+    def __str__(self):
+        return f"{self.country} - {self.trophy_type}"
+    
+
+class LeagueTable(models.Model):
+    league = models.IntegerField(blank=True, null=True)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, blank=True, null=True)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True)
+    season = models.IntegerField(blank=True, null=True)
+    position = models.IntegerField(blank=True, null=True)
+    points = models.IntegerField(blank=True, null=True)
+    played = models.IntegerField(blank=True, null=True)
+    won = models.IntegerField(blank=True, null=True)
+    drawn = models.IntegerField(blank=True, null=True)
+    lost = models.IntegerField(blank=True, null=True)
+    scored = models.IntegerField(blank=True, null=True)
+    conceded = models.IntegerField(blank=True, null=True)
+
+    def goal_difference(self):
+        return self.scored - self.conceded
+    
+    class Meta:
+        verbose_name_plural = _("League Table")
+        unique_together = ("league", "country", "team", "season")
+    def __str__(self):
+        return f"{self.league} - {self.country} - {self.team} - {self.season}"
+ 
+    
+    

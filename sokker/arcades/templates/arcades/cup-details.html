@@ -221,11 +221,12 @@
                     <!-- Render the tables -->
                     {% for table in tables %}
                         <div class="col-lg-{{ columns_1 }} col-md-{{ columns_1 }}">
+                            
                             <div class="group-box">
                                 {% get_last_round_arcades cup_id=cup.pk group_id=forloop.counter as last_round %}
                                 {% get_group_games_arcades cup_id=cup.pk group_id=forloop.counter rounds=last_round as group_games %}                      
                                 <h6>{% trans "Group" %} {{ forloop.counter }} - Round {{ last_round }}</h6>
-                                
+
                                 <ul>
                                     {% for game in group_games %}
                                         <h4>Game {{ forloop.counter }}</h4>

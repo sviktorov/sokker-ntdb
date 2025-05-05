@@ -14,4 +14,9 @@ urlpatterns = [
         views.PlayerPrediction.as_view(),
         name="player_prediction",
     ),
+    path(
+        "player-last-transfer",
+        views.PlayerLastTransfer.as_view(),
+        name="player_last_transfer",
+    ),
 ]

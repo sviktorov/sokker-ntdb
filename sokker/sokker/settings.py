@@ -43,6 +43,8 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
+    "easy_thumbnails",
+    "filer",
     "front",
     "sokker_base",
     "ntdb",

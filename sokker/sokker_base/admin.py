@@ -4,7 +4,15 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from django.contrib import admin
-from .models import Country, UserCountry, PointsRequirementsCountry, Team
+from .models import Country, UserCountry, PointsRequirementsCountry, Team, TeamTrophies, LeagueTable
+
+
+@admin.register(TeamTrophies)
+class TeamTrophiesAdmin(ImportExportModelAdmin):
+    list_display = ("team", "country", "trophy_type", "position", "level", "occurrences")
+    list_filter = ("team", "country", "trophy_type", "position", "level")
+    search_fields = ("team__name", "country__name", "trophy_type")
+    ordering = ("team__name", "country__name", "trophy_type", "position", "level")
 
 
 @admin.register(Country)
@@ -53,3 +61,10 @@ class TeamAdmin(ImportExportModelAdmin):
 
 admin.site.site_header = "Sokker NTDB"
 admin.site.site_title = "Sokker NTDB"
+
+@admin.register(LeagueTable)
+class LeagueTableAdmin(ImportExportModelAdmin):
+    list_display = ("league", "country", "team", "season", "position", "points", "played", "won", "drawn", "lost", "scored", "conceded")
+    list_filter = ("league", "country", "team", "season")
+    search_fields = ("league", "country__name", "team__name", "season")
+    ordering = ("league", "country__name", "team__name", "season")

@@ -39,10 +39,14 @@ class CupAdmin(ImportExportModelAdmin):
         "c_name",
         "c_edition",
         "c_active",
+        "c_status",
+        "c_draw_status",
         "category",
     )
     list_filter = (
         "c_active",
+        "c_status",
+        "c_draw_status",
         "category",
     )
     ordering = ("c_name",)
@@ -74,7 +78,7 @@ class CupTeamsAdmin(ImportExportModelAdmin):
 @admin.register(CupDraw)
 class CupDrawAdmin(ImportExportModelAdmin):
     autocomplete_fields = ('t_id',)   
-    list_display = ("t_id", "c_id", "g_id")
+    list_display = ("t_id", "c_id", "g_id", "rating")
     ordering = ("c_id",)
     search_fields = ('t_id',)
     list_filter = ("c_id", "g_id", "c_id")

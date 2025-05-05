@@ -1,12 +1,12 @@
 import requests
 from django.shortcuts import render
-from .forms import FetchTacticDataForm, PostTacticDataForm, SwapPositionsForm, PlayerPredictionForm
+from .forms import FetchTacticDataForm, PlayerLastTransferForm, PostTacticDataForm, SwapPositionsForm, PlayerPredictionForm
 from ntdb.forms import PlayerManualUpdateForm, PlayerForm
 import re
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
-from sokker_base.api import get_sokker_seasons, auth_sokker, get_season_week 
+from sokker_base.api import get_sokker_player_data, get_sokker_player_experience_data, get_sokker_seasons, auth_sokker, get_season_week, get_sokker_team_players_data, get_sokker_player_transfer_data
 from ntdb.utils import extract_skill_value, INITIAL_PHARSE_PLAYER
 from django import forms
 PLAYER_SLOT = 70
@@ -268,4 +268,29 @@ class PlayerPrediction(FormView):
         return context
 
 
+class PlayerLastTransfer(FormView):
+    template_name = "tools/player-last-transfer.html"
+    form_class = PlayerLastTransferForm
 
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        playerForm = PlayerForm()
+        last_transfer = {}
+        if form.is_valid():
+            sokker_id = form.cleaned_data["sokker_id"]
+            cookie = auth_sokker()
+            if not cookie:
+                return render(request, 'error.html', {
+                    'page_title': _("Error"),
+                    'error_message': _("Sokker.org is currently unavailable. Please try again our tool later.")
+                })
+     
+            player_experience = get_sokker_player_experience_data(sokker_id, cookie) 
+
+            if player_experience.status_code == 200:
+                last_transfer = player_experience.json()
+                
+            else:
+                last_transfer = {}
+        context = self.get_context_data(form=form, playerForm=playerForm, transfer_data=last_transfer, **kwargs)
+        return self.render_to_response(context)

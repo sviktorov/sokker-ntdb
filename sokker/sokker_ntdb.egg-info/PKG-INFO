@@ -1,4 +1,4 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.4
 Name: sokker-ntdb
 Version: 0.1.0
 Classifier: Private :: Do not upload
@@ -20,6 +20,7 @@ Requires-Dist: django-admin-list-filter-dropdown
 Requires-Dist: django-grappelli
 Requires-Dist: django_tables2
 Requires-Dist: django-filter
+Requires-Dist: django-filer
 Requires-Dist: django-bootstrap-v5
 Requires-Dist: django-admin-numeric-filter
 Requires-Dist: requests
@@ -27,6 +28,7 @@ Requires-Dist: matplotlib
 Requires-Dist: numpy
 Requires-Dist: scikit-learn
 Requires-Dist: pandas
+Requires-Dist: cairosvg
 Provides-Extra: dev
 Requires-Dist: pip-audit; extra == "dev"
 Requires-Dist: flake8; extra == "dev"

@@ -65,6 +65,7 @@ class GameAdmin(ImportExportModelAdmin):
         "goals_away",
         "playoff_position",
         "group_id",
+        "g_status",
     )
     list_filter = (
         "c_id",

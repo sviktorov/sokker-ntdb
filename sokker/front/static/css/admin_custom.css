@@ -59,3 +59,20 @@
 .skill-scoring.ATT {
     color:#8D32B4;
 }
+
+span.light_injury {
+    color: #de7887 !important;
+}
+
+span.medium_injury {
+    color: #bb1537 !important;
+}
+
+span.heavy_injury {
+    color: red !important;
+}
+
+/* For specific columns if needed */
+table.grp-table td, table.grp-table th {
+    font-size: 13px !important;
+}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %} 
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">            
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>Standing {{ country.name }} Top division season {{ season_id }}</h3>
+                    <p>League: <a href="https://www.sokker.com/league/{{ league_id }}" target="_blank">{{ league_id }}</a></p>
+                    <label for="season-select">Season:</label>
+                    <select id="season-select">
+                    {% for season in seasons %}
+                        <option value="{{ season }}" {% if season|stringformat:"s" == season_id %}selected{% endif %}>
+                        {{ season }}
+                        </option>
+                    {% endfor %}
+                    </select>
+                </div>
+
+                <div class="point-table-widget">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Team</th>
+                                <th>Played</th>
+                                <th>Won</th>
+                                <th>Draw</th>
+                                <th>Lost</th>
+                                <th>Scored</th>
+                                <th>Conceded</th>
+                                <th>Goal Difference</th>
+                                <th>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for standing in standings %}
+                                <tr>
+                                    <td>{{ standing.position }}</td>
+                                    <td><a href="https://www.sokker.com/team/{{ standing.team.id }}" target="_blank">{{ standing.team.name }}</a></td>
+                                    <td>{{ standing.played }}</td>
+                                    <td>{{ standing.won }}</td>
+                                    <td>{{ standing.draw }}</td>
+                                    <td>{{ standing.lost }}</td>
+                                    <td>{{ standing.scored }}</td>
+                                    <td>{{ standing.conceded }}</td>
+                                    <td>{{ standing.goal_difference }}</td>
+                                    <td>{{ standing.points }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+document.getElementById('season-select').addEventListener('change', function() {
+    var seasonId = this.value;
+    window.location.href = '/en/sokker/standings/{{ country.name }}/' + seasonId + '/{{ league_id }}';
+});
+</script>
+
+{% endblock %}
+

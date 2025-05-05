@@ -59,4 +59,12 @@ urlpatterns = [
         views.CLFixtures.as_view(),
         name="cl_fixtures",
     ),
+    path(
+        "do_draw_arcades",
+        views.CommandFormPlayerUpdate,
+        name="do_draw_arcades",
+    ),
+    path('cup/<int:cup_id>/round/<int:round_id>/image/', views.cup_round_image, name='cup_round_image'),
+    path('cup/<int:cup_id>/group/<int:group_id>/standings/image/', views.cup_group_standings_image, name='cup_group_standings_image'),
+
 ]

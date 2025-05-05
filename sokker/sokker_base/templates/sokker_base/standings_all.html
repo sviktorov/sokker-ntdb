@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %} 
+
+<div class="main-content wf100"> 
+    <section class="wf100 p80">
+        <div class="container">            
+            <div class="row">
+                <div class="col-md-12">
+                    <h3>Standing all time {{ country.name }} Top division</h3>
+                    <p>League: <a href="https://www.sokker.com/league/{{ league_id }}" target="_blank">{{ league_id }}</a></p>
+                </div>
+
+                <div class="point-table-widget">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Team</th>
+                                <th>Played</th>
+                                <th>Won</th>
+                                <th>Draw</th>
+                                <th>Lost</th>
+                                <th>Scored</th>
+                                <th>Conceded</th>
+                                <th>Goal Difference</th>
+                                <th>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for standing in standings %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><a href="https://www.sokker.com/team/{{ standing.team__id }}" target="_blank">{{ standing.team__name }}</a></td>
+                                    <td>{{ standing.total_played }}</td>
+                                    <td>{{ standing.total_won }}</td>
+                                    <td>{{ standing.total_drawn }}</td>
+                                    <td>{{ standing.total_lost }}</td>
+                                    <td>{{ standing.total_scored }}</td>
+                                    <td>{{ standing.total_conceded }}</td>
+                                    <td>{{ standing.total_goal_difference }}</td>
+                                    <td>{{ standing.total_points }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+
+
+{% endblock %}
+

@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 from arcades.models import Game, Cup
 from sokker_base.api import auth_sokker, get_sokker_seasons, get_sokker_team_match_data_arcade, get_sokker_match_lineup_data
 from datetime import datetime
-from arcades.utils import get_next_monday_or_saturday, get_next_day, get_previous_day, get_next_thursday
+from arcades.utils import get_next_monday_or_saturday, get_next_saturday, get_next_monday_or_thursday, get_next_day, get_previous_day, get_next_thursday
 from django.utils import timezone
 
 class Command(BaseCommand):
@@ -53,7 +53,7 @@ class Command(BaseCommand):
                 if round == 1:
                     round_date[str(round)] = start_date
                 else:
-                    round_date[str(round)] = get_next_monday_or_saturday(round_date[str(round - 1)]).strftime("%Y-%m-%d")
+                    round_date[str(round)] = get_next_monday_or_thursday(round_date[str(round - 1)]).strftime("%Y-%m-%d")
             end_date = round_date[str(21)]
             seasons = get_sokker_seasons(cookie).json()
             season_ids = []
@@ -129,13 +129,13 @@ class Command(BaseCommand):
                     # cover case when game is arranged after midnight sokker time
                     next_day = get_next_day(day)
                     previous_day = get_previous_day(day)
-                    next_thursday = get_next_thursday(day).strftime("%Y-%m-%d")
-                    next_thursday_day = get_next_day(next_thursday)
-                    next_thursday_from_today = get_next_thursday(today_date_str).strftime("%Y-%m-%d")
-                    next_thursday_from_today_day = get_next_day(next_thursday_from_today)
+                    next_saturday = get_next_saturday(day).strftime("%Y-%m-%d")
+                    next_saturday_day = get_next_day(next_saturday)
+                    next_saturday_from_today = get_next_saturday(today_date_str).strftime("%Y-%m-%d")
+                    next_saturday_from_today_day = get_next_day(next_saturday_from_today)
                     next_thursday_from_round_day = get_next_day(round_date[round])
                     
-                    possible_days = [round_date[round], next_day, next_thursday, next_thursday_day, next_thursday_from_today, next_thursday_from_today_day, next_thursday_from_round_day]
+                    possible_days = [round_date[round], next_day, next_saturday, next_saturday_day, next_saturday_from_today, next_saturday_from_today_day, next_thursday_from_round_day]
                     yesterday = get_previous_day(today_date_str)
                     possible_days.append(yesterday)
                     possible_days.append(today_date_str)

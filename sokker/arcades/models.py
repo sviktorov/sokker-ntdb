@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from sokker_base.models import Team
 from django.core.exceptions import ObjectDoesNotExist
+from .utils import DRAW_STATUS_CHOICES, CUP_STATUS_CHOICES
 
 
 class CupCategory(models.Model):
@@ -31,8 +32,20 @@ class Cup(models.Model):
     )  # Assuming this is the number of group winners
     c_games_groups = models.IntegerField(null=True, blank=True)
     c_games = models.IntegerField(null=True, blank=True)
-    c_status = models.CharField(max_length=50)
-    c_draw_status = models.CharField(max_length=50)
+    c_status = models.CharField(
+        max_length=50,
+        choices=CUP_STATUS_CHOICES,
+        blank=True,
+        null=True,
+        default=''
+    )
+    c_draw_status = models.CharField(
+        max_length=50,
+        choices=DRAW_STATUS_CHOICES,
+        blank=True,
+        null=True,
+        default=''
+    )
     c_draw_date = models.DateTimeField(null=True, blank=True, default=None)
     c_notes = models.TextField(null=True, blank=True)  # Assuming this can be nullable
     c_active = models.BooleanField(default=False)  # Assuming this is a boolean field
@@ -63,6 +76,7 @@ class CupDraw(models.Model):
     id = models.AutoField(primary_key=True)
     c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
     t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
+    rating = models.FloatField(null=True, blank=True, default=0)
     g_id = models.IntegerField()
 
     def __str__(self):

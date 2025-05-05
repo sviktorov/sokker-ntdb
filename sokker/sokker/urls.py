@@ -25,7 +25,7 @@ import ntdb.urls
 import tools.urls
 import euro.urls
 import arcades.urls
-
+import sokker_base.urls
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 
@@ -48,6 +48,7 @@ urlpatterns += i18n_patterns(
     path("tools/", include(tools.urls)),
     path("euro/", include(euro.urls)),
     path("arcades/", include(arcades.urls)),
+    path("sokker/", include(sokker_base.urls)),
 )
 
 

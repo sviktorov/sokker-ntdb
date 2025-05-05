@@ -54,8 +54,21 @@ def get_sokker_transfers(cookie):
     
     return requests.get(url, headers=headers)
 
-
 def get_sokker_player_transfer_data(player_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/transfer/{player_id}"
+    print("player id : " + str(player_id))
+    # Send GET request
+    
+    return requests.get(url, headers=headers)
+
+
+
+
+def get_sokker_player_transfer_historydata(player_id, cookie):
     headers = {
         "accept": "application/json",
         "Cookie": cookie,
@@ -64,6 +77,27 @@ def get_sokker_player_transfer_data(player_id, cookie):
     print("player id : " + str(player_id))
     # Send GET request
     
+    return requests.get(url, headers=headers)
+
+def get_sokker_player_observer_data(player_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/player/{player_id}/observer"
+    print("player id" ": " + str(player_id))
+    # Send GET request
+    return requests.get(url, headers=headers)
+
+
+def get_sokker_player_last_transfer_data(player_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/player/{player_id}/transfer"
+    print("player id" ": " + str(player_id))
+    # Send GET request
     return requests.get(url, headers=headers)
 
 def get_sokker_player_data(sokker_id):
@@ -131,17 +165,41 @@ def get_sokker_match_data(match_id, cookie):
     
     return requests.get(url, headers=headers)
 
-def get_sokker_team_match_data(team_id, season, cookie):
+def get_sokker_team_trophies(team_id, cookie):
     headers = {
         "accept": "application/json",
         "Cookie": cookie,
     }
-    url = f"https://sokker.org/api/team/{team_id}/match?filter[season]={season}"
+    url = f"https://sokker.org/api/team/{team_id}/trophies?filter[limit]=200"
     print("team id : " + str(team_id))
     # Send GET request
     data = {}
     
     return requests.get(url, headers=headers, json=data)
+
+
+def get_sokker_team_match_data(team_id, season, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/team/{team_id}/match?filter[season]={season}&filter[limit]=200"
+    print("team id : " + str(team_id))
+    # Send GET request
+    data = {}
+    
+    return requests.get(url, headers=headers, json=data)
+
+
+
+def get_sokker_player_experience_data(player_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/player/{player_id}/experience"
+    return requests.get(url, headers=headers)
+
 
 def get_sokker_seasons(cookie):
     headers = {
@@ -172,3 +230,31 @@ def get_sokker_team_match_data_arcade(team_id, season, cookie):
     return requests.get(url, headers=headers, json=data)
 
 
+
+def get_sokker_team_players_data(team_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/team/{team_id}/player"
+    print("team id" ": " + str(team_id))
+    # Send GET request
+    return requests.get(url, headers=headers)
+
+
+def get_sokker_league_table_data(league_id, cookie):    
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/api/league/{league_id}/table"
+    return requests.get(url, headers=headers)
+
+
+def get_sokker_archive_table_data(league_id, season_id, round_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/league?leagueID={league_id}&action=archive&season={season_id}&round={round_id}"
+    return requests.get(url, headers=headers)

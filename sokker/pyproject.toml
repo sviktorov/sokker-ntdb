@@ -30,6 +30,7 @@ dependencies = [
     "django-grappelli",
     "django_tables2",
     "django-filter",
+    "django-filer",
     "django-bootstrap-v5",
     "django-admin-numeric-filter",
     "requests",
@@ -37,6 +38,7 @@ dependencies = [
     "numpy",
     "scikit-learn",
     "pandas",
+    "cairosvg",
 ]
 
 [project.optional-dependencies]

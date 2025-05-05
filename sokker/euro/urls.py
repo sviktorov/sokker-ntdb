@@ -5,6 +5,11 @@ from . import views
 
 urlpatterns = [
     path(
+        "admin-dashboard",
+        views.EuroAdminDashboard.as_view(),
+        name="admin_dashboard_euro",
+    ),
+    path(
         "",
         views.CupIndex.as_view(),
         name="cup_index",
@@ -34,4 +39,6 @@ urlpatterns = [
         views.CommandFormPlayerUpdate,
         name="do_draw",
     ),
+    path('cup/<int:cup_id>/group/<int:group_id>/round/<int:round_id>/image/', views.cup_round_image, name='cup_round_image_euro'),
+    path('cup/<int:cup_id>/group/<int:group_id>/standings/image/', views.cup_group_standings_image, name='cup_group_standings_image_euro'),
 ]

@@ -1,11 +1,22 @@
 from django import template
-from ..models import Game, Winners  # Adjust the import according to your model
+from ..models import Game, Winners, Cup  # Adjust the import according to your model
 from arcades.models import Game as GameArcades
 from django.db.models import Max, IntegerField
 from django.db.models.functions import Cast
+from ..utils import format_round_date
 
 register = template.Library()
 
+
+@register.simple_tag
+def get_active_cups():
+    return Cup.objects.filter(c_active=True)
+
+@register.simple_tag
+def get_round_date(cup, round):
+    if not cup.c_start_date:
+        return ""
+    return format_round_date(int(round), cup.c_start_date, "%Y-%m-%d")
 
 @register.simple_tag
 def get_group_games(cup_id, group_id):
@@ -41,3 +52,7 @@ def get_winners(cup_id, position, first=True):
     else:
         second_winner = None  # Handle the case where there is no second element
     return second_winner
+
+@register.filter
+def round_date(cup_round, start_date):
+    return format_round_date(cup_round, start_date)

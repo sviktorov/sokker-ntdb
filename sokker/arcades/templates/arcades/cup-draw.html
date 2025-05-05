@@ -18,6 +18,15 @@
   opacity: 1;
   transition: opacity 1s ease-in-out;
 }
+
+.team-link {
+    color: rgb(33, 37, 41) !important;
+}
+
+.rating-text {
+    font-size: 12px;
+    color: rgb(232, 31, 62);
+}
 </style>
 
 <script>
@@ -25,7 +34,7 @@
    function generateDraw() {
       // Example URL you want to redirect to
       const c_id = "{{ cup.pk }}";
-      const baseUrl =  "{% url 'do_draw' %}";
+      const baseUrl =  "{% url 'do_draw_arcades' %}";
       const targetUrl = `${baseUrl}?c_id=${c_id}`;
       // Redirect to the new URL
       window.location.href = targetUrl;
@@ -130,7 +139,7 @@
                       <ul>
                         {% for team in pots %}
                             {% if team.g_id == i %}
-                                <li id="pot_{{ team.t_id.id }}"  ><img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ team.t_id.country.code }}.svg" alt="">{{ team.t_id.name }} </li>
+                                <li id="pot_{{ team.t_id.id }}"  ><img  width="38" height="26"  src="https://sokker.org/static/pic/flags/{{ team.t_id.country.code }}.svg" alt=""><a href="https://sokker.org/en/app/team/{{ team.t_id.id }}/" class="team-link" target="_blank">{{ team.t_id.name }}</a> {% if team.rating %}<span class="rating-text">({{ team.rating }})</span>{% endif %}</li>
                             {% endif %} 
                         {% endfor %}
                        

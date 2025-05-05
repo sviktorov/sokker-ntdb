@@ -24,6 +24,21 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td>{% trans "Generate Draw" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="draw_arcades" 
+                                                data-params="--c_id={{ cup.pk }}">
+                                            {% trans "Generate Draw" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            <tr>
                                 <td>{% trans "Update Standings" %}</td>
                                 {% for cup in active_cups %}
                                     <td>

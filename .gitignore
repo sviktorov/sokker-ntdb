@@ -4,3 +4,9 @@ prod.sql
 .env
 *.DS_Store
 .DS_Store
+sokker/.env
+sokker/prod.sql
+sokker/.sokkerenv
+sokker/.sokker.db
+sokker/sokker.db
+sokker/data

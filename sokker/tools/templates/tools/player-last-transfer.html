@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block content %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var form = document.getElementById('tact_fetch');
+        var submitButton = form.querySelector('button[type="submit"]');
+
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            form.submit(); // Submit the form
+        });
+       
+    });
+</script>
+<div class="container">
+    <h2>Player Last Transfer</h2>
+    <form id="tact_fetch" action="{% url 'player_last_transfer' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="hidden" name="form1_submit" value="1">
+        <button type="submit">{% trans "Fetch" %}</button>
+    </form>
+    {% if transfer_data %}
+        <h2>Transfer Data</h2>
+        <p>{{ transfer_data }}</p>
+    {% endif %}
+</div>
+{% endblock %}

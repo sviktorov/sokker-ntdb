@@ -111,7 +111,10 @@ def get_player_active_stats(player, find_position=False, no_age=False):
         best = Player.objects.annotate(mid_points=get_mid_wrapper()).filter(countryid=player.countryid, position="MID", age__lte=end_age).order_by("-mid_points")
     if player.position == "ATT":
         best = Player.objects.annotate(att_points=get_att_wrapper()).filter(countryid=player.countryid, position="ATT", age__lte=end_age).order_by("-att_points")
-    top = best[0]
+    if best:
+        top = best[0]
+    else:
+        return None
 
     if find_position:
         # Find position of the player in the list
@@ -155,7 +158,10 @@ def get_player_all_time_stats(player, find_position=False, is_u21=False):
         end_age = player.age
     country = Country.objects.filter(code=player.countryid).first()
     best = return_distinct_all_time_records_by_position(player.position, country, 16, end_age)
-    top = best[0]
+    if best:
+        top = best[0]
+    else:
+        return None
 
     if find_position:
         # Find position of the player in the list

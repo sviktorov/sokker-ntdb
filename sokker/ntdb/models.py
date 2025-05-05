@@ -192,6 +192,8 @@ class Player(models.Model):
             if self.position == "GK":
                 return self.gk_points_dif(req)
         return 0
+    
+    position_score.short_description = _("P.Sc")
 
     def best_position(self):
         req = self.db_requirements()

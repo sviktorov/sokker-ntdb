@@ -68,6 +68,21 @@
                                 {% endfor %} 
                             </tr>
                             <tr>
+                                <td><h3>{% trans "Update Team Trophies" %}</h3></td>
+                                {% for country in active_countries %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="fetch_trophies_all_teams" 
+                                                data-params="--country_id={{ country.code }}">
+                                            {% trans "Update Trophies" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %} 
+                            </tr>
+                            <tr>
                                 <td><h3>{% trans "Calculate Players Stats" %}</h3></td>
                                 {% for country in active_countries %}
                                     <td>

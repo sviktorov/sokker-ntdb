@@ -39,3 +39,7 @@ class SwapPositionsForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 10, "cols": 100}),
         label="Output Code",
     )
+
+class PlayerLastTransferForm(forms.Form):
+    sokker_id = forms.IntegerField(label="Player ID")
+
