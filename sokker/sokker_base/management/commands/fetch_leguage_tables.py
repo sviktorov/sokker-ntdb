@@ -1,4 +1,4 @@
-from sokker_base.api import get_sokker_league_table_data, auth_sokker, get_sokker_archive_table_data
+from sokker_base.api import extract_table_from_html, get_sokker_league_table_data, auth_sokker, get_sokker_archive_table_data
 from django.utils.translation import gettext_lazy as _
 from django.core.management.base import BaseCommand
 from bs4 import BeautifulSoup
@@ -80,16 +80,7 @@ class Command(BaseCommand):
                 league_table.points=row[9]
                 league_table.save()
             self.stdout.write(self.style.SUCCESS(f"League table {league_id} {country_id} {team.name} {season_id} {row[0]} created"))
-def extract_table_from_html(html_content, table_index=1):
-    """
-    Parses the HTML content and returns the first table with class 'table'.
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-    table = soup.find_all('table', class_='table')
-    if len(table)>=table_index:
-        return table[table_index]
-    else:
-        return None
+
 
 def table_to_headers_and_rows(table):
     """

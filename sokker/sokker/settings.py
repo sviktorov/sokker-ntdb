@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     "euro",
     "arcades",
     "tools",
+    "footballarena",
     "import_export",
     "django_admin_listfilter_dropdown",
     "grappelli",

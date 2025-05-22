@@ -8,6 +8,7 @@ from .models import (
     Winners,
     Medals,
     RankAllTime,
+    EuroCupGameStats,
 )
 from import_export.admin import ImportExportModelAdmin
 from django.contrib import admin
@@ -122,3 +123,10 @@ class RankAllTimeAdmin(ImportExportModelAdmin):
         "c_flow",
     )
     ordering = ("-points", "-gdif")
+
+
+@admin.register(EuroCupGameStats)
+class EuroCupGameStatsAdmin(ImportExportModelAdmin):
+    list_display = ("player_id", "team_id", "goals", "game_id", "assists", "red_cards", "yellow_cards")
+    list_filter = ("team_id", "game_id__c_id", "player_id")
+    search_fields = ('team_id', 'game_id__c_id', 'player_id')

@@ -22,6 +22,16 @@ import matplotlib.font_manager as fm
 # Increase the recursion depth to a higher value (e.g., 5000)
 sys.setrecursionlimit(130000)
 
+WEEKDAY_CHOICES = [
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
+    ]
+
 DRAW_STATUS_CHOICES = [
     ('ready', 'Ready'),
     ('done', 'Done'),
@@ -71,6 +81,31 @@ PLAYOFF_FIXTURES_CL = [
     [13, "s1", "s2", "final"]
 ]
 
+def get_next_available_cup_date(cup, start_date=None):
+    if not cup.match_days:
+        match_days = [0, 4]
+    else:
+        match_days = sorted(cup.match_days)
+    if not start_date:
+        start_date = datetime.now()
+
+        # Convert string to datetime if needed
+    if isinstance(start_date, str):
+        try:
+            start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        except ValueError:
+            # Handle invalid date string by using current date
+            start_date = datetime.now()
+
+    available_dates = []
+    for day in match_days:
+        days_ahead_current_day = (7 - start_date.weekday() + int(day)) % 7
+        if days_ahead_current_day == 0:
+            days_ahead_current_day = 7
+        available_dates.append(start_date + timedelta(days=days_ahead_current_day))
+
+    return min(available_dates)
+
 
 def get_next_day(date_str):
     """
@@ -100,77 +135,7 @@ def get_previous_day(date_str):
     next_date = current_date - timedelta(days=1)
     return next_date.strftime('%Y-%m-%d')
 
-def get_next_monday_or_thursday(start_date):
-    """
-    Get the next Monday or Thursday from the given date.
 
-    Args:
-        start_date (str or datetime): The date to start from. Can be a string in format 'YYYY-MM-DD' 
-                                    or a datetime object.
-
-    Returns:
-        datetime: The next Monday or Thursday.
-    """
-    # Handle empty or None input by using current date
-    if not start_date:
-        start_date = datetime.now()
-    
-    # Convert string to datetime if needed
-    if isinstance(start_date, str):
-        try:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        except ValueError:
-            # Handle invalid date string by using current date
-            start_date = datetime.now()
-
-    days_ahead_monday = (7 - start_date.weekday() + 0) % 7  # 0 for Monday
-    days_ahead_thursday = (7 - start_date.weekday() + 3) % 7  # 3 for Thursday
-
-    if days_ahead_monday == 0:  # If today is Monday
-        days_ahead_monday = 7
-    if days_ahead_thursday == 0:  # If today is Thursday
-        days_ahead_thursday = 7
-
-    next_monday = start_date + timedelta(days=days_ahead_monday)
-    next_thursday = start_date + timedelta(days=days_ahead_thursday)
-
-    return min(next_monday, next_thursday)
-
-def get_next_monday_or_saturday(start_date):
-    """
-    Get the next Monday or Saturday from the given date.
-
-    Args:
-        start_date (str or datetime): The date to start from. Can be a string in format 'YYYY-MM-DD' 
-                                    or a datetime object.
-
-    Returns:
-        datetime: The next Monday or Saturday.
-    """
-    # Handle empty or None input by using current date
-    if not start_date:
-        start_date = datetime.now()
-    
-    # Convert string to datetime if needed
-    if isinstance(start_date, str):
-        try:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d')
-        except ValueError:
-            # Handle invalid date string by using current date
-            start_date = datetime.now()
-
-    days_ahead_monday = (7 - start_date.weekday() + 0) % 7  # 0 for Monday
-    days_ahead_saturday = (7 - start_date.weekday() + 5) % 7  # 5 for Saturday
-
-    if days_ahead_monday == 0:  # If today is Monday
-        days_ahead_monday = 7
-    if days_ahead_saturday == 0:  # If today is Saturday
-        days_ahead_saturday = 7
-
-    next_monday = start_date + timedelta(days=days_ahead_monday)
-    next_saturday = start_date + timedelta(days=days_ahead_saturday)
-
-    return min(next_monday, next_saturday)
 
 def get_next_saturday(start_date):
     """

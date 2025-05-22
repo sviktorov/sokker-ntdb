@@ -1,0 +1,286 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% load i18n %}
+{% block title %}{{ cup.c_name }}{% endblock %}
+{% load custom_tags %}
+
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}  
+<style>
+   .fade-out {
+  opacity: 0.2;
+  transition: opacity 1s ease-in-out;
+}
+
+.fade-in {
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+}
+
+.team-link {
+    color: rgb(33, 37, 41) !important;
+}
+
+.rating-text {
+    font-size: 12px;
+    color: rgb(232, 31, 62);
+}
+
+/* Add DataTables styles */
+.pot-table {
+   width: 100%;
+   border-collapse: collapse;
+}
+
+.pot-table th {
+   cursor: pointer;
+   padding: 8px;
+   text-align: left;
+   background-color: #f8f9fa;
+   position: relative;
+}
+
+.pot-table th:after {
+   content: '↕';
+   position: absolute;
+   right: 8px;
+   color: #999;
+}
+
+.pot-table th.sorting_asc:after {
+   content: '↑';
+}
+
+.pot-table th.sorting_desc:after {
+   content: '↓';
+}
+
+.pot-table td {
+   padding: 8px;
+   border-bottom: 1px solid #dee2e6;
+}
+
+.pot-table tr:hover {
+   background-color: #f8f9fa;
+}
+
+.team-cell {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+}
+
+.team-link {
+   color: rgb(33, 37, 41) !important;
+   text-decoration: none;
+}
+
+.rating-text {
+   font-size: 12px;
+   color: rgb(232, 31, 62);
+}
+
+/* DataTables specific styles */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_processing,
+.dataTables_wrapper .dataTables_paginate {
+   display: none;
+}
+</style>
+
+<script>
+   // Function to handle the button click action and redirect to a new URL
+   function generateDraw() {
+      // Example URL you want to redirect to
+      const c_id = "{{ cup.pk }}";
+      const baseUrl =  "{% url 'do_draw_arcades' %}";
+      const targetUrl = `${baseUrl}?c_id=${c_id}`;
+      // Redirect to the new URL
+      window.location.href = targetUrl;
+   }
+
+
+   function fadeAndMoveElement(fromElement, toElement, teamHTML) {
+      return new Promise((resolve) => {
+         fromElement.classList.add('fade-out');
+         setTimeout(() => {
+            toElement.innerHTML = teamHTML;
+            toElement.classList.add('fade-in');
+            resolve(); // Resolve the promise after the timeout
+         }, 2000);
+      });
+   }
+
+   document.addEventListener('DOMContentLoaded', function() {
+      const targetDateTimeStr = '{{ cup.c_draw_date|date:"Y-m-d\TH:i:s" }}';
+      console.log(targetDateTimeStr); // Check the output   
+      const targetDateTime = new Date(targetDateTimeStr);
+      // Get the countdown element and the button
+      const countdownElement = document.getElementById("countdown");
+      const doDrawButton = document.getElementById("do-draw");
+
+      // Update the countdown every second
+      const countdownInterval = setInterval(() => {
+         // Get the current date and time
+         const now = new Date().getTime();
+         
+         // Calculate the difference between now and the target date
+         const distance = targetDateTime - now;
+         
+         // Calculate days, hours, minutes, and seconds
+         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+         
+         // Display the result
+         countdownElement.innerHTML = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+         
+         // Check if the countdown is over
+         if (distance <= 0) {
+            // Stop the countdown
+            clearInterval(countdownInterval);
+            
+            // Show the button
+            countdownElement.innerHTML = "Draw is done";
+            doDrawButton.style.display = "block";
+         }
+      }, 1000);
+
+
+
+      var submitButton = document.getElementById("trigger-button");
+      var drawAnimation = {{ draw_json|safe }};
+
+      submitButton.addEventListener('click', async function(event) {
+      event.preventDefault(); // Prevent default form submission
+
+      for (var team of drawAnimation) {
+         console.log("draw team", team.from, team.to);
+         var fromElement = document.getElementById(team.from);
+         var toElement = document.getElementById(team.to); // Assuming team.to provides the target ID
+         var teamHTML = fromElement.innerHTML;
+
+         await fadeAndMoveElement(fromElement, toElement, teamHTML); // Wait for promise to resolve
+         console.log("Element moved!"); // This will print after each element is moved
+      }
+      });
+   });  
+  
+ </script>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
+
+<div class="main-content innerpagebg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+       <!--Start-->
+       <div class="matach-groups">
+          <div class="container">
+            {% include "arcades/includes/submenu.html" with cup=cup %} 
+       
+            <div>
+               <h2>Draw Playoffs</h2>
+               <h3>Total teams: {{ total_teams }}</h3>
+               <h3>Groups: {{ cup_groups }}</h3>
+               <h3>Teams in group: {{ teams_in_group }}</h3>
+               <h3>Total games in group stage: {{ total_games_in_group }}</h3>
+               <h3>Games played: {{ games_played }}</h3>
+               <h3>Games to play: {{ games_to_play }}</h3>
+               <h3>Teams in playoffs: {{ teams_in_playoffs }}</h3>
+             
+               <h3 id="countdown">0</h3>
+               
+               {% if cup.c_draw_status == "playoff_draw" %}
+                  <button id="trigger-button">Play Draw</button>
+               {% endif %}
+
+            </div>
+             <div class="row">
+                <!--col start-->
+                {% for i in pot_numbers %}
+                <div class="col-lg-{{ col_lg_pots }} col-md-{{ col_lg_pots }}">
+                   <div class="group-box">
+                      <h6>POT {{ i }}</h6>
+                      <table class="pot-table">
+                         <thead>
+                            <tr>
+                               <th>Team</th>
+                               <th>Rating</th>
+                            </tr>
+                         </thead>
+                         <tbody>
+                            {% for team in pots %}
+                                {% if team.pot_id == i %}
+                                <tr id="pot_{{ team.t_id.id }}">
+                                    <td class="team-cell">
+                                        <img width="38" height="26" src="https://sokker.org/static/pic/flags/{{ team.t_id.country.code }}.svg" alt="">
+                                        <a href="https://sokker.org/en/app/team/{{ team.t_id.id }}/" class="team-link" target="_blank">{{ team.t_id.name }}</a>
+                                    </td>
+                                    <td>
+                                        {% if team.rating %}<span class="rating-text">{{ team.rating }}</span>{% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %} 
+                            {% endfor %}
+                         </tbody>
+                      </table>
+                   </div>
+                </div>
+                {% endfor %}
+                <!--col end--> 
+             </div>
+             <div class="row">
+                <!--col start-->
+                {% for i in group_numbers %}
+                <div class="col-lg-{{ col_lg_groups }} col-md-{{ col_lg_groups }}">
+                   <div class="group-box">
+                      <h6>Game {{ i }}</h6>
+                      <ul>
+                        {% for pot in pot_numbers %}
+                            <li id="group_{{ i }}_{{ forloop.counter }}"></li>
+                        {% endfor %}
+                      </ul>
+                   </div>
+                </div>
+                {% endfor %}
+                <!--col end--> 
+             </div>
+          </div>
+       </div>
+       <!--End--> 
+    </div>
+    <!--team Page End--> 
+ </div>
+
+<script>
+   // Add DataTables initialization
+   $(document).ready(function() {
+      // Initialize DataTables on all pot tables
+      $('.pot-table').DataTable({
+         paging: false,
+         searching: false,
+         info: false,
+         ordering: true,
+         columnDefs: [
+            {
+               targets: 0,
+               orderData: [0, 1]
+            },
+            {
+               targets: 1,
+               orderData: [1, 0]
+            }
+         ],
+         language: {
+            emptyTable: "No teams in this pot"
+         }
+      });
+   });
+</script>
+{% endblock %}

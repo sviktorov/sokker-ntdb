@@ -4,23 +4,46 @@ from django.core.management.base import BaseCommand
 from arcades.models import Game, Cup, CupTeams
 from arcades.utils import generate_fixtures_cl
 
-fixtures_4 = [[1, 1, 4], [1, 2, 3], [2, 3, 1], [2, 4, 2], [3, 1, 2], [3, 3, 4]]
+fixtures_4 = [
+        [
+            [1, 1, 4], 
+            [1, 2, 3]
+        ], 
+        [
+            [2, 3, 1], 
+            [2, 4, 2]
+        ], 
+        [
+            [3, 1, 2],
+            [3, 3, 4]
+        ]
+    ]
 fixtures_6 = [
-    [1, 2, 5],
-    [1, 3, 6],
-    [1, 4, 1],
-    [2, 1, 3],
-    [2, 5, 4],
-    [2, 6, 2],
-    [3, 2, 1],
-    [3, 3, 4],
-    [3, 6, 5],
-    [4, 1, 6],
-    [4, 3, 5],
-    [4, 4, 2],
-    [5, 2, 3],
-    [5, 5, 1],
-    [5, 6, 4],
+    [
+        [1, 2, 5],
+        [1, 3, 6],
+        [1, 4, 1]
+    ], 
+    [
+        [2, 1, 3],
+        [2, 5, 4],
+        [2, 6, 2]
+    ], 
+    [
+        [3, 2, 1],
+        [3, 3, 4],
+        [3, 6, 5]
+    ], 
+    [
+        [4, 1, 6],
+        [4, 3, 5],
+        [4, 4, 2]
+    ], 
+    [
+        [5, 2, 3],
+        [5, 5, 1],
+        [5, 6, 4]
+    ]
 ]
 
 
@@ -54,7 +77,10 @@ class Command(BaseCommand):
         if cup.c_draw_status == "done" and cup.c_status == "fixtures":
             print("Number of teams:", cup.c_teams)
             print("Number of groups:", cup.c_groups)
-            Game.objects.filter(c_id=cup).delete()
+            check_games = Game.objects.filter(c_id=cup)
+            if check_games.exists():
+                return print("Games already generated")
+            
             group_numbers = list(range(1, cup.c_groups + 1))
             for i in group_numbers:
                 if cup.is_cl:
@@ -63,11 +89,12 @@ class Command(BaseCommand):
                     ct = CupTeams.objects.filter(c_id=cup, g_id=i).order_by("pot_id")
                 print("Group {} team number {}".format(i, ct.count()))
                 fixtures = []
-
+                round_rotation = 3
                 if ct.count() == 4:
                     fixtures = fixtures_4
                 if ct.count() == 6:
                     fixtures = fixtures_6
+                    round_rotation = 5
                 if ct.count() == 36 and cup.is_cl:
                     fixtures, filename = generate_fixtures_cl()
                     
@@ -89,6 +116,16 @@ class Command(BaseCommand):
                         game.cup_round = int(r)
                         game.group_id = int(i)
                         game.save()
+
+                        if cup.c_games_groups == 2:
+                           game2 = Game()
+                           game2.t_id_h = away_team.t_id
+                           game2.t_id_v = home_team.t_id
+                           game2.c_id = cup
+                           game2.cup_round = int(r) + round_rotation
+                           game2.group_id = int(i)
+                           game2.save()
+
             cup.c_status = "ready"
             cup.save()
         else:

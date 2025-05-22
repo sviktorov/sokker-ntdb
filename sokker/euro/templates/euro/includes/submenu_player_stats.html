@@ -1,0 +1,7 @@
+<nav>
+    <div class="nav nav-tabs" id="nav-tab-player-stats" role="tablist">
+      <a class="nav-item nav-link {% if request.resolver_match.url_name == 'euro_cup_stats_template' and stat_type == 'goals' %}active{% endif %}" id="nav-1-tab-player-stats" href="{% url "euro_cup_stats_template" cup_id=cup.pk stat_type='goals' %}" role="tab" aria-controls="nav-1-player-stats" aria-selected="false">Goals</a>
+      <a class="nav-item nav-link {% if request.resolver_match.url_name == 'euro_cup_stats_template' and stat_type == 'assists' %}active{% endif %}" id="nav-2-tab-player-stats" href="{% url "euro_cup_stats_template" cup_id=cup.pk stat_type='assists' %}" role="tab" aria-controls="nav-2-player-stats" aria-selected="false">Assists</a>
+      <a class="nav-item nav-link {% if request.resolver_match.url_name == 'euro_cup_stats_template' and stat_type == 'cards' %}active{% endif %}" id="nav-3-tab-player-stats" href="{% url "euro_cup_stats_template" cup_id=cup.pk stat_type='cards' %}" role="tab" aria-controls="nav-3-player-stats" aria-selected="false">Cards</a>
+    </div>
+</nav>

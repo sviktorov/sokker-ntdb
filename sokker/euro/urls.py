@@ -41,4 +41,8 @@ urlpatterns = [
     ),
     path('cup/<int:cup_id>/group/<int:group_id>/round/<int:round_id>/image/', views.cup_round_image, name='cup_round_image_euro'),
     path('cup/<int:cup_id>/group/<int:group_id>/standings/image/', views.cup_group_standings_image, name='cup_group_standings_image_euro'),
+    path('cup/<int:cup_id>/stats/<str:stat_type>/', 
+         cache_page(60 * 60 * 24)(views.EuroCupStatsTemplate.as_view()), 
+         name='euro_cup_stats_template'),
+
 ]

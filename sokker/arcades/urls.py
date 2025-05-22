@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.decorators.cache import cache_page
 
 from . import views
 
@@ -55,6 +56,11 @@ urlpatterns = [
         name="arcade_cup_draw",
     ),
     path(
+        "<str:category_slug>/draw-playoffs/<str:cup_id>/",
+        views.CupDrawPlayoffsTemplate.as_view(),
+        name="arcade_cup_draw_playoffs",
+    ),
+    path(
         "fixtures/cl/rounds",
         views.CLFixtures.as_view(),
         name="cl_fixtures",
@@ -66,5 +72,10 @@ urlpatterns = [
     ),
     path('cup/<int:cup_id>/round/<int:round_id>/image/', views.cup_round_image, name='cup_round_image'),
     path('cup/<int:cup_id>/group/<int:group_id>/standings/image/', views.cup_group_standings_image, name='cup_group_standings_image'),
-
+    path('cup/<int:cup_id>/stats/<str:stat_type>/', 
+         cache_page(60 * 60 * 24)(views.CupStatsTemplate.as_view()), 
+         name='cup_stats_template'),
+    path('cup/<int:cup_id>/stats-teams/<str:stat_type>/', 
+         cache_page(60 * 60 * 24)(views.CupStatsTeamsTemplate.as_view()), 
+         name='cup_stats_teams_template'),
 ]

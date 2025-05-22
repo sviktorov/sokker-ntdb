@@ -1,9 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from sokker_base.models import Team
-from django.core.exceptions import ObjectDoesNotExist
-from .utils import DRAW_STATUS_CHOICES, CUP_STATUS_CHOICES
-
+from .utils import DRAW_STATUS_CHOICES, CUP_STATUS_CHOICES, WEEKDAY_CHOICES
+from sokker_base.models import Country
 
 class CupCategory(models.Model):
     id = models.AutoField(primary_key=True)  # Assuming c_id is an auto-incrementing ID
@@ -20,18 +19,18 @@ class Cup(models.Model):
         CupCategory, on_delete=models.CASCADE, null=True, blank=True, default=None
     )
     # New header_image field
-    header_image = models.ImageField(upload_to="header_images/", null=True, blank=True)
-    forum_link = models.CharField(max_length=255, null=True, blank=True)
-    c_name = models.CharField(max_length=255)
-    c_edition = models.IntegerField(null=True, blank=True)
-    c_flow = models.IntegerField(null=True, blank=True, default=1)
-    c_teams = models.IntegerField(null=True, blank=True)
-    c_groups = models.IntegerField(null=True, blank=True)
+    header_image = models.ImageField(upload_to="header_images/", null=True, blank=True, help_text=_("Header image for the cup 1920x300px"))
+    forum_link = models.CharField(max_length=255, null=True, blank=True, help_text=_("Forum link for the cup"))
+    c_name = models.CharField(max_length=255, help_text=_("Name of the cup"))
+    c_edition = models.IntegerField(null=True, blank=True, help_text=_("Edition of the cup"))
+    c_flow = models.IntegerField(null=True, blank=True, default=1, help_text=_("Flow of the cup if few cups are splited in different flows"))
+    c_teams = models.IntegerField(null=True, blank=True, help_text=_("Total number of teams in the cup"))
+    c_groups = models.IntegerField(null=True, blank=True, help_text=_("Number of groups in the cup"))
     c_g_winners = models.IntegerField(
-        null=True, blank=True
+        null=True, blank=True, help_text=_("Total Number of teams proceeding to the next round")
     )  # Assuming this is the number of group winners
-    c_games_groups = models.IntegerField(null=True, blank=True)
-    c_games = models.IntegerField(null=True, blank=True)
+    c_games_groups = models.IntegerField(null=True, blank=True, help_text=_("Number of games in group stage between teams"))
+    c_games = models.IntegerField(null=True, blank=True, help_text=_("Number of games in the playoffs"))
     c_status = models.CharField(
         max_length=50,
         choices=CUP_STATUS_CHOICES,
@@ -39,6 +38,7 @@ class Cup(models.Model):
         null=True,
         default=''
     )
+
     c_draw_status = models.CharField(
         max_length=50,
         choices=DRAW_STATUS_CHOICES,
@@ -49,9 +49,15 @@ class Cup(models.Model):
     c_draw_date = models.DateTimeField(null=True, blank=True, default=None)
     c_notes = models.TextField(null=True, blank=True)  # Assuming this can be nullable
     c_active = models.BooleanField(default=False)  # Assuming this is a boolean field
-    is_cl = models.BooleanField(default=False)
-    c_start_date = models.DateTimeField(null=True, blank=True, default=None) 
-    rating_limit = models.FloatField(null=True, blank=True, default=None)
+    is_cl = models.BooleanField(default=False, help_text=_("If the cup is a CL format"))
+    c_start_date = models.DateTimeField(null=True, blank=True, default=None, help_text=_("Start date of the cup 1 round")) 
+    match_days = models.JSONField(
+        default=list,
+        help_text="List of weekdays when matches can be played (0=Monday, 6=Sunday)",
+    )
+    rating_limit = models.FloatField(null=True, blank=True, default=None, help_text=_("Rating limit for the cup"))
+    looser_playoffs = models.BooleanField(default=False, help_text=_("If the loosers in groups play separate playoffs"))
+    draw_playoffs = models.BooleanField(default=False, help_text=_("If the playoffs have draw"))
     def __str__(self):
         return self.c_name
 
@@ -111,7 +117,7 @@ class Game(models.Model):
     cup_round = models.CharField(max_length=50)
     matchID = models.CharField(max_length=255)
     playoff_position = models.CharField(max_length=50, null=True, blank=True)
-    
+    has_stats = models.BooleanField(default=False)
 
     def __str__(self):
         return (
@@ -250,3 +256,73 @@ class RankAllTime(models.Model):
 
     def __str__(self):
         return f"Team {self.id}: {self.t_id}  - Cup: {self.c_id} points {self.points}"
+
+class Player(models.Model):
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    team_id = models.ForeignKey(Team, on_delete=models.CASCADE, null=True, blank=True)
+    country_id = models.ForeignKey(Country, on_delete=models.CASCADE)
+    def __str__(self):
+        return f"Player {self.id}: {self.name} - Team: {self.team_id}"
+
+class GameDetails(models.Model):
+    id = models.AutoField(primary_key=True)
+    game_id = models.ForeignKey(Game, on_delete=models.CASCADE)
+    team_id = models.ForeignKey(Team, on_delete=models.CASCADE)
+    is_home = models.BooleanField(default=False)
+    timeOnHalf = models.IntegerField(null=True, blank=True)
+    timePossession = models.IntegerField(null=True, blank=True)
+    shots = models.IntegerField(null=True, blank=True)
+    fouls = models.IntegerField(null=True, blank=True)
+    yellowCards = models.IntegerField(null=True, blank=True)
+    redCards = models.IntegerField(null=True, blank=True)
+    offsides = models.IntegerField(null=True, blank=True)
+    effShoot = models.IntegerField(null=True, blank=True)
+    effPass = models.IntegerField(null=True, blank=True)
+    effTackle = models.IntegerField(null=True, blank=True)
+   
+    
+    def __str__(self):
+        return f"Game Details {self.id}: {self.game_id} - {self.team_id} - {self.is_home}"
+    
+    class Meta:
+        verbose_name_plural = _("Game Details")
+
+class CupGameStats(models.Model):
+    id = models.AutoField(primary_key=True)
+    goals = models.IntegerField(null=True, blank=True)
+    team_id = models.ForeignKey(Team, on_delete=models.CASCADE)
+    game_id = models.ForeignKey(Game, on_delete=models.CASCADE)
+    player_id = models.ForeignKey(Player, on_delete=models.CASCADE)
+    assists = models.IntegerField(null=True, blank=True)
+    red_cards = models.IntegerField(null=True, blank=True)
+    yellow_cards = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Goal {self.id}:  - {self.player_id}  - {self.game_id} - {self.team_id}"
+    
+    class Meta:
+        verbose_name_plural = _("Cup Game Stats")
+
+class PlayoffPots(models.Model):
+    id = models.AutoField(primary_key=True)
+    c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
+    pot_id = models.IntegerField(null=True, blank=True)
+    t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
+    flow = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Playoff Pot {self.id}: {self.c_id} - {self.pot_id} - {self.t_id}"  
+    
+    class Meta:
+        verbose_name_plural = _("Playoff Pots")
+
+class PlayoffDraw(models.Model):
+    id = models.AutoField(primary_key=True)
+    c_id = models.ForeignKey(Cup, on_delete=models.CASCADE)
+    pot_id = models.IntegerField(null=True, blank=True)
+    t_id = models.ForeignKey(Team, on_delete=models.CASCADE)
+    draw_id = models.IntegerField(null=True, blank=True)
+    flow = models.IntegerField(null=True, blank=True)
+    def __str__(self):
+        return f"Playoff Draw {self.id}: {self.c_id} - {self.pot_id} - {self.t_id} - {self.draw_id}"

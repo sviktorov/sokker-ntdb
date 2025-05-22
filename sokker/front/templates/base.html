@@ -21,21 +21,6 @@
 <link rel="stylesheet" href="{% static 'js/rev-slider/css/navigation.css' %}"  type='text/css' media='all' />
 <!--Rev Slider End-->
 <title>Tigers Sports HTML Template</title>
-</head>
-<body>
-<!--Wrapper Start-->
-<div class="wrapper"> 
-  {% include 'includes/header.html' %}
- 
-  <!--Main Content Start-->
-
-  {% block content %}
-
-  {% endblock %}
-  <!--Main Content End--> 
-  {% include 'includes/footer.html' %}
-</div>
-<!--Wrapper End--> 
 
 <!-- Optional JavaScript -->
 <script src="{% static 'js/jquery-3.3.1.min.js' %}"></script>
@@ -62,6 +47,26 @@
 <script src="{% static 'js/rev-slider/js/extensions/revolution.extension.parallax.min.js' %}"></script>
 <script src="{% static 'js/rev-slider/js/extensions/revolution.extension.slideanims.min.js' %}"></script>
 <script src="{% static 'js/rev-slider/js/extensions/revolution.extension.video.min.js' %}"></script>
+<!-- Tablesorter (official CDN) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/js/jquery.tablesorter.combined.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.31.3/css/theme.bootstrap_4.min.css">
+
+
+</head>
+<body>
+<!--Wrapper Start-->
+<div class="wrapper"> 
+  {% include 'includes/header.html' %}
+ 
+  <!--Main Content Start-->
+
+  {% block content %}
+
+  {% endblock %}
+  <!--Main Content End--> 
+  {% include 'includes/footer.html' %}
+</div>
+<!--Wrapper End--> 
 
 </body>
 </html>

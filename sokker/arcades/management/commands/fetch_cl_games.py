@@ -2,13 +2,13 @@
 from django.utils.translation import gettext_lazy as _
 from django.core.management.base import BaseCommand
 from arcades.models import Game, Cup
-from sokker_base.api import auth_sokker, get_sokker_seasons, get_sokker_team_match_data_arcade, get_sokker_match_lineup_data
+from sokker_base.api import auth_sokker, get_sokker_seasons, get_sokker_team_match_data_arcade
 from datetime import datetime
-from arcades.utils import get_next_monday_or_saturday, get_next_saturday, get_next_monday_or_thursday, get_next_day, get_previous_day, get_next_thursday
+from arcades.utils import get_next_available_cup_date, get_next_saturday, get_next_day, get_previous_day
 from django.utils import timezone
 
 class Command(BaseCommand):
-    help = _("Cup fixtures Euro")
+    help = _("Cup fixtures Arcade")
 
     def add_arguments(self, parser):
         # Add c_id argument here
@@ -41,11 +41,15 @@ class Command(BaseCommand):
             print("Current time (with TZ):", timezone.now())
             print("Today date:", today_date)
             print("Today date (str):", today_date_str)
-            # Check if today is Thursday
-            is_thursday = today_date.weekday() == 3  # 3 represents Thursday (0 = Monday, 6 = Sunday)
-            is_monday = today_date.weekday() == 0  # 0 represents Monday (0 = Monday, 6 = Sunday)
             print("Number of teams:", cup.c_teams)
             print("Number of groups:", cup.c_groups)
+            print("Number of games in groups:", cup.c_games_groups)
+            if cup.is_cl:
+                group_rounds = 8
+            else:
+                group_rounds = int(cup.c_games_groups) * int(int(cup.c_teams) / int(cup.c_groups) -1)
+            print("Number of group rounds:", group_rounds)
+
             round_range = range(1, 22)
             round_date = {}
             start_date=cup.c_start_date.strftime("%Y-%m-%d")
@@ -53,7 +57,7 @@ class Command(BaseCommand):
                 if round == 1:
                     round_date[str(round)] = start_date
                 else:
-                    round_date[str(round)] = get_next_monday_or_thursday(round_date[str(round - 1)]).strftime("%Y-%m-%d")
+                    round_date[str(round)] = get_next_available_cup_date(cup, round_date[str(round - 1)]).strftime("%Y-%m-%d")
             end_date = round_date[str(21)]
             seasons = get_sokker_seasons(cookie).json()
             season_ids = []
@@ -102,10 +106,16 @@ class Command(BaseCommand):
                     away_team_id = match["away"]["id"]
                     # print(was_played, home_team_id, away_team_id, game.t_id_h.id, game.t_id_v.id)
                     flag = False
+
                     # in groups stage home away can be reversed
                     if (str(home_team_id) == str(game.t_id_h.id) or str(away_team_id) == str(game.t_id_h.id)) and \
                        (str(home_team_id) == str(game.t_id_v.id) or str(away_team_id) == str(game.t_id_v.id)) and \
-                       (int(game.cup_round) < 9 and int(game.cup_round) > 0):
+                       (int(game.cup_round) < (group_rounds + 1) and int(game.cup_round) > 0):
+                        # if we play more than once in group stage them home and away cannot be reversed
+                        if int(cup.c_games_groups) > 1 and str(home_team_id) == str(game.t_id_h.id) and str(away_team_id) == str(game.t_id_v.id):
+                            flag = True
+                        else:
+                            continue
                         flag = True
                         if str(home_team_id) == str(game.t_id_h.id):
                             home_match = True
@@ -115,7 +125,7 @@ class Command(BaseCommand):
                             home_goal = match["score"]["away"]
                             away_goal = match["score"]["home"]
                             home_match = False
-                    if (int(game.cup_round) > 8) and (str(home_team_id) == str(game.t_id_h.id) and str(away_team_id) == str(game.t_id_v.id)):
+                    if (int(game.cup_round) > group_rounds) and (str(home_team_id) == str(game.t_id_h.id) and str(away_team_id) == str(game.t_id_v.id)):
                         flag = True
                         home_goal = match["score"]["home"]
 

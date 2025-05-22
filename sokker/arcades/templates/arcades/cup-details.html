@@ -50,94 +50,78 @@
                     </div>
                 </div>
                 <div class="row">
-                        <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols}}">
-                            <div class="group-box">
-                                <h6>{% trans "Final" %}</h6>
-                                {% if final %}
-                                    {% if cup.is_cl %}
-                                        {% regroup final by playoff_position as grouped_games %}
-                                        {% for position in grouped_games %}
-                                                {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
-                                        {% endfor %}
-                                    {% else %}
-                                        {% for game in final %}
-                                               {% include "arcades/includes/game_block_playoff.html" with title="Final" game=game cup=cup %}       
-                                        {% endfor %}
-                                    {% endif %}
+                    <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols}}">
+                        <div class="group-box">
+                            <h6>{% trans "Final" %}</h6>
+                            {% if final %}
+                                {% if cup.is_cl %}
+                                    {% regroup final by playoff_position as grouped_games %}
+                                    {% for position in grouped_games %}
+                                        {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                    {% endfor %}
+                                {% else %}
+                                    {% for game in final %}
+                                        {% include "arcades/includes/game_block_playoff.html" with title="Final" game=game cup=cup %}       
+                                    {% endfor %}
                                 {% endif %}
+                            {% endif %}
             
-                                {% if final_bronze %}
-                                    {% include "arcades/includes/game_block_playoff.html" with title="3/4 Place game" game=final_bronze cup=cup %}
-                                {% endif %}
-                            </div>
+                            {% if final_bronze %}
+                                {% include "arcades/includes/game_block_playoff.html" with title="3/4 Place game" game=final_bronze cup=cup %}
+                            {% endif %}
                         </div>
-          
-                       
-                        <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
-                            <div class="group-box">
+                    </div> 
+                    <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
+                        <div class="group-box">
                                 
-                                <h6>{% trans "Semifinals" %}</h6>
-                                {% if semi_finals|length > 0 %}
-                                    <!--title end-->
-                                    {% if cup.is_cl %}
+                            <h6>{% trans "Semifinals" %}</h6>
+                            {% if semi_finals|length > 0 %}
+                                {% if cup.is_cl %}
                                         {% regroup semi_finals by playoff_position as grouped_games %}
                                         {% for position in grouped_games %}
                                                 {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
                                         {% endfor %}
-                                    {% else %}
-                                        {% for game in semi_finals %}
-                                            {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
-                                        {% endfor %}
-                                    {% endif %}
+                                {% else %}
+                                    {% for game in semi_finals %}
+                                        {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
+                                    {% endfor %}
                                 {% endif %}
-                            </div>
+                            {% endif %}
                         </div>
-                   
                     </div>
-                    <div class="row">
+                </div>
+                <div class="row">
                     <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
-                        {% if quarter_finals|length > 0 %}
                         <div class="group-box">
-                             
-                                    <h6>{% trans "Quarterfinals" %}</h6>
+                            <h6>{% trans "Quarterfinals" %}</h6>
+                            {% if cup.is_cl %}
+                                {% regroup quarter_finals by playoff_position as grouped_games %}        
+                                <ul>
+                                    <li><h2></h2></li>
+                                </ul>
+                                {% for position in grouped_games %}
+                                    <ul style="padding: 5px; border-bottom: 1px solid #ddd;">
+                                        <li><h2></h2></li>
+                                    </ul>
+                                    {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                    <ul>
+                                        <li><h2></h2></li>
+                                    </ul>
+                                {% endfor %}
 
-                                    {% if cup.is_cl %}
-                                        {% regroup quarter_finals by playoff_position as grouped_games %}
-                                        
-                                        <ul>
-                                            <li><h2></h2></li>
-                                        </ul>
-                                        {% for position in grouped_games %}
-                                                <ul style="padding: 5px; border-bottom: 1px solid #ddd;">
-                                                    <li><h2></h2></li>
-                                                </ul>
-                                                {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
-                                                <ul>
-                                                    <li><h2></h2></li>
-                                                </ul>
-
-                                        {% endfor %}
-
-                                    {% else %}
-                                        {% for game in quarter_finals %}
-                                            {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
-                                        {% endfor %}
-                                    {% endif %}
+                            {% else %}
+                                {% for game in quarter_finals %}
+                                    {% include "arcades/includes/game_block_playoff.html" with game=game cup=cup %}       
+                                {% endfor %}
+                            {% endif %}
                                
-                            </div>
                         </div>
-                        {% endif %} 
-                
-                        {% if eight_finals|length > 0 %}
-                        <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
-                            <div class="group-box">
-    
-                                {% if eight_finals|length > 0 %}
-                                            
-                                    <h6>{% trans "Eight finals" %}</h6>
-                                        <!--title end-->
-                                    {% if cup.is_cl %}
-                                        {% regroup eight_finals by playoff_position as grouped_games %}
+                    </div>
+                    <div class="col-lg-{{ playoff_cols }} col-md-{{ playoff_cols }}">
+                        <div class="group-box">          
+                            <h6>{% trans "Eight finals" %}</h6>
+                            {% if cup.is_cl %}
+                                {% regroup eight_finals by playoff_position as grouped_games %}
                                         {% for position in grouped_games %}
                                                 {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
                                         {% endfor %}
@@ -147,31 +131,30 @@
                                         {% endfor %}
                                     {% endif %}
                                 
-                                {% endif %}  
-                            </div>
-                        </div>
-                        {% endif %}
-                </div>
-                {% endif %}
-                {% if cup.is_cl %}
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="section-title">
-                                <h2>{% trans "Playoffs preliminaries" %}</h2>
-                            </div>
+                            {% endif %} 
                         </div>
                     </div>
-                    <div class="row">
+                </div>
+                
+                {% if cup.is_cl %}
+                <div class="row">
+                    <div class="col-lg-12 col-md-12">
+                        <div class="section-title">
+                            <h2>{% trans "Playoffs preliminaries" %}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+            
                         <div class="col-lg-6 col-md-6">
-                            
-                                {% if eight_finals_cl %}
-                                    {% regroup eight_finals_cl by playoff_position as grouped_games %}
-                                    {% for position in grouped_games %}
-                                    <div class="group-box">
-                                        {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
-                                    </div>
-                                    {% endfor %}
-                                {% endif %}
+                            {% if eight_finals_cl %}
+                                {% regroup eight_finals_cl by playoff_position as grouped_games %}
+                                {% for position in grouped_games %}
+                                <div class="group-box">
+                                    {% include "arcades/includes/game_block_playoff_cl.html" with game_list=position.list cup=cup %}       
+                                </div>
+                                {% endfor %}
+                            {% endif %}
                         </div>
                         <div class="col-lg-2 col-md-2">
                             {% if eight_finals_cl %}
@@ -206,9 +189,9 @@
                                     {% endif %}
                                     {% endfor %}
                                 {% endif %}
-                            
-                        </div>
-                    </div>
+                        </div>        
+                    
+                </div>
                 {% endif %}
                 <div class="row">
                     <div class="section-title">
@@ -250,9 +233,9 @@
                                 </div>
                             </div>
                         </div>
-                    {% endfor %}
-                    
+                    {% endfor %} 
                 </div>
+
             </div>
         </div>
     </div>

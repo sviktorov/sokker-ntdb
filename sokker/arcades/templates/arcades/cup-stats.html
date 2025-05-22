@@ -1,0 +1,70 @@
+<!-- templates/best-players.html -->
+{% extends 'base.html' %}
+{% load cache %}
+{% load render_table from django_tables2 %}
+{% load bootstrap5 %}
+{% load i18n %}
+{% block title %}{{ cup.c_name }}{% endblock %}
+{% load custom_tags_arcades %}
+{% block content %}
+{% include 'includes/inner-header.html' with page_title=page_title  page_siblings=page_siblings country=country  background=cup.header_image %}  
+<style>
+    .game-statistics td.win strong {
+        color:#28a745 !important;
+    }
+    .game-statistics td.loss strong {
+        color:#dc3545 !important;
+    }
+    .game-statistics td.draw strong {
+        color:#38a1f3 !important;
+    }
+</style>
+
+<div class="main-content innerpagebg wf100">
+    <!--team Page Start-->
+    <div class="team wf100 p80">
+       <!--Start-->
+       <div class="matach-groups">
+            <div class="container">
+                {% include "arcades/includes/submenu.html" with cup=cup %} 
+                {% include "arcades/includes/submenu_player_stats.html" %} 
+                <div class="game-statistics">
+                    <h4>Cup Statistics: {{ stat_type }}</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="text-right"></th>
+                                <th class="text-right">Player</th>
+                                <th class="text-right">Team</th>
+                                <th class="text-right">{{ stat_type }}</th>
+                            </tr>
+                           
+                        </thead>
+                        <tbody>
+                            {% for stat in stats %}
+                            <tr>
+                                <td class="text-left">{{ forloop.counter }}.</td>
+                                <td class="text-left">{{ stat.player_id__name }}</td>
+                                <td class="text-left">{{ stat.team_id__name }}</td>
+                                <td class="text-left">
+                                    {% if stat_type == "goals" %}
+                                        <i class="fas fa-futbol"></i> {{ stat.total_goals }}
+                                    {% elif stat_type == "assists" %}
+                                        <i class="fas fa-handshake"></i> {{ stat.total_assists }}
+                                    {% elif stat_type == "cards" %}
+                                        <i class="fas fa-square text-warning"></i> {{ stat.total_yellow_cards }}
+                                        <i class="fas fa-square text-danger"></i> {{ stat.total_red_cards }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

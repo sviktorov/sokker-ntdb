@@ -61,7 +61,7 @@ def draw_cl(cup):
 
 
 class Command(BaseCommand):
-    help = _("Cup draw Euro")
+    help = _("Cup draw Arcade")
 
     def add_arguments(self, parser):
         # Add c_id argument here
@@ -89,11 +89,16 @@ class Command(BaseCommand):
         if cup.c_draw_status == "ready":
             print("Number of teams:", cup.c_teams)
             print("Number of groups:", cup.c_groups)
+            ct = CupTeams.objects.filter(c_id=cup)
+            if ct.exists():
+                return print("Draw already done")
+            
             if cup.is_cl:
                 return draw_cl(cup)
 
             pot_iterations = int(cup.c_teams / cup.c_groups)
-            CupTeams.objects.filter(c_id=cup).delete()
+
+            
             for i in range(1, pot_iterations + 1):
                 group_numbers = list(range(1, cup.c_groups + 1))
                 pots = CupDraw.objects.filter(c_id=cup, g_id=i).order_by("g_id")

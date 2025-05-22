@@ -1,7 +1,7 @@
 import requests
 import os
 from datetime import datetime
-
+from bs4 import BeautifulSoup
 
 def get_season_week(season_data):
     today = datetime.now().date()
@@ -66,15 +66,12 @@ def get_sokker_player_transfer_data(player_id, cookie):
     return requests.get(url, headers=headers)
 
 
-
-
 def get_sokker_player_transfer_historydata(player_id, cookie):
     headers = {
         "accept": "application/json",
         "Cookie": cookie,
     }
     url = f"https://sokker.org/api/player/{player_id}/transfer"
-    print("player id : " + str(player_id))
     # Send GET request
     
     return requests.get(url, headers=headers)
@@ -99,6 +96,7 @@ def get_sokker_player_last_transfer_data(player_id, cookie):
     print("player id" ": " + str(player_id))
     # Send GET request
     return requests.get(url, headers=headers)
+
 
 def get_sokker_player_data(sokker_id):
     headers = {"accept": "application/json"}
@@ -142,16 +140,6 @@ def get_sokker_match_stats_data(match_id, cookie):
     
     return requests.get(url, headers=headers)
 
-def get_sokker_match_data(match_id, cookie):
-    headers = {
-        "accept": "application/json",
-        "Cookie": cookie,
-    }
-    url = f"https://sokker.org/api/match/{match_id}"
-    print("match id : " + str(match_id))
-    # Send GET request
-    
-    return requests.get(url, headers=headers)
 
 
 def get_sokker_match_data(match_id, cookie):
@@ -258,3 +246,25 @@ def get_sokker_archive_table_data(league_id, season_id, round_id, cookie):
     }
     url = f"https://sokker.org/league?leagueID={league_id}&action=archive&season={season_id}&round={round_id}"
     return requests.get(url, headers=headers)
+
+
+def get_sokker_game_lineup_stats_html(match_id, team_id, cookie):
+    headers = {
+        "accept": "application/json",
+        "Cookie": cookie,
+    }
+    url = f"https://sokker.org/stats/matchID/{match_id}/teamID/{team_id}"
+    print(url)
+    return requests.get(url, headers=headers)
+
+
+def extract_table_from_html(html_content, table_index=1):
+    """
+    Parses the HTML content and returns the first table with class 'table'.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    table = soup.find_all('table', class_='table')
+    if len(table) > 0 and len(table)>=table_index:
+        return table[table_index]
+    else:
+        return None

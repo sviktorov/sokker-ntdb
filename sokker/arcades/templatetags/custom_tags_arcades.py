@@ -1,6 +1,6 @@
 from django import template
 from ..models import Game, Winners, CupTeams, Cup, RankGroups # Added CupTeams import
-from ..utils import get_next_monday_or_thursday
+from ..utils import get_next_available_cup_date
 from django.db.models import Q
 from django.core.paginator import Paginator
 register = template.Library()
@@ -9,13 +9,12 @@ register = template.Library()
 def define(val=None):
   return val
 
-def get_cup_round_date(start_date, round):
-    print(start_date, round)
+def get_cup_round_date(cup, start_date, round):
     date = start_date
     if round == 1:
         return date
     for i in range(2, round+1):
-        date = get_next_cl_date(date)
+        date = get_next_available_cup_date(cup,date)
     return date
 
 
@@ -36,9 +35,9 @@ def get_team_by_position_in_standings(cup_id, group_id, position):
     return queryset[int(position) - 1]
 
 @register.simple_tag
-def get_next_cl_date(date):
+def get_next_cl_date(cup, date):
     # Fetch the list of semi-final matches based on the passed cup_id
-    return get_next_monday_or_thursday(date)
+    return get_next_available_cup_date(cup, date)
 
 @register.simple_tag
 def get_group_games(cup_id, group_id):

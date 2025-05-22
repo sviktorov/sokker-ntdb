@@ -1,6 +1,6 @@
 from django_tables2.views import MultiTableMixin
 from django.views.generic import TemplateView
-from .models import Cup, RankGroups, Game, Medals, RankAllTime, CupDraw, CupTeams
+from .models import Cup, RankGroups, Game, Medals, RankAllTime, CupDraw, CupTeams, EuroCupGameStats
 from .tables import RankGroupsTable
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
@@ -19,13 +19,18 @@ import io
 import matplotlib.font_manager as fm
 from django.views.decorators.cache import cache_page
 import math
-
+from django.db.models import Sum, Q
 EURO_SUB_MENU = [
     {"title": _("Euros - listing"), "url": "/en/euro"},
     {"title": _("Medals"), "url": "/en/euro/medals"},
     {"title": _("Rank"), "url": "/en/euro/rank"},
+    {"title": _("Player Stats"), "url": "/en/euro/cup/c_id/stats/goals"},
 ]
 
+def euro_submenu(cup_id):
+    for item in EURO_SUB_MENU:
+        item["url"] = item["url"].replace("c_id", str(cup_id))
+    return EURO_SUB_MENU
 
 class EuroAdminDashboard(LoginRequiredMixin, TemplateView):
     template_name = "euro/euro-admin-dashboard.html"
@@ -68,10 +73,11 @@ class CupIndex(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cup_list = Cup.objects.all().order_by("c_flow", "-c_edition")
+        menu = euro_submenu(cup_list.first().pk)
         context["page_title"] = _("Euro Cups")
         context["page_siblings"] = []
         context["cups"] = cup_list
-        context["page_siblings"] = EURO_SUB_MENU
+        context["page_siblings"] = menu
         context["menu_type"] = "EURO"
         return context
 
@@ -84,6 +90,7 @@ class CupMedals(TemplateView):
         teams = Medals.objects.all().order_by(
             "-position_1", "-position_2", "-position_3", "-position_4"
         )
+        menu = euro_submenu(teams.first().c_id.pk)
         context["page_siblings"] = EURO_SUB_MENU
         context["menu_type"] = "EURO"
         context["page_title"] = _("Medals")
@@ -99,10 +106,12 @@ class CupRank(TemplateView):
         teams = RankAllTime.objects.filter(c_flow=1).order_by(
             "-points", "-gdif", "-gscored"
         )
+        menu = euro_submenu(teams.first().c_id.pk)
         context["page_siblings"] = EURO_SUB_MENU
         context["menu_type"] = "EURO"
         context["page_title"] = _("Rank")
         context["teams"] = teams
+        context["page_siblings"] = menu
         return context
 
 
@@ -115,7 +124,7 @@ class CupDrawTemplate(TemplateView):
         cup_object = Cup.objects.filter(id=cup_id).first()
         pots = CupDraw.objects.filter(c_id=cup_object).order_by("g_id")
         draw = CupTeams.objects.filter(c_id=cup_object).order_by("pk")
-        menu = EURO_SUB_MENU
+        menu = euro_submenu(cup_object.pk)
         group_numbers = list(range(1, cup_object.c_groups + 1))
         pot_numbers = list(range(1, int(cup_object.c_teams / cup_object.c_groups) + 1))
         # pot_iterations = int(cup.c_teams / cup.c_groups)
@@ -208,7 +217,9 @@ class CupDetails(MultiTableMixin, TemplateView):
             title = cup_object.c_name
             context["page_title"] = title
             url = reverse("cup_details", kwargs={"cup_id": str(cup_object.pk)})
-        menu = EURO_SUB_MENU
+            menu = euro_submenu(cup_object.pk)
+        else:
+            menu = EURO_SUB_MENU
 
         # Check if the URL already exists in the `menu`
         if not any(item["url"] == url for item in menu):
@@ -363,7 +374,42 @@ def cup_group_standings_image(request, cup_id, group_id):
     return create_standings_table_image(standings, title, title_font)
 
 
+class EuroCupStatsTemplate(TemplateView):
+    template_name = "euro/cup-stats.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cup_id = kwargs.get("cup_id")
+        stat_type = kwargs.get("stat_type")
+        if stat_type == "goals":
+            stats = EuroCupGameStats.objects.filter(game_id__c_id=cup_id, goals__gt=0)\
+                .values('player_id', 'player_id__name', 'team_id__t_name')\
+                .annotate(total_goals=Sum('goals'))\
+                .order_by('-total_goals')
+        elif stat_type == "assists":
+            stats = EuroCupGameStats.objects.filter(game_id__c_id=cup_id, assists__gt=0)\
+                .values('player_id', 'player_id__name', 'team_id__t_name')\
+                .annotate(total_assists=Sum('assists'))\
+                .order_by('-total_assists')
+        elif stat_type == "cards":
+            stats = EuroCupGameStats.objects.filter(
+                game_id__c_id=cup_id).filter(
+                Q(yellow_cards__gt=0) | Q(red_cards__gt=0)
+            ).values('player_id', 'player_id__name', 'team_id__t_name')\
+             .annotate(
+                total_yellow_cards=Sum('yellow_cards'),
+                total_red_cards=Sum('red_cards')
+            ).order_by('-total_red_cards', '-total_yellow_cards')
+    
+        
+        cup_object = Cup.objects.filter(id=cup_id).first()
+        context["page_title"] = _("Cup Stats")
+        context["menu_type"] = "EURO"
+        context["cup_id"] = cup_id
+        context["stat_type"] = stat_type
+        context["cup"] = cup_object
+        context["stats"] = stats
+        return context
 
 
 

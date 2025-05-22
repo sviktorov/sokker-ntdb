@@ -1,7 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from arcades.utils import CUP_STATUS_CHOICES, DRAW_STATUS_CHOICES
-
+from arcades.models import Player
+from sokker_base.models import Team
 
 class Cup(models.Model):
     id = models.AutoField(primary_key=True)  # Assuming c_id is an auto-incrementing ID
@@ -94,6 +95,7 @@ class Game(models.Model):
     cup_round = models.CharField(max_length=50)
     matchID = models.CharField(max_length=255)
     playoff_position = models.CharField(max_length=50, null=True, blank=True)
+    has_stats = models.BooleanField(default=False)
 
     def __str__(self):
         return (
@@ -199,6 +201,20 @@ class RankAllTime(models.Model):
     grecieved = models.IntegerField(null=True, blank=True)
     draw = models.IntegerField(null=True, blank=True)
     c_flow = models.IntegerField(null=True, blank=True, default=1)
-
     def __str__(self):
         return f"Team {self.id}: {self.t_id}  - Cup: {self.c_id} points {self.points}"
+    
+class EuroCupGameStats(models.Model):
+    id = models.AutoField(primary_key=True)
+    goals = models.IntegerField(null=True, blank=True)
+    team_id = models.ForeignKey(NTTeam, on_delete=models.CASCADE)
+    game_id = models.ForeignKey(Game, on_delete=models.CASCADE)
+    player_id = models.ForeignKey(Player, on_delete=models.CASCADE, related_name="player_stats")
+    assists = models.IntegerField(null=True, blank=True)
+    red_cards = models.IntegerField(null=True, blank=True)
+    yellow_cards = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Goal {self.id}: {self.c_id} - {self.t_id} - {self.goal} - {self.game_id} - {self.minute} - {self.player_id}"
+   
+  

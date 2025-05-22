@@ -1,12 +1,11 @@
 from django_tables2.views import MultiTableMixin
 from django.views.generic import TemplateView
-from .models import Cup, RankGroups, Game, Medals, RankAllTime, CupCategory, CupDraw, CupTeams
+from .models import Cup, RankGroups, Game, GameDetails, Medals, RankAllTime, CupCategory, CupDraw, CupTeams, CupGameStats, PlayoffPots, PlayoffDraw
 from .tables import RankGroupsTable
 from django.utils.translation import gettext_lazy as _
 from django.urls import reverse
-from django.shortcuts import redirect
 from .utils import generate_fixtures_cl, get_flag_image
-from django.db.models import Max, IntegerField
+from django.db.models import Max, IntegerField, Sum, Q, Avg
 from django.db.models.functions import Cast
 import json
 from collections import defaultdict
@@ -293,7 +292,92 @@ class CupFixtures(TemplateView):
         context["rounds"] = rounds
         context["groups"] = range(1, cup_object.c_groups +1)
         return context
+
+class CupDrawPlayoffsTemplate(TemplateView):
+    template_name = "arcades/cup-draw-playoffs.html"  # Create this template
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cup_id = kwargs.get("cup_id")
+        
+        cup_object = Cup.objects.filter(id=cup_id).first()
+        total_teams = int(cup_object.c_teams)
+        looser_playoffs = cup_object.looser_playoffs
+        cup_groups = int(cup_object.c_groups)
+        group_games = int(cup_object.c_games_groups)
+        teams_in_group = int(total_teams / cup_groups)
+        teams_in_playoffs = int(cup_object.c_g_winners)
+        games_per_round = int(teams_in_group / 2)
+        total_rounds = int((teams_in_group - 1) * group_games * cup_groups)
+        total_games_in_group = int(games_per_round * total_rounds)
+
+        games_played = Game.objects.filter(c_id=cup_object, g_status__in=["yes", "ADJ"]).count()
+        games_to_play = total_games_in_group - games_played
+  
+        pots = PlayoffPots.objects.filter(c_id=cup_object, flow=1).order_by("pot_id")
+        draw = PlayoffDraw.objects.filter(c_id=cup_object, flow=1).order_by("pot_id")
+        
+        menu = ARCADES_SUB_MENU
+        group_numbers = list(range(1, int(teams_in_playoffs / 2) + 1))
+        pot_numbers = list(range(1,3))
+
+        draw_json = []
+        group_indexes = defaultdict(int)
+        for td in draw:
+            group_indexes[td.g_id] += 1
+            draw_json.append(
+                {
+                    "from": "pot_{}".format(td.t_id.pk),
+                    "to": "group_{}_{}".format(td.g_id, group_indexes[td.g_id]),
+                    "sokker_id": td.t_id.pk,
+                }
+            )
+        
+
+        url = ""
+        if cup_object:
+            title = cup_object.c_name
+            context["page_title"] = title
+            url = reverse(
+                "arcade_cup_draw_playoffs",
+                kwargs={
+                    "cup_id": str(cup_object.pk),
+                    "category_slug": str(cup_object.category.slug),
+                },
+            )
+
+        menu = ARCADES_SUB_MENU
+        # Check if the URL already exists in the `menu`
+        if not any(item["url"] == url for item in menu):
+            menu.append({"title": cup_object.c_name, "url": url})
+        context["cup"] = cup_object
+        context["page_siblings"] = menu
+        context["menu_type"] = "EURO"
+        
+        col_lg_pots = 6
+        col_lg_groups = int(12 / int(teams_in_playoffs / 2))
+       
+        context["draw"] = draw
+        context["pots"] = pots
+        context["pot_numbers"] = pot_numbers
+        context["group_numbers"] = group_numbers
+        context["total_teams"] = total_teams
+        context["looser_playoffs"] = looser_playoffs
+        context["cup_groups"] = cup_groups
+        context["group_games"] = group_games
+        context["teams_in_group"] = teams_in_group
+        context["teams_in_playoffs"] = teams_in_playoffs
+        context["games_per_round"] = games_per_round
+        context["total_rounds"] = total_rounds
+        context["total_games_in_group"] = total_games_in_group
+        context["games_played"] = games_played
+        context["games_to_play"] = games_to_play
+        context["draw_json"] = json.dumps(draw_json)
+        context["col_lg_pots"] = col_lg_pots
+        context["col_lg_groups"] = col_lg_groups
+        return context   
     
+
 class CupDrawTemplate(TemplateView):
     template_name = "arcades/cup-draw.html"  # Create this template
 
@@ -435,7 +519,7 @@ def cup_round_image(request, cup_id, round_id):
     # Get your data
     cup = Cup.objects.get(id=cup_id)
     games = Game.objects.filter(c_id=cup_id, cup_round=round_id)
-    date_round = get_cup_round_date(cup.c_start_date, round_id).strftime("%d.%m.%Y")
+    date_round = get_cup_round_date(cup,cup.c_start_date, round_id).strftime("%d.%m.%Y")
     # Create image
     y = 95
     height = 20 + (len(games) * 30) + y
@@ -552,3 +636,76 @@ def cup_group_standings_image(request, cup_id, group_id):
         position += 1
     return create_standings_table_image(standings, title, title_font)
 
+
+#@method_decorator(cache_page(60 * 60 * 24), name='dispatch')  # Cache for 24 hours 
+class CupStatsTemplate(TemplateView):
+    template_name = "arcades/cup-stats.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cup_id = kwargs.get("cup_id")
+        stat_type = kwargs.get("stat_type")
+        if stat_type == "goals":
+            stats = CupGameStats.objects.filter(game_id__c_id=cup_id, goals__gt=0)\
+                .values('player_id', 'player_id__name', 'team_id__name')\
+                .annotate(total_goals=Sum('goals'))\
+                .order_by('-total_goals')
+        elif stat_type == "assists":
+            stats = CupGameStats.objects.filter(game_id__c_id=cup_id, assists__gt=0)\
+                .values('player_id', 'player_id__name', 'team_id__name')\
+                .annotate(total_assists=Sum('assists'))\
+                .order_by('-total_assists')
+        elif stat_type == "cards":
+            stats = CupGameStats.objects.filter(
+                game_id__c_id=cup_id).filter(
+                Q(yellow_cards__gt=0) | Q(red_cards__gt=0)
+            ).values('player_id', 'player_id__name', 'team_id__name')\
+             .annotate(
+                total_yellow_cards=Sum('yellow_cards'),
+                total_red_cards=Sum('red_cards')
+            ).order_by('-total_red_cards', '-total_yellow_cards')
+    
+        
+        cup_object = Cup.objects.filter(id=cup_id).first()
+        context["page_title"] = _("Cup Stats")
+        context["menu_type"] = "EURO"
+        context["cup_id"] = cup_id
+        context["stat_type"] = stat_type
+        context["cup"] = cup_object
+        context["stats"] = stats
+        return context
+
+
+class CupStatsTeamsTemplate(TemplateView):
+    template_name = "arcades/cup-stats-teams.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        cup_id = kwargs.get("cup_id")
+        stat_type = kwargs.get("stat_type")
+        
+        stats = GameDetails.objects.filter(game_id__c_id=cup_id).values('team_id__name').annotate(
+            total_fouls=Sum('fouls'),
+            total_yellow_cards=Sum('yellowCards'),
+            total_red_cards=Sum('redCards'),
+            total_offsides=Sum('offsides'),
+            total_shots=Sum('shots'),
+            avg_eff_shoot=Avg('effShoot'),
+            avg_eff_pass=Avg('effPass'),
+            avg_eff_tackle=Avg('effTackle'),
+            avg_in_half=Avg('timeOnHalf'),
+            avg_poss_in_half=Avg('timePossession'),
+            max_in_half=Max('timeOnHalf'),
+            max_poss_in_half=Max('timePossession'),
+        ).order_by('-total_fouls')
+        
+        
+        
+        cup_object = Cup.objects.filter(id=cup_id).first()
+        context["page_title"] = _("Cup Stats")
+        context["menu_type"] = "EURO"
+        context["cup_id"] = cup_id
+        context["stat_type"] = stat_type
+        context["cup"] = cup_object
+        context["stats"] = stats
+        return context

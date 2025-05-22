@@ -97,7 +97,22 @@
                                         <div class="status-message"></div>
                                     </td>
                                 {% endfor %}
-                            </tr>    
+                            </tr> 
+                            <tr>
+                                <td>{% trans "Player  stats" %}</td>
+                                {% for cup in active_cups %}
+                                    <td>
+                                        <button class="btn btn-primary update-standings-btn" 
+                                                data-command="fetch_euro_game_details" 
+                                                data-params="--c_id={{ cup.pk }}">
+                                            {% trans "Player Stats Update" %}
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <div class="status-message"></div>
+                                    </td>
+                                {% endfor %}
+                            </tr>     
                             <tr>
                                 <td>{% trans "Useful links" %}</td>
                                 {% for cup in active_cups %}
